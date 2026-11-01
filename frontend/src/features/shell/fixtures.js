@@ -21,6 +21,7 @@ export const navSections = [
     items: [
       { path: 'central-timeline', label: 'Central Timeline', icon: 'calendar_today' },
       { path: 'rekap-nilai-dan-presensi', label: 'Rekap Nilai & Presensi', icon: 'check_circle' },
+      { path: 'status-presensi', label: 'Status Presensi', icon: 'how_to_reg' },
     ],
   },
   {

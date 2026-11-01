@@ -13,10 +13,11 @@ import DasborDosenPage from './pages/DasborDosen';
 import DasborAdminPage from './pages/DasborAdmin';
 import AppShellGlobalPage from './pages/AppShellGlobal';
 import DirectEnrollmentPage from './pages/DirectEnrollment';
-import ManajemenPenggunaPage from './pages/ManajemenPengguna';
+import ManajenenPenggunaPage from './pages/ManajemenPengguna';
 import MasterMataKuliahPage from './pages/MasterMataKuliah';
 import PembukaanKelasPage from './pages/PembukaanKelas';
 import JejakAuditPage from './pages/JejakAudit';
+import StatusPresensiPage from './pages/StatusPresensi';
 
 // Peta rute yang tersedia (routing via query string ?page=... atau path-based)
 // Keys harus match dengan Sidebar menu paths
@@ -34,6 +35,7 @@ const ROUTES = {
   'pembukaan-kelas': 'pembukaan-kelas',
   'jejak-audit': 'jejak-audit',
   'konfigurasi-sistem': 'konfigurasi-sistem',
+  'status-presensi': 'status-presensi',
   // Auth routes (not in sidebar but valid for navigation)
   'login': 'login',
   'forgot-password': 'forgot-password',
@@ -192,6 +194,20 @@ function App() {
   const routeKey = normalizeRoute(currentRoute);
   if (routeKey === 'forgot-password') {
     return <ForgotPasswordPage onNavigate={navigateTo} onBack={handleBack} />;
+  }
+
+  // Status Presensi page (mahasiswa only) - uses AppShell pattern
+  if (routeKey === 'status-presensi' && activeRole !== 'dosen' && activeRole !== 'admin') {
+    return (
+      <AppShell
+        activeRole="mahasiswa"
+        onRoleChange={handleRoleChange}
+        activeNavPath="status-presensi"
+        onNavChange={navigateTo}
+      >
+        <StatusPresensiPage onNavigate={navigateTo} onRoleChange={handleRoleChange} />
+      </AppShell>
+    );
   }
 
   // Peran Dosen aktif -> render Dasbor Dosen terdedikasi (shell sendiri)
