@@ -1,5 +1,4 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import AppShell from '../../components/AppShell';
 
 // Data Rombel Kelas Awal
 const INITIAL_CLASSES = [
@@ -324,11 +323,7 @@ export default function DirectEnrollment({ onRoleChange }) {
   };
 
   return (
-    <AppShell
-      activeRole="admin"
-      onRoleChange={onRoleChange}
-      activeNavPath="direct-enrollment"
-    >
+    <>
       {/* Toast Notifikasi Lokal */}
       {toastMessage && (
         <div
@@ -1200,6 +1195,6 @@ export default function DirectEnrollment({ onRoleChange }) {
           </div>
         </div>
       )}
-    </AppShell>
+    </>
   );
 }

@@ -47,22 +47,13 @@ function Sidebar({ isOpen, activeRole = 'mahasiswa', onRoleChange, activeNavPath
     if (onNavChange) {
       onNavChange(path);
     }
-    // Sinkronisasi peran bila navigasi menuju dasbor terdedikasi
+    // Only sync role for dedicated dashboard routes
     if (path === 'dasbor-dosen' && activeRole !== 'dosen') {
       onRoleChange && onRoleChange('dosen');
     } else if (path === 'dasbor-mahasiswa' && activeRole !== 'mahasiswa') {
       onRoleChange && onRoleChange('mahasiswa');
-    } else if (
-      (path === 'direct-enrollment' ||
-        path === 'manajemen-pengguna' ||
-        path === 'master-mata-kuliah' ||
-        path === 'pembukaan-kelas' ||
-        path === 'jejak-audit' ||
-        path === 'konfigurasi-sistem') &&
-      activeRole !== 'admin'
-    ) {
-      onRoleChange && onRoleChange('admin');
     }
+    // Admin pages don't auto-switch role - let App.jsx handle routing based on activeRole
   };
 
   // STRICT RBAC FILTERING: Memastikan mahasiswa tidak melihat menu admin/dosen dan sebaliknya

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import AppShell from '../../components/AppShell';
 import { adminApi } from '../../services/api';
-import DirectEnrollment from './DirectEnrollment';
 
 /**
  * DasborAdmin — Feature Component
@@ -11,16 +10,11 @@ import DirectEnrollment from './DirectEnrollment';
  * Pengelolaan terpusat Master Data, Direct Enrollment, Rekap Audit Trail,
  * dan Pemantauan Integritas Sistem (Storage, MIME Whitelist, Gatekeeping Presensi).
  */
-export default function DasborAdmin({ onRoleChange }) {
-  const [activeNavPath, setActiveNavPath] = useState('manajemen-pengguna');
+export default function DasborAdmin({ onRoleChange, activeNavPath, onNavChange }) {
   const [toastMessage, setToastMessage] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState(null);
   const [filterAction, setFilterAction] = useState('ALL');
-
-  if (activeNavPath === 'direct-enrollment') {
-    return <DirectEnrollment onRoleChange={onRoleChange} />;
-  }
 
   const showToast = (msg) => {
     setToastMessage(msg);

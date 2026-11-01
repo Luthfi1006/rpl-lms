@@ -6,6 +6,6 @@
  */
 import DasborAdmin from '../features/admin/DasborAdmin';
 
-export default function DasborAdminPage({ onRoleChange }) {
-  return <DasborAdmin onRoleChange={onRoleChange} />;
+export default function DasborAdminPage({ onRoleChange, activeNavPath, onNavChange }) {
+  return <DasborAdmin onRoleChange={onRoleChange} activeNavPath={activeNavPath} onNavChange={onNavChange} />;
 }
