@@ -16,7 +16,7 @@ import classesRoutes from './modules/classes/classes.routes.js';
 import enrollmentsRoutes from './modules/enrollments/enrollments.routes.js';
 import { errorHandler } from './middlewares/error.middleware.js';
 import { attachAuditHelper } from './middlewares/audit.middleware.js';
-import { generalLimiter, authLimiter, publicApiLimiter } from './middlewares/rateLimit.middleware.js';
+import { generalLimiter, authLimiter } from './middlewares/rateLimit.middleware.js';
 
 const app = express();
 
@@ -56,8 +56,8 @@ if (ENV.NODE_ENV !== 'test') {
   app.use(morgan('dev'));
 }
 
-// Health check endpoint
-app.get('/health', publicApiLimiter, (req, res) => {
+// Health check endpoint (FIX F13: Hapus publicApiLimiter ganda, cukup generalLimiter global)
+app.get('/health', (req, res) => {
   return apiResponse.success(res, {
     message: 'SPADA LMS Backend API is operational',
     data: {

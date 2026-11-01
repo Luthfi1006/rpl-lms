@@ -1,4 +1,4 @@
-﻿import { test, describe, before, after } from 'node:test';
+import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import app from '../src/app.js';
 import prisma from '../src/config/prisma.js';
@@ -180,10 +180,10 @@ describe('Fase 5: Modul Direct Enrollment (BR-002), Dasbor Kontekstual & Ruang K
       assert.strictEqual(res.status, 201);
       const json = await res.json();
       assert.strictEqual(json.success, true);
-      assert.strictEqual(json.data.class_id, testClassMain.id);
-      assert.strictEqual(json.data.student_id, student1.id);
+      assert.strictEqual(json.data[0].class_id, testClassMain.id);
+      assert.strictEqual(json.data[0].student_id, student1.id);
 
-      enrolledRecord = json.data;
+      enrolledRecord = json.data[0];
 
       // Verifikasi tersimpan di tabel audit_logs
       const audit = await prisma.auditLog.findFirst({

@@ -1,46 +1,29 @@
 ﻿import prisma from '../../config/prisma.js';
 import { AppError } from '../../utils/errors.js';
 import { ROLES } from '../../constants/roles.js';
+import { ACADEMIC } from '../../constants/academic.js';
+import { formatLecturerName } from '../../utils/format.js';
 
 export class UserClassesService {
   /**
-   * Helper format nama dosen bergelar
-   */
-  static formatLecturerName(lecturer) {
-    if (!lecturer) return null;
-    const fullName = lecturer.user?.profile?.full_name || 'Dosen Pengampu';
-    const depan = lecturer.gelar_depan ? `${lecturer.gelar_depan} ` : '';
-    const belakang = lecturer.gelar_belakang ? `, ${lecturer.gelar_belakang}` : '';
-    return `${depan}${fullName}${belakang}`;
-  }
-
-  /**
    * Menghasilkan struktur 16 pertemuan terstruktur secara sistematis (BR-004)
-   * Pertemuan 1â€“7: Pra-UTS
-   * Pertemuan 8: Evaluasi Tengah Semester (UTS)
-   * Pertemuan 9â€“15: Pasca-UTS
-   * Pertemuan 16: Evaluasi Akhir Semester (UAS)
+   * Menggunakan konstanta tunggal ACADEMIC (FR-050)
    */
   static generate16Meetings(classRecord) {
     const meetings = [];
-    for (let i = 1; i <= 16; i++) {
-      if (i === 8) {
+    for (let i = 1; i <= ACADEMIC.TOTAL_MEETINGS; i++) {
+      const isExam = !!ACADEMIC.EXAM_MEETINGS[i];
+      const examType = ACADEMIC.EXAM_MEETINGS[i] || null;
+
+      if (isExam) {
+        const examName = examType === 'UTS' ? 'Evaluasi Tengah Semester (UTS)' : 'Evaluasi Akhir Semester (UAS)';
         meetings.push({
-          meeting_number: 8,
-          title: 'Pertemuan 8: Evaluasi Tengah Semester (UTS)',
-          description: `Ujian Tengah Semester untuk mata kuliah ${classRecord.course.name}`,
-          type: 'UTS',
+          meeting_number: i,
+          title: `Pertemuan ${i}: ${examName}`,
+          description: `Ujian ${examType === 'UTS' ? 'Tengah' : 'Akhir'} Semester untuk mata kuliah ${classRecord.course.name}`,
+          type: examType,
           is_exam: true,
-          attendance_required_percentage: 70, // Prasyarat kehadiran â‰¥70% (BR-012)
-        });
-      } else if (i === 16) {
-        meetings.push({
-          meeting_number: 16,
-          title: 'Pertemuan 16: Evaluasi Akhir Semester (UAS)',
-          description: `Ujian Akhir Semester untuk mata kuliah ${classRecord.course.name}`,
-          type: 'UAS',
-          is_exam: true,
-          attendance_required_percentage: 70, // Prasyarat kehadiran â‰¥70% (BR-012)
+          attendance_required_percentage: ACADEMIC.DEFAULT_ATTENDANCE_THRESHOLD, // Prasyarat kehadiran (BR-012, FR-050)
         });
       } else {
         meetings.push({
@@ -57,7 +40,10 @@ export class UserClassesService {
   }
 
   /**
-   * Mengambil daftar kelas sesuai konteks peran pengguna (Mahasiswa: enrolled, Dosen: diampu)
+   * Mengambil daftar kelas sesuai kontekstual peran pengguna (Mahasiswa: enrolled, Dosen: diampu)
+   * FIX F5: Penanganan eksplisit role dan throw 403 pada role yang tidak diizinkan (fail-closed)
+   * FIX F6: Pakai ACADEMIC.TOTAL_MEETINGS
+   * FIX F7: Pakai formatLecturerName dari utils/format.js
    */
   static async getUserClasses(user, { page = 1, limit = 20, search, academic_year, semester } = {}) {
     const take = Math.min(100, Math.max(1, Number(limit) || 20));
@@ -125,7 +111,7 @@ export class UserClassesService {
         semester: enr.class.semester,
         capacity: enr.class.capacity,
         enrolled_count: enr.class._count.enrollments,
-        total_meetings: 16,
+        total_meetings: ACADEMIC.TOTAL_MEETINGS,
         course: enr.class.course,
         lecturer: {
           id: enr.class.lecturer.id,
@@ -134,7 +120,7 @@ export class UserClassesService {
           gelar_depan: enr.class.lecturer.gelar_depan,
           gelar_belakang: enr.class.lecturer.gelar_belakang,
           full_name: enr.class.lecturer.user?.profile?.full_name || null,
-          formatted_name: this.formatLecturerName(enr.class.lecturer),
+          formatted_name: formatLecturerName(enr.class.lecturer),
         },
         enrolled_at: enr.enrolled_at,
       }));
@@ -161,6 +147,7 @@ export class UserClassesService {
       const where = {
         lecturer_id: lecturer.id,
       };
+
       if (academic_year) where.academic_year = academic_year;
       if (semester) where.semester = semester;
       if (search) {
@@ -182,6 +169,15 @@ export class UserClassesService {
             course: {
               select: { id: true, code: true, name: true, credits: true },
             },
+            lecturer: {
+              include: {
+                user: {
+                  select: {
+                    profile: { select: { full_name: true } },
+                  },
+                },
+              },
+            },
             _count: { select: { enrollments: true } },
           },
         }),
@@ -194,8 +190,17 @@ export class UserClassesService {
         semester: cls.semester,
         capacity: cls.capacity,
         enrolled_count: cls._count.enrollments,
-        total_meetings: 16,
+        total_meetings: ACADEMIC.TOTAL_MEETINGS,
         course: cls.course,
+        lecturer: {
+          id: cls.lecturer.id,
+          nidn: cls.lecturer.nidn,
+          nip: cls.lecturer.nip,
+          gelar_depan: cls.lecturer.gelar_depan,
+          gelar_belakang: cls.lecturer.gelar_belakang,
+          full_name: cls.lecturer.user?.profile?.full_name || null,
+          formatted_name: formatLecturerName(cls.lecturer),
+        },
       }));
 
       return {
@@ -209,76 +214,14 @@ export class UserClassesService {
       };
     }
 
-    // Role ADMIN: Seluruh daftar kelas
-    const where = {};
-    if (academic_year) where.academic_year = academic_year;
-    if (semester) where.semester = semester;
-    if (search) {
-      where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { course: { code: { contains: search, mode: 'insensitive' } } },
-        { course: { name: { contains: search, mode: 'insensitive' } } },
-      ];
-    }
-
-    const [total, classes] = await Promise.all([
-      prisma.class.count({ where }),
-      prisma.class.findMany({
-        where,
-        skip: (currentPage - 1) * take,
-        take,
-        orderBy: [{ academic_year: 'desc' }, { semester: 'asc' }, { name: 'asc' }],
-        include: {
-          course: {
-            select: { id: true, code: true, name: true, credits: true },
-          },
-          lecturer: {
-            include: {
-              user: {
-                select: {
-                  profile: { select: { full_name: true } },
-                },
-              },
-            },
-          },
-          _count: { select: { enrollments: true } },
-        },
-      }),
-    ]);
-
-    const items = classes.map((cls) => ({
-      id: cls.id,
-      name: cls.name,
-      academic_year: cls.academic_year,
-      semester: cls.semester,
-      capacity: cls.capacity,
-      enrolled_count: cls._count.enrollments,
-      total_meetings: 16,
-      course: cls.course,
-      lecturer: {
-        id: cls.lecturer.id,
-        nidn: cls.lecturer.nidn,
-        nip: cls.lecturer.nip,
-        gelar_depan: cls.lecturer.gelar_depan,
-        gelar_belakang: cls.lecturer.gelar_belakang,
-        full_name: cls.lecturer.user?.profile?.full_name || null,
-        formatted_name: this.formatLecturerName(cls.lecturer),
-      },
-    }));
-
-    return {
-      items,
-      meta: {
-        page: currentPage,
-        limit: take,
-        total,
-        totalPages: Math.ceil(total / take),
-      },
-    };
+    // FIX F5: Ditolak jika role bukan MAHASISWA atau DOSEN (Admin gunakan /api/admin/classes)
+    throw new AppError('Akses ditolak: endpoint /api/classes hanya untuk Mahasiswa dan Dosen', 403);
   }
 
   /**
    * Mengambil detail kelas dan daftar 16 pertemuan terstruktur (BR-003, BR-004)
+   * FIX F6: Pakai ACADEMIC.TOTAL_MEETINGS
+   * FIX F7: Pakai formatLecturerName dari utils/format.js
    */
   static async getClassDetail(user, classId) {
     const classRecord = await prisma.class.findUnique({
@@ -335,6 +278,9 @@ export class UserClassesService {
           403
         );
       }
+    } else {
+      // FIX F5: Admin tidak boleh mengakses /api/classes/:id (gunakan /api/admin/classes/:id)
+      throw new AppError('Akses ditolak: endpoint ini khusus untuk Mahasiswa dan Dosen terdaftar', 403);
     }
 
     const meetings = this.generate16Meetings(classRecord);
@@ -360,10 +306,10 @@ export class UserClassesService {
         gelar_depan: classRecord.lecturer.gelar_depan,
         gelar_belakang: classRecord.lecturer.gelar_belakang,
         full_name: classRecord.lecturer.user?.profile?.full_name || null,
-        formatted_name: this.formatLecturerName(classRecord.lecturer),
+        formatted_name: formatLecturerName(classRecord.lecturer),
         email: classRecord.lecturer.user?.email,
       },
-      total_meetings: 16,
+      total_meetings: ACADEMIC.TOTAL_MEETINGS,
       meetings,
     };
   }
