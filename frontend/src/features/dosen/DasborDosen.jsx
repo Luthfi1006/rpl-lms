@@ -9,7 +9,7 @@ import { dosenApi } from '../../services/api';
  * Mendukung kurikulum 16 Pertemuan Terstruktur, sinkronisasi SIAKAD,
  * pengelolaan presensi, dan penilaian rubrik tugas.
  */
-export default function DasborDosen({ onRoleChange }) {
+export default function DasborDosen({ onRoleChange, onNavigate }) {
   const [activeMenu, setActiveMenu] = useState('dasbor-dosen');
   const [toastMessage, setToastMessage] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -159,7 +159,10 @@ export default function DasborDosen({ onRoleChange }) {
       activeRole="dosen"
       onRoleChange={onRoleChange}
       activeNavPath={activeMenu}
-      onNavChange={setActiveMenu}
+      onNavChange={(path) => {
+        setActiveMenu(path);
+        if (onNavigate) onNavigate(path);
+      }}
     >
       {/* Toast Notification Lokal */}
       {toastMessage && (

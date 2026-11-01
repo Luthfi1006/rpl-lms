@@ -196,7 +196,10 @@ export default function DasborAdmin({ onRoleChange, activeNavPath, onNavChange }
       activeRole="admin"
       onRoleChange={onRoleChange}
       activeNavPath={activeNavPath}
-      onNavChange={setActiveNavPath}
+      onNavChange={(path) => {
+        setActiveNavPath(path);
+        if (onNavChange) onNavChange(path);
+      }}
     >
       {/* Toast Notification Lokal */}
       {toastMessage && (

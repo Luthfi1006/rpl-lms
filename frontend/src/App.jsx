@@ -7,9 +7,28 @@ import CourseCards from './components/CourseCards';
 import AnnouncementBanner from './components/AnnouncementBanner';
 import AssignmentWidget from './components/AssignmentWidget';
 import AttendanceWidget from './components/AttendanceWidget';
+
+// === Page Imports (19 UI Designs + Auth) ===
 import ForgotPasswordPage from './pages/ForgotPassword';
 import LoginPage from './pages/Login';
+
+// Mahasiswa Pages
+import StatusPresensiPage from './pages/StatusPresensi';
+import KlsSayaMahasiswaPage from './pages/KlsSayaMahasiswa';
+import RuangKlsPage from './pages/RuangKls';
+
+// Dosen Pages
 import DasborDosenPage from './pages/DasborDosen';
+import KlsDiampuPage from './pages/KlsDiampu';
+import KelolaKlsPage from './pages/KelolaKls';
+import DaftarHadirKoreksiPage from './pages/DaftarHadirKoreksi';
+import MenejemenMaterialPage from './pages/MenejemenMaterial';
+import UnggahMateriPage from './pages/UnggahMateri';
+
+// Akademik (shared dosen/mahasiswa)
+import RekapKehadiranPage from './pages/RekapKehadiran';
+
+// Admin Pages
 import DasborAdminPage from './pages/DasborAdmin';
 import AppShellGlobalPage from './pages/AppShellGlobal';
 import DirectEnrollmentPage from './pages/DirectEnrollment';
@@ -17,25 +36,36 @@ import ManajenenPenggunaPage from './pages/ManajemenPengguna';
 import MasterMataKuliahPage from './pages/MasterMataKuliah';
 import PembukaanKelasPage from './pages/PembukaanKelas';
 import JejakAuditPage from './pages/JejakAudit';
-import StatusPresensiPage from './pages/StatusPresensi';
 
 // Peta rute yang tersedia (routing via query string ?page=... atau path-based)
 // Keys harus match dengan Sidebar menu paths
 const ROUTES = {
+  // Mahasiswa
   'dasbor-mahasiswa': 'dasbor-mahasiswa',
   'kelas-saya': 'kelas-saya',
+  'kelas-saya-mahasiswa': 'kelas-saya-mahasiswa',
+  'ruang-kelas': 'ruang-kelas',
   'panduan-belajar': 'panduan-belajar',
   'central-timeline': 'central-timeline',
+  'status-presensi': 'status-presensi',
+  // Shared (Akademik)
   'rekap-nilai-dan-presensi': 'rekap-nilai-dan-presensi',
+  'rekap-kehadiran': 'rekap-kehadiran',
+  // Dosen
   'dasbor-dosen': 'dasbor-dosen',
+  'kelas-diampu': 'kelas-diampu',
+  'kelola-kelas': 'kelola-kelas',
+  'daftar-hadir-koreksi': 'daftar-hadir-koreksi',
+  'manajemen-materi': 'manajemen-materi',
+  'unggah-materi': 'unggah-materi',
   'pemeriksaan-tugas': 'pemeriksaan-tugas',
+  // Admin
   'direct-enrollment': 'direct-enrollment',
   'manajemen-pengguna': 'manajemen-pengguna',
   'master-mata-kuliah': 'master-mata-kuliah',
   'pembukaan-kelas': 'pembukaan-kelas',
   'jejak-audit': 'jejak-audit',
   'konfigurasi-sistem': 'konfigurasi-sistem',
-  'status-presensi': 'status-presensi',
   // Auth routes (not in sidebar but valid for navigation)
   'login': 'login',
   'forgot-password': 'forgot-password',
@@ -46,6 +76,31 @@ const ROUTES = {
 const SPECIAL_ROUTES = {
   'forgot-password': ForgotPasswordPage,
   'login': LoginPage,
+};
+
+// Route → Component mapping for pages that use their own AppShell internally
+const ROUTED_PAGES = {
+  // Mahasiswa feature pages (each has AppShell built-in)
+  'status-presensi': StatusPresensiPage,
+  'kelas-saya-mahasiswa': KlsSayaMahasiswaPage,
+  'ruang-kelas': RuangKlsPage,
+  // Dosen feature pages (each has AppShell built-in)
+  'dasbor-dosen': DasborDosenPage,
+  'kelas-diampu': KlsDiampuPage,
+  'kelola-kelas': KelolaKlsPage,
+  'daftar-hadir-koreksi': DaftarHadirKoreksiPage,
+  'manajemen-materi': MenejemenMaterialPage,
+  'unggah-materi': UnggahMateriPage,
+  // Akademik (shared — has AppShell built-in)
+  'rekap-kehadiran': RekapKehadiranPage,
+  'rekap-nilai-dan-presensi': RekapKehadiranPage,
+  // Admin feature pages
+  'direct-enrollment': DirectEnrollmentPage,
+  'manajemen-pengguna': ManajenenPenggunaPage,
+  'master-mata-kuliah': MasterMataKuliahPage,
+  'pembukaan-kelas': PembukaanKelasPage,
+  'jejak-audit': JejakAuditPage,
+  'app-shell': AppShellGlobalPage,
 };
 
 function App() {
@@ -95,9 +150,6 @@ function App() {
     // Default to dashboard if empty (root path '/')
     return path || 'dasbor-mahasiswa';
   });
-
-  // pushState tidak memicu popstate, jadi tidak perlu flag isProgrammaticNavigation
-  // popstate hanya memicu saat user klik back/forward browser
 
   useEffect(() => {
     const handleLocationChange = () => {
@@ -159,6 +211,19 @@ function App() {
       return;
     }
 
+    // Auto-sync role berdasarkan route target
+    const dosenRoutes = ['dasbor-dosen', 'kelas-diampu', 'kelola-kelas', 'daftar-hadir-koreksi', 'manajemen-materi', 'unggah-materi', 'pemeriksaan-tugas'];
+    const adminRoutes = ['direct-enrollment', 'manajemen-pengguna', 'master-mata-kuliah', 'pembukaan-kelas', 'jejak-audit', 'konfigurasi-sistem'];
+    const mahasiswaRoutes = ['dasbor-mahasiswa', 'kelas-saya', 'kelas-saya-mahasiswa', 'ruang-kelas', 'panduan-belajar', 'status-presensi'];
+
+    if (dosenRoutes.includes(routeKey) && activeRole !== 'dosen') {
+      setActiveRole('dosen');
+    } else if (adminRoutes.includes(routeKey) && activeRole !== 'admin') {
+      setActiveRole('admin');
+    } else if (mahasiswaRoutes.includes(routeKey) && activeRole !== 'mahasiswa') {
+      setActiveRole('mahasiswa');
+    }
+
     // Pertahankan param role agar peran aktif tidak hilang saat navigasi
     const currentRole = new URLSearchParams(window.location.search).get('role');
     if (currentRole && !targetUrl.includes('role=')) {
@@ -168,19 +233,17 @@ function App() {
     // pushState tidak memicu popstate, langsung set state
     window.history.pushState({}, '', targetUrl);
     setCurrentRoute(routeKey);
-  }, [resolveTargetUrl, normalizeRoute]);
+  }, [resolveTargetUrl, normalizeRoute, activeRole]);
 
   const handleBack = useCallback(() => {
     // Navigasi ke halaman yang sesuai berdasarkan route saat ini
-    // Jika di halaman forgot-password, kembali ke login page
-    // Jika di halaman lain (special routes), kembali ke dashboard
     const routeKey = normalizeRoute(currentRoute);
     if (routeKey === 'forgot-password') {
       navigateTo('login');
     } else {
       navigateTo('/');
     }
-  }, [navigateTo, currentRoute]);
+  }, [navigateTo, currentRoute, normalizeRoute]);
 
   // Ganti peran (mahasiswa <-> dosen <-> admin) dan sinkronkan dengan URL ?role=...
   const handleRoleChange = useCallback((newRole) => {
@@ -188,45 +251,67 @@ function App() {
     const url = new URL(window.location.href);
     url.searchParams.set('role', newRole);
     window.history.pushState({}, '', url);
+
+    // Auto-navigate ke default dashboard saat ganti peran
+    const defaultPages = {
+      mahasiswa: 'dasbor-mahasiswa',
+      dosen: 'dasbor-dosen',
+      admin: 'manajemen-pengguna',
+    };
+    const defaultPage = defaultPages[newRole] || 'dasbor-mahasiswa';
+    setCurrentRoute(defaultPage);
+    const targetUrl = `?page=${defaultPage}&role=${newRole}`;
+    window.history.pushState({}, '', targetUrl);
   }, []);
 
-  // Auth route: halaman Lupa Password selalu tampil standalone
+  // === RENDERING LOGIC ===
   const routeKey = normalizeRoute(currentRoute);
+
+  // 1. Auth route: halaman Lupa Password / Login selalu tampil standalone
   if (routeKey === 'forgot-password') {
     return <ForgotPasswordPage onNavigate={navigateTo} onBack={handleBack} />;
   }
+  if (routeKey === 'login') {
+    return <LoginPage onNavigate={navigateTo} onBack={handleBack} />;
+  }
 
-  // Status Presensi page (mahasiswa only) - uses AppShell pattern
-  if (routeKey === 'status-presensi' && activeRole !== 'dosen' && activeRole !== 'admin') {
-    return (
-      <AppShell
-        activeRole="mahasiswa"
+  // 2. Check if this route has a dedicated page component (dosen, admin, mahasiswa feature pages)
+  const RoutedPage = ROUTED_PAGES[routeKey];
+  if (RoutedPage) {
+    // DasborDosenPage has a different prop signature
+    if (routeKey === 'dasbor-dosen') {
+      return <DasborDosenPage onRoleChange={handleRoleChange} onNavigate={navigateTo} />;
+    }
+    // DasborAdminPage has a different prop signature
+    if (routeKey === 'manajemen-pengguna' || routeKey === 'direct-enrollment' ||
+        routeKey === 'master-mata-kuliah' || routeKey === 'pembukaan-kelas' ||
+        routeKey === 'jejak-audit' || routeKey === 'konfigurasi-sistem') {
+      // Admin pages — check if the DasborAdmin component handles internal routing
+      // If it's the admin dashboard page itself, render it with nav support
+      return <DasborAdminPage
         onRoleChange={handleRoleChange}
-        activeNavPath="status-presensi"
+        activeNavPath={routeKey}
         onNavChange={navigateTo}
-      >
-        <StatusPresensiPage onNavigate={navigateTo} onRoleChange={handleRoleChange} />
-      </AppShell>
-    );
+      />;
+    }
+    // All other feature pages receive standard props
+    return <RoutedPage onNavigate={navigateTo} onRoleChange={handleRoleChange} />;
   }
 
-  // Peran Dosen aktif -> render Dasbor Dosen terdedikasi (shell sendiri)
+  // 3. Role-based default dashboards (when no specific route matched)
   if (activeRole === 'dosen') {
-    return <DasborDosenPage onRoleChange={handleRoleChange} />;
+    return <DasborDosenPage onRoleChange={handleRoleChange} onNavigate={navigateTo} />;
   }
 
-  // Peran Admin aktif -> render Dasbor Admin terdedikasi
   if (activeRole === 'admin') {
-    return <DasborAdminPage onRoleChange={handleRoleChange} />;
+    return <DasborAdminPage
+      onRoleChange={handleRoleChange}
+      activeNavPath={routeKey}
+      onNavChange={navigateTo}
+    />;
   }
 
-  // Cek apakah route adalah halaman khusus yang punya komponen sendiri
-  const SpecialPage = SPECIAL_ROUTES[routeKey];
-  if (SpecialPage) {
-    return <SpecialPage onNavigate={navigateTo} onBack={handleBack} />;
-  }
-
-  // Default: Dasbor Mahasiswa dengan AppShell reusable
+  // 4. Default: Dasbor Mahasiswa dengan AppShell reusable
   return (
     <AppShell
       activeRole={activeRole}
