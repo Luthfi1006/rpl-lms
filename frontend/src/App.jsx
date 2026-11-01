@@ -1,6 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import Header from './components/Header';
-import Sidebar from './components/Sidebar';
+import { useState, useEffect, useCallback } from 'react';
+import AppShell from './components/AppShell';
 import Breadcrumb from './components/Breadcrumb';
 import GreetingBanner from './components/GreetingBanner';
 import SummaryCards from './components/SummaryCards';
@@ -9,42 +8,47 @@ import AnnouncementBanner from './components/AnnouncementBanner';
 import AssignmentWidget from './components/AssignmentWidget';
 import AttendanceWidget from './components/AttendanceWidget';
 import ForgotPasswordPage from './pages/ForgotPassword';
-import MasterMataKuliah from './pages/MasterMataKuliah';
-import PembukaanKelas from './pages/PembukaanKelas';
-import JejakAudit from './pages/JejakAudit';
+import LoginPage from './pages/Login';
 import DasborDosenPage from './pages/DasborDosen';
+import DasborAdminPage from './pages/DasborAdmin';
+import AppShellGlobalPage from './pages/AppShellGlobal';
+import DirectEnrollmentPage from './pages/DirectEnrollment';
+import ManajenenPenggunaPage from './pages/ManajemenPengguna';
+import MasterMataKuliahPage from './pages/MasterMataKuliah';
+import PembukaanKelasPage from './pages/PembukaanKelas';
+import JejakAuditPage from './pages/JejakAudit';
+import StatusPresensiPage from './pages/StatusPresensi';
 
-// Peta rute yang tersedia (routing via query string ?page=...)
+// Peta rute yang tersedia (routing via query string ?page=... atau path-based)
 // Keys harus match dengan Sidebar menu paths
 const ROUTES = {
   'dasbor-mahasiswa': 'dasbor-mahasiswa',
-  'mata-kuliah-saya': 'mata-kuliah-saya',
-  'sentral-penugasan': 'sentral-penugasan',
+  'kelas-saya': 'kelas-saya',
+  'panduan-belajar': 'panduan-belajar',
   'central-timeline': 'central-timeline',
   'rekap-nilai-dan-presensi': 'rekap-nilai-dan-presensi',
   'dasbor-dosen': 'dasbor-dosen',
   'pemeriksaan-tugas': 'pemeriksaan-tugas',
+  'direct-enrollment': 'direct-enrollment',
   'manajemen-pengguna': 'manajemen-pengguna',
   'master-mata-kuliah': 'master-mata-kuliah',
   'pembukaan-kelas': 'pembukaan-kelas',
   'jejak-audit': 'jejak-audit',
   'konfigurasi-sistem': 'konfigurasi-sistem',
+  'status-presensi': 'status-presensi',
   // Auth routes (not in sidebar but valid for navigation)
   'login': 'login',
   'forgot-password': 'forgot-password',
+  'app-shell': 'app-shell',
 };
 
-// Halaman khusus yang punya komponen sendiri
+// Halaman khusus yang punya komponen sendiri (standalone, tidak menggunakan AppShell)
 const SPECIAL_ROUTES = {
-  'master-mata-kuliah': MasterMataKuliah,
-  'pembukaan-kelas': PembukaanKelas,
-  'jejak-audit': JejakAudit,
   'forgot-password': ForgotPasswordPage,
+  'login': LoginPage,
 };
 
 function App() {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-
   // Helper: normalize route to key (no leading slash, no query params, no hash)
   const normalizeRoute = useCallback((route) => {
     if (!route) return 'dasbor-mahasiswa';
@@ -70,10 +74,11 @@ function App() {
     return route.startsWith('/') ? route.slice(1) : route;
   }, []);
 
-  // Deteksi peran aktif via URL / query param (?role=dosen|mahasiswa)
+  // Deteksi peran aktif via URL / query param (?role=dosen|mahasiswa|admin)
   const pathname = window.location.pathname;
   const searchParams = new URLSearchParams(window.location.search);
-  const initialRole = searchParams.get('role') || (pathname.includes('/dosen') ? 'dosen' : 'mahasiswa');
+  const initialRole = searchParams.get('role') ||
+    (pathname.includes('/admin') ? 'admin' : pathname.includes('/dosen') ? 'dosen' : 'mahasiswa');
   const [activeRole, setActiveRole] = useState(initialRole);
 
   // Dukungan routing reaktif untuk pratinjau halaman Lupa Password
@@ -177,7 +182,7 @@ function App() {
     }
   }, [navigateTo, currentRoute]);
 
-  // Ganti peran (mahasiswa <-> dosen) dan sinkronkan dengan URL ?role=...
+  // Ganti peran (mahasiswa <-> dosen <-> admin) dan sinkronkan dengan URL ?role=...
   const handleRoleChange = useCallback((newRole) => {
     setActiveRole(newRole);
     const url = new URL(window.location.href);
@@ -191,96 +196,65 @@ function App() {
     return <ForgotPasswordPage onNavigate={navigateTo} onBack={handleBack} />;
   }
 
+  // Status Presensi page (mahasiswa only) - uses AppShell pattern
+  if (routeKey === 'status-presensi' && activeRole !== 'dosen' && activeRole !== 'admin') {
+    return (
+      <AppShell
+        activeRole="mahasiswa"
+        onRoleChange={handleRoleChange}
+        activeNavPath="status-presensi"
+        onNavChange={navigateTo}
+      >
+        <StatusPresensiPage onNavigate={navigateTo} onRoleChange={handleRoleChange} />
+      </AppShell>
+    );
+  }
+
   // Peran Dosen aktif -> render Dasbor Dosen terdedikasi (shell sendiri)
   if (activeRole === 'dosen') {
     return <DasborDosenPage onRoleChange={handleRoleChange} />;
   }
 
+  // Peran Admin aktif -> render Dasbor Admin terdedikasi
+  if (activeRole === 'admin') {
+    return <DasborAdminPage onRoleChange={handleRoleChange} />;
+  }
+
   // Cek apakah route adalah halaman khusus yang punya komponen sendiri
   const SpecialPage = SPECIAL_ROUTES[routeKey];
   if (SpecialPage) {
-    return (
-      <SpecialPage
-        onNavigate={navigateTo}
-        onBack={handleBack}
-      />
-    );
+    return <SpecialPage onNavigate={navigateTo} onBack={handleBack} />;
   }
 
-  // Cek apakah route valid (ada di ROUTES)
-  const isValidRoute = routeKey in ROUTES;
-
-  const mainWrapClass = sidebarOpen
-    ? 'pl-64 transition-all duration-300'
-    : 'pl-0 transition-all duration-300';
-
-  // Default dashboard view untuk route valid yang bukan halaman khusus
+  // Default: Dasbor Mahasiswa dengan AppShell reusable
   return (
-    <div className="bg-background font-body-md text-on-surface antialiased">
-      <Header
-        onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-        activeRole={activeRole}
-        onRoleChange={handleRoleChange}
-      />
-      <Sidebar
-        isOpen={sidebarOpen}
-        activeRoute={routeKey}
-        activeRole={activeRole}
-        onRoleChange={handleRoleChange}
-        onNavigate={navigateTo}
-      />
+    <AppShell
+      activeRole={activeRole}
+      onRoleChange={handleRoleChange}
+      activeNavPath={routeKey}
+      onNavChange={navigateTo}
+    >
+      {/* Dynamic Glow Scrim */}
+      <div className="relative w-full">
+        <div className="absolute -top-10 left-1/4 w-96 h-96 bg-primary-container/10 rounded-full blur-3xl pointer-events-none -z-10" />
+        <div className="absolute top-48 right-10 w-80 h-80 bg-secondary-container/10 rounded-full blur-3xl pointer-events-none -z-10" />
 
-      <div className={mainWrapClass}>
-        <main className="w-full pt-16 px-gutter bg-background min-h-screen">
-          <div className="flex flex-col w-full pb-space-xl">
-            {/* Dynamic Glow Scrim */}
-            <div className="relative w-full">
-              <div className="absolute -top-10 left-1/4 w-96 h-96 bg-primary-container/10 rounded-full blur-3xl pointer-events-none -z-10" />
-              <div className="absolute top-48 right-10 w-80 h-80 bg-secondary-container/10 rounded-full blur-3xl pointer-events-none -z-10" />
+        <Breadcrumb />
+        <GreetingBanner />
+        <SummaryCards />
+        <CourseCards />
+        <AnnouncementBanner />
 
-              <Breadcrumb route={routeKey} onNavigate={navigateTo} />
-              {isValidRoute ? (
-                <>
-                  <GreetingBanner />
-                  <SummaryCards />
-                  <CourseCards />
-                  <AnnouncementBanner />
-
-                  {/* Quick Metrics / Central Timeline Mini Widget */}
-                  <section
-                    aria-labelledby="timeline-widget-heading"
-                    className="grid grid-cols-1 lg:grid-cols-3 gap-space-md"
-                  >
-                    <AssignmentWidget />
-                    <AttendanceWidget />
-                  </section>
-                </>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
-                  <div className="w-20 h-20 rounded-full bg-surface-container-high flex items-center justify-center text-tertiary mb-6">
-                    <span className="material-symbols-outlined text-[36px]">construction</span>
-                  </div>
-                  <h2 className="font-headline-md text-headline-md text-on-surface mb-3">
-                    Halaman Belum Tersedia
-                  </h2>
-                  <p className="font-body-md text-body-md text-on-surface-variant max-w-md mb-6">
-                    Halaman <code className="px-2 py-0.5 bg-surface-container-high rounded font-mono">{routeKey}</code>
-                    sedang dalam pengembangan. Silakan kembali ke <button className="text-primary underline hover:text-primary-focus font-semibold" onClick={() => navigateTo('/')}>Beranda</button>
-                    atau pilih menu lain dari sidebar.
-                  </p>
-                  <button
-                    className="px-4 py-2 rounded-lg bg-primary-container text-on-primary-container font-label-md text-label-md font-semibold shadow-sm hover:brightness-110"
-                    onClick={() => navigateTo('/')}
-                  >
-                    Kembali ke Beranda
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </main>
+        {/* Quick Metrics / Central Timeline Mini Widget */}
+        <section
+          aria-labelledby="timeline-widget-heading"
+          className="grid grid-cols-1 lg:grid-cols-3 gap-space-md"
+        >
+          <AssignmentWidget />
+          <AttendanceWidget />
+        </section>
       </div>
-    </div>
+    </AppShell>
   );
 }
 

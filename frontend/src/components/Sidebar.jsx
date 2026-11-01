@@ -1,108 +1,113 @@
 import { useState, useEffect } from 'react';
+import { navSections } from '../features/shell/fixtures';
 
-const menuMahasiswa = [
-  { icon: 'dashboard', label: 'Dasbor Mahasiswa', path: 'dasbor-mahasiswa' },
-  { icon: 'auto_stories', label: 'Mata Kuliah Saya', path: 'mata-kuliah-saya' },
-  { icon: 'assignment', label: 'Sentral Penugasan', path: 'sentral-penugasan' },
-  { icon: 'calendar_today', label: 'Central Timeline', path: 'central-timeline' },
-  { icon: 'check_circle', label: 'Rekap Nilai & Presensi', path: 'rekap-nilai-dan-presensi' },
-];
-
-const menuDosen = [
-  { icon: 'co_present', label: 'Kelas Diampu (Dasbor Dosen)', path: 'dasbor-dosen' },
-  { icon: 'assignment_turned_in', label: 'Pemeriksaan Tugas', path: 'pemeriksaan-tugas' },
-];
-
-const menuAdmin = [
-  { icon: 'group', label: 'Manajemen Pengguna', path: 'manajemen-pengguna' },
-  { icon: 'local_library', label: 'Master Mata Kuliah', path: 'master-mata-kuliah' },
-  { icon: 'edit_calendar', label: 'Pembukaan Kelas', path: 'pembukaan-kelas' },
-  { icon: 'security', label: 'Jejak Audit', path: 'jejak-audit' },
-  { icon: 'settings', label: 'Konfigurasi Sistem', path: 'konfigurasi-sistem' },
-];
-
-function NavItem({ item, isActive, onNavigate }) {
+function NavItem({ item, isActive, onClick }) {
   const baseClass = 'flex items-center gap-space-sm px-space-md py-space-sm rounded-lg transition-colors font-label-md text-label-md';
   const activeClass = 'bg-primary-container text-on-primary-container font-bold shadow-md';
   const inactiveClass = 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface';
   return (
     <a
-      href="#"
-      onClick={(e) => { e.preventDefault(); onNavigate(item.path); }}
-      className={baseClass + ' ' + (isActive ? activeClass : inactiveClass)}
+      href={`#${item.path}`}
+      onClick={(e) => {
+        e.preventDefault();
+        onClick(item.path);
+      }}
+      className={`${baseClass} ${isActive ? activeClass : inactiveClass}`}
     >
       <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
-      {item.label}
+      <span>{item.label}</span>
     </a>
   );
 }
 
-function Sidebar({ isOpen, activeRoute, activeRole = 'mahasiswa', onNavigate, onRoleChange }) {
-  // Sinkronkan activePath saat route/role berubah (single source of truth dari App)
-  const derivePath = (role) => (role === 'dosen' ? 'dasbor-dosen' : activeRoute || 'dasbor-mahasiswa');
-  const [activePath, setActivePath] = useState(() => derivePath(activeRole));
+function Sidebar({ isOpen, activeRole = 'mahasiswa', onRoleChange, activeNavPath, onNavChange }) {
+  const getDefaultPath = (role) => {
+    if (role === 'dosen') return 'dasbor-dosen';
+    if (role === 'admin') return 'manajemen-pengguna';
+    return 'dasbor-mahasiswa';
+  };
 
+  const [internalPath, setInternalPath] = useState(() => activeNavPath || getDefaultPath(activeRole));
+
+  // Sync with activeRole and external activeNavPath
   useEffect(() => {
-    setActivePath(derivePath(activeRole));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeRoute, activeRole]);
+    if (activeNavPath) {
+      setInternalPath(activeNavPath);
+    } else {
+      setInternalPath(getDefaultPath(activeRole));
+    }
+  }, [activeRole, activeNavPath]);
 
-  const asideClass = 'fixed top-16 left-0 bottom-0 w-64 bg-surface-container-low z-40 flex flex-col border-r border-outline-variant/20 transition-transform duration-300 ' + (isOpen ? 'translate-x-0' : '-translate-x-full');
+  const asideClass = `fixed top-16 left-0 bottom-0 w-64 bg-surface-container-low z-40 flex flex-col border-r border-outline-variant/20 transition-transform duration-300 ${
+    isOpen ? 'translate-x-0' : '-translate-x-full'
+  }`;
 
   const handleNavClick = (path) => {
-    setActivePath(path);
-    // Klik menu dasbor dosen/mahasiswa memicu ganti peran (kompatibel dgn main)
-    if (path === 'dasbor-dosen' && onRoleChange) {
-      onRoleChange('dosen');
-    } else if (path === 'dasbor-mahasiswa' && onRoleChange) {
-      onRoleChange('mahasiswa');
+    setInternalPath(path);
+    if (onNavChange) {
+      onNavChange(path);
     }
-    // Navigasi SPA via query string ?page=...
-    if (onNavigate) {
-      onNavigate(path);
+    // Only sync role for dedicated dashboard routes
+    if (path === 'dasbor-dosen' && activeRole !== 'dosen') {
+      onRoleChange && onRoleChange('dosen');
+    } else if (path === 'dasbor-mahasiswa' && activeRole !== 'mahasiswa') {
+      onRoleChange && onRoleChange('mahasiswa');
     }
+    // Admin pages don't auto-switch role - let App.jsx handle routing based on activeRole
   };
 
-  const renderGroup = (items, title) => {
-    if (!items.length) return null;
-    return (
-      <div key={title}>
-        <div className="px-space-sm pt-space-md pb-space-xs font-caption text-caption text-outline uppercase tracking-wider font-semibold">
-          {title}
-        </div>
-        {items.map((item) => (
-          <NavItem
-            key={item.path}
-            item={item}
-            isActive={activePath === item.path}
-            onNavigate={handleNavClick}
-          />
-        ))}
-      </div>
-    );
+  // STRICT RBAC FILTERING: Memastikan mahasiswa tidak melihat menu admin/dosen dan sebaliknya
+  const getVisibleSections = () => {
+    return navSections.filter((section) => {
+      if (activeRole === 'mahasiswa') {
+        return section.role === 'mahasiswa' || section.role === 'shared';
+      }
+      if (activeRole === 'dosen') {
+        return section.role === 'dosen' || section.role === 'shared';
+      }
+      if (activeRole === 'admin') {
+        return section.role === 'admin';
+      }
+      return false;
+    });
   };
 
-  // Filter menu berdasarkan activeRole
-  const getVisibleMenus = () => {
-    const menus = [];
-    if (activeRole === 'mahasiswa' || activeRole === 'dosen') {
-      menus.push({ items: menuMahasiswa, title: 'Menu Mahasiswa' });
-      menus.push({ items: menuDosen, title: 'Menu Dosen' });
-    }
-    // Admin menu selalu tampil (bisa dikembangkan dengan cek role admin)
-    menus.push({ items: menuAdmin, title: 'Administrasi SPADA' });
-    return menus;
-  };
-
-  const visibleMenus = getVisibleMenus();
+  const visibleSections = getVisibleSections();
 
   return (
     <aside className={asideClass}>
-      <div className="flex-1 overflow-y-auto py-space-md px-space-sm flex flex-col gap-space-xs">
-        {visibleMenus.map(({ items, title }) => renderGroup(items, title))}
+      {/* Brand Sub-header */}
+      <div className="px-space-md py-space-sm bg-surface-container-lowest/50 border-b border-outline-variant/20 flex flex-col gap-0.5">
+        <div className="flex items-center gap-space-xs">
+          <span className="material-symbols-outlined text-primary text-[18px]">security</span>
+          <span className="font-label-md text-label-md text-on-surface font-bold capitalize">
+            Akses: {activeRole}
+          </span>
+        </div>
+        <span className="font-caption text-[11px] text-outline uppercase tracking-wider">
+          SPADA UPGRIS &bull; RBAC Mode
+        </span>
       </div>
 
-      <div className="p-space-md bg-surface-container-lowest/80 flex flex-col gap-space-sm">
+      <nav className="flex-1 overflow-y-auto py-space-sm px-space-sm flex flex-col gap-space-xs">
+        {visibleSections.map((section) => (
+          <div key={section.title}>
+            <div className="px-space-sm pt-space-sm pb-space-xs font-caption text-caption text-outline uppercase tracking-wider font-semibold">
+              {section.title}
+            </div>
+            {section.items.map((item) => (
+              <NavItem
+                key={item.path}
+                item={item}
+                isActive={internalPath === item.path}
+                onClick={handleNavClick}
+              />
+            ))}
+          </div>
+        ))}
+      </nav>
+
+      <div className="p-space-md bg-surface-container-lowest/80 flex flex-col gap-space-sm border-t border-outline-variant/20">
         <div className="text-center font-caption text-caption text-outline">
           SPADA UPGRIS v2.4 &bull; Standalone LMS
         </div>
@@ -113,7 +118,7 @@ function Sidebar({ isOpen, activeRoute, activeRole = 'mahasiswa', onNavigate, on
           className="w-full flex items-center justify-center gap-space-xs py-space-xs rounded-lg bg-surface-container-high hover:bg-surface-bright text-secondary hover:text-on-surface transition-colors font-label-sm text-label-sm"
         >
           <span className="material-symbols-outlined text-[16px]">support_agent</span>
-          <span>IT Helpdesk</span>
+          <span>IT Helpdesk PTIK</span>
         </a>
       </div>
     </aside>
