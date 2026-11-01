@@ -1,19 +1,10 @@
-﻿import prisma from '../../config/prisma.js';
-import { AppError } from '../../utils/errors.js';
-import { ROLES } from '../../constants/roles.js';
+﻿import prisma from "../../config/prisma.js";
+import { AppError } from "../../utils/errors.js";
+import { ROLES } from "../../constants/roles.js";
+import { ACADEMIC } from "../../constants/academic.js";
+import { formatLecturerName } from "../../utils/format.js";
 
 export class DashboardService {
-  /**
-   * Helper format nama dosen bergelar akademik
-   */
-  static formatLecturerName(lecturer) {
-    if (!lecturer) return null;
-    const fullName = lecturer.user?.profile?.full_name || 'Dosen Pengampu';
-    const depan = lecturer.gelar_depan ? `${lecturer.gelar_depan} ` : '';
-    const belakang = lecturer.gelar_belakang ? `, ${lecturer.gelar_belakang}` : '';
-    return `${depan}${fullName}${belakang}`;
-  }
-
   /**
    * Dasbor kontekstual untuk Administrator (SRS Bab 4 & IMPLEMENTATION_PLAN Bab 4.3)
    */
@@ -32,10 +23,10 @@ export class DashboardService {
       prisma.course.count({ where: { is_active: true } }),
       prisma.class.count(),
       prisma.enrollment.count(),
-      prisma.user.count({ where: { status: 'ACTIVE' } }),
+      prisma.user.count({ where: { status: "ACTIVE" } }),
       prisma.auditLog.findMany({
         take: 5,
-        orderBy: { created_at: 'desc' },
+        orderBy: { created_at: "desc" },
         include: {
           user: {
             select: {
@@ -59,14 +50,13 @@ export class DashboardService {
       },
       system_summary: {
         active_users: activeUsers,
-        total_records: totalStudents + totalLecturers + totalCourses + totalClasses,
       },
       shortcuts: [
-        { title: 'Manajemen Pengguna', path: '/admin/users' },
-        { title: 'Master Mata Kuliah', path: '/admin/courses' },
-        { title: 'Pembukaan Kelas', path: '/admin/classes' },
-        { title: 'Direct Enrollment', path: '/admin/enrollments' },
-        { title: 'Jejak Audit Sistem', path: '/admin/audit-logs' },
+        { title: "Manajemen Pengguna", path: "/admin/users" },
+        { title: "Master Mata Kuliah", path: "/admin/courses" },
+        { title: "Pembukaan Kelas", path: "/admin/classes" },
+        { title: "Direct Enrollment", path: "/admin/enrollments" },
+        { title: "Jejak Audit Sistem", path: "/admin/audit-logs" },
       ],
       recent_audit_logs: recentAuditLogs,
     };
@@ -74,6 +64,9 @@ export class DashboardService {
 
   /**
    * Dasbor kontekstual untuk Dosen (SRS Bab 4 & IMPLEMENTATION_PLAN Bab 4.3)
+   * FIX F2: Hapus storage_name dan file_path dari avatar_file select (BR-009 privasi)
+   * FIX F6: Pakai ACADEMIC.TOTAL_MEETINGS
+   * FIX F7: Pakai formatLecturerName dari utils/format.js
    */
   static async getLecturerDashboard(userId) {
     const lecturer = await prisma.dosen.findUnique({
@@ -88,14 +81,14 @@ export class DashboardService {
             profile: {
               include: {
                 avatar_file: {
-                  select: { id: true, original_name: true, storage_name: true },
+                  select: { id: true, original_name: true },
                 },
               },
             },
           },
         },
         classes: {
-          orderBy: [{ academic_year: 'desc' }, { semester: 'asc' }, { name: 'asc' }],
+          orderBy: [{ academic_year: "desc" }, { semester: "asc" }, { name: "asc" }],
           include: {
             course: {
               select: { id: true, code: true, name: true, credits: true },
@@ -109,7 +102,7 @@ export class DashboardService {
     });
 
     if (!lecturer) {
-      throw new AppError('Data profil dosen tidak ditemukan', 404);
+      throw new AppError("Data profil dosen tidak ditemukan", 404);
     }
 
     const formattedClasses = lecturer.classes.map((cls) => ({
@@ -119,7 +112,7 @@ export class DashboardService {
       semester: cls.semester,
       capacity: cls.capacity,
       enrolled_count: cls._count.enrollments,
-      total_meetings: 16, // Sesuai aturan bisnis BR-004
+      total_meetings: ACADEMIC.TOTAL_MEETINGS,
       course: cls.course,
     }));
 
@@ -140,7 +133,7 @@ export class DashboardService {
         nip: lecturer.nip,
         gelar_depan: lecturer.gelar_depan,
         gelar_belakang: lecturer.gelar_belakang,
-        formatted_name: this.formatLecturerName(lecturer),
+        formatted_name: formatLecturerName(lecturer),
         avatar: lecturer.user.profile?.avatar_file || null,
       },
       summary: {
@@ -153,6 +146,9 @@ export class DashboardService {
 
   /**
    * Dasbor kontekstual untuk Mahasiswa (SRS Bab 4 & IMPLEMENTATION_PLAN Bab 4.3)
+   * FIX F2: Hapus storage_name dan file_path dari avatar_file select (BR-009 privasi)
+   * FIX F6: Pakai ACADEMIC.TOTAL_MEETINGS
+   * FIX F7: Pakai formatLecturerName dari utils/format.js
    */
   static async getStudentDashboard(userId) {
     const student = await prisma.mahasiswa.findUnique({
@@ -167,14 +163,14 @@ export class DashboardService {
             profile: {
               include: {
                 avatar_file: {
-                  select: { id: true, original_name: true, storage_name: true },
+                  select: { id: true, original_name: true },
                 },
               },
             },
           },
         },
         enrollments: {
-          orderBy: { enrolled_at: 'desc' },
+          orderBy: { enrolled_at: "desc" },
           include: {
             class: {
               include: {
@@ -198,7 +194,7 @@ export class DashboardService {
     });
 
     if (!student) {
-      throw new AppError('Data profil mahasiswa tidak ditemukan', 404);
+      throw new AppError("Data profil mahasiswa tidak ditemukan", 404);
     }
 
     const enrolledClasses = student.enrollments.map((enr) => ({
@@ -209,7 +205,7 @@ export class DashboardService {
       academic_year: enr.class.academic_year,
       semester: enr.class.semester,
       enrolled_at: enr.enrolled_at,
-      total_meetings: 16, // Sesuai aturan bisnis BR-004
+      total_meetings: ACADEMIC.TOTAL_MEETINGS,
       course: enr.class.course,
       lecturer: {
         id: enr.class.lecturer.id,
@@ -218,7 +214,7 @@ export class DashboardService {
         gelar_depan: enr.class.lecturer.gelar_depan,
         gelar_belakang: enr.class.lecturer.gelar_belakang,
         full_name: enr.class.lecturer.user?.profile?.full_name || null,
-        formatted_name: this.formatLecturerName(enr.class.lecturer),
+        formatted_name: formatLecturerName(enr.class.lecturer),
       },
     }));
 
@@ -261,7 +257,7 @@ export class DashboardService {
       case ROLES.MAHASISWA:
         return this.getStudentDashboard(user.id);
       default:
-        throw new AppError(`Peran pengguna '${user.role}' tidak dikenali`, 403);
+        throw new AppError(`Peran pengguna "${user.role}" tidak dikenali`, 403);
     }
   }
 }

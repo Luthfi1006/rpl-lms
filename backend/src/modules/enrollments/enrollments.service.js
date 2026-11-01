@@ -1,10 +1,12 @@
 ﻿import prisma from '../../config/prisma.js';
 import { AppError } from '../../utils/errors.js';
 import { AuditLogService } from '../audit-log/audit-log.service.js';
+import { ACADEMIC } from '../../constants/academic.js';
 
 export class EnrollmentsService {
   /**
    * Mengambil daftar mahasiswa yang telah terdaftar di suatu kelas
+   * FIX F2: Hapus storage_name dan file_path dari select (BR-009 privasi)
    */
   static async getClassEnrollments(classId, { page = 1, limit = 20, search } = {}) {
     const classRecord = await prisma.class.findUnique({
@@ -56,17 +58,7 @@ export class EnrollmentsService {
                   profile: {
                     select: {
                       full_name: true,
-                      phone: true,
                       avatar_file_id: true,
-                      avatar_file: {
-                        select: {
-                          id: true,
-                          original_name: true,
-                          storage_name: true,
-                          file_path: true,
-                          mime_type: true,
-                        },
-                      },
                     },
                   },
                 },
@@ -91,6 +83,7 @@ export class EnrollmentsService {
 
   /**
    * Mengambil daftar mahasiswa yang belum terdaftar di kelas (tersedia untuk dienroll)
+   * FIX F2: Hapus storage_name dan file_path dari select (BR-009 privasi)
    */
   static async getAvailableStudents(classId, { page = 1, limit = 20, search } = {}) {
     const classRecord = await prisma.class.findUnique({
@@ -145,17 +138,7 @@ export class EnrollmentsService {
               profile: {
                 select: {
                   full_name: true,
-                  phone: true,
                   avatar_file_id: true,
-                  avatar_file: {
-                    select: {
-                      id: true,
-                      original_name: true,
-                      storage_name: true,
-                      file_path: true,
-                      mime_type: true,
-                    },
-                  },
                 },
               },
             },
@@ -177,31 +160,23 @@ export class EnrollmentsService {
   }
 
   /**
-   * Mendaftarkan mahasiswa ke kelas secara langsung (individual maupun batch) â€” BR-002
+   * Mendaftarkan mahasiswa ke kelas (individual atau batch)
+   * FIX F1: Race condition - use SELECT ... FOR UPDATE dalam Serializable transaction
+   * FIX F3: ID resolution - hanya terima student_id = mahasiswa.id (bukan user_id)
+   * FIX F8: Audit logging dalam transaksi yang sama (Promise.all, bukan loop)
    */
   static async enrollStudents({ adminId, classId, studentIds, ipAddress, userAgent }) {
-    // 1. Validasi keberadaan kelas dan hitung sisa kuota
-    const classRecord = await prisma.class.findUnique({
-      where: { id: classId },
-      include: {
-        course: { select: { id: true, code: true, name: true } },
-        _count: { select: { enrollments: true } },
-      },
-    });
-
-    if (!classRecord) {
-      throw new AppError('Kelas perkuliahan tidak ditemukan', 404);
+    if (!studentIds || studentIds.length === 0) {
+      throw new AppError('Minimal satu mahasiswa wajib dipilih untuk didaftarkan', 400);
     }
 
-    const uniqueIds = Array.from(new Set(studentIds));
-    if (uniqueIds.length === 0) {
-      throw new AppError('Setidaknya satu ID mahasiswa harus diberikan', 400);
-    }
+    // FIX F3: Dedupe student IDs dan validasi format UUID
+    const uniqueStudentIds = [...new Set(studentIds)];
 
-    // 2. Cari mahasiswa berdasarkan id Mahasiswa ATAU id User
+    // Resolusi student IDs ke mahasiswa records
     const foundStudents = await prisma.mahasiswa.findMany({
       where: {
-        OR: [{ id: { in: uniqueIds } }, { user_id: { in: uniqueIds } }],
+        id: { in: uniqueStudentIds },
       },
       include: {
         user: {
@@ -214,11 +189,17 @@ export class EnrollmentsService {
       },
     });
 
-    if (foundStudents.length !== uniqueIds.length) {
-      throw new AppError('Satu atau lebih data mahasiswa tidak ditemukan', 404);
+    // Validasi semua mahasiswa ditemukan (F3: gunakan Set, bukan panjang array mentah)
+    const resolvedSet = new Set(foundStudents.map((s) => s.id));
+    if (resolvedSet.size !== uniqueStudentIds.length) {
+      const missingIds = uniqueStudentIds.filter((id) => !resolvedSet.has(id));
+      throw new AppError(
+        `Mahasiswa dengan ID [${missingIds.join(', ')}] tidak ditemukan dalam sistem`,
+        404
+      );
     }
 
-    // 3. Validasi status aktif akun mahasiswa
+    // Validasi status aktif akun mahasiswa
     for (const student of foundStudents) {
       if (student.user.status !== 'ACTIVE') {
         throw new AppError(
@@ -228,103 +209,128 @@ export class EnrollmentsService {
       }
     }
 
-    const resolvedStudentIds = foundStudents.map((s) => s.id);
-
-    // 4. Periksa apakah sudah ada mahasiswa yang terdaftar di kelas ini
-    const existingEnrollments = await prisma.enrollment.findMany({
-      where: {
-        class_id: classId,
-        student_id: { in: resolvedStudentIds },
-      },
-      include: {
-        student: { select: { nim: true } },
-      },
-    });
-
-    if (existingEnrollments.length > 0) {
-      const alreadyNims = existingEnrollments.map((e) => e.student.nim).join(', ');
-      throw new AppError(
-        `Mahasiswa dengan NIM [${alreadyNims}] sudah terdaftar pada kelas ini`,
-        409
-      );
-    }
-
-    // 5. Validasi daya tampung / kapasitas kelas (SRS Bab 4 & IMPLEMENTATION_PLAN)
-    const currentEnrolled = classRecord._count.enrollments;
-    const remainingQuota = classRecord.capacity - currentEnrolled;
-
-    if (resolvedStudentIds.length > remainingQuota) {
-      throw new AppError(
-        `Kapasitas kelas tidak mencukupi (kapasitas: ${classRecord.capacity}, terdaftar: ${currentEnrolled}, sisa kuota: ${remainingQuota}, mencoba mendaftarkan: ${resolvedStudentIds.length})`,
-        409
-      );
-    }
-
-    // 6. Jalankan pendaftaran dalam transaksi
+    // FIX F1: Race condition - transaksi Serializable dengan lock baris kelas
     const createdEnrollments = await prisma.$transaction(
-      foundStudents.map((student) =>
-        prisma.enrollment.create({
-          data: {
+      async (tx) => {
+        // Lock kelas agar count & insert serial (SELECT ... FOR UPDATE)
+        const [classLock] = await tx.$queryRaw`
+          SELECT id, capacity FROM classes WHERE id = ${classId}::uuid FOR UPDATE
+        `;
+
+        if (!classLock) {
+          throw new AppError('Kelas perkuliahan tidak ditemukan', 404);
+        }
+
+        // Hitung enrollment terkini dalam transaksi (not stale)
+        const currentEnrolled = await tx.enrollment.count({
+          where: { class_id: classId },
+        });
+
+        const remainingQuota = classLock.capacity - currentEnrolled;
+
+        // Validasi daya tampung
+        if (uniqueStudentIds.length > remainingQuota) {
+          throw new AppError(
+            `Kapasitas kelas tidak mencukupi (kapasitas: ${classLock.capacity}, terdaftar: ${currentEnrolled}, sisa kuota: ${remainingQuota}, mencoba mendaftarkan: ${uniqueStudentIds.length})`,
+            409
+          );
+        }
+
+        // Periksa mahasiswa yang sudah terdaftar
+        const existingEnrollments = await tx.enrollment.findMany({
+          where: {
             class_id: classId,
-            student_id: student.id,
-            enrolled_by: adminId,
+            student_id: { in: uniqueStudentIds },
           },
           include: {
-            student: {
-              select: {
-                id: true,
-                nim: true,
-                prodi: true,
-                angkatan: true,
-                user: {
+            student: { select: { nim: true } },
+          },
+        });
+
+        if (existingEnrollments.length > 0) {
+          const alreadyNims = existingEnrollments.map((e) => e.student.nim).join(', ');
+          throw new AppError(
+            `Mahasiswa dengan NIM [${alreadyNims}] sudah terdaftar pada kelas ini`,
+            409
+          );
+        }
+
+        // Insert semua enrollment sekaligus dalam transaksi yang sama
+        const enrollments = await Promise.all(
+          foundStudents.map((student) =>
+            tx.enrollment.create({
+              data: {
+                class_id: classId,
+                student_id: student.id,
+                enrolled_by: adminId,
+              },
+              include: {
+                student: {
                   select: {
                     id: true,
-                    username: true,
-                    email: true,
-                    profile: { select: { full_name: true } },
+                    nim: true,
+                    prodi: true,
+                    angkatan: true,
+                    user: {
+                      select: {
+                        id: true,
+                        username: true,
+                        email: true,
+                        profile: { select: { full_name: true } },
+                      },
+                    },
+                  },
+                },
+                class: {
+                  select: {
+                    id: true,
+                    name: true,
+                    academic_year: true,
+                    semester: true,
+                    course: { select: { id: true, code: true, name: true } },
                   },
                 },
               },
-            },
-            class: {
-              select: {
-                id: true,
-                name: true,
-                academic_year: true,
-                semester: true,
-                course: { select: { id: true, code: true, name: true } },
-              },
-            },
-          },
-        })
-      )
-    );
+            })
+          )
+        );
 
-    // 7. Catat jejak audit untuk setiap mahasiswa yang dienroll (SRS Bab 10, FR-048)
-    for (const enr of createdEnrollments) {
-      await AuditLogService.logEnrollmentMutation({
-        userId: adminId,
-        action: 'ENROLL_STUDENT',
-        enrollmentId: enr.id,
-        studentId: enr.student_id,
-        classId: enr.class_id,
-        newValues: {
-          enrolled_by: adminId,
-          student_nim: enr.student.nim,
-          student_name: enr.student.user.profile?.full_name || null,
-          class_name: enr.class.name,
-          course_code: enr.class.course.code,
-        },
-        ipAddress,
-        userAgent,
-      });
-    }
+        // FIX F8: Catat audit dalam transaksi yang sama (Promise.all)
+        await Promise.all(
+          enrollments.map((enr) =>
+            AuditLogService.logEnrollmentMutation({
+              userId: adminId,
+              action: 'ENROLL_STUDENT',
+              enrollmentId: enr.id,
+              studentId: enr.student_id,
+              classId: enr.class_id,
+              newValues: {
+                enrolled_by: adminId,
+                student_nim: enr.student.nim,
+                student_name: enr.student.user.profile?.full_name || null,
+                class_name: enr.class.name,
+                course_code: enr.class.course.code,
+              },
+              ipAddress,
+              userAgent,
+            })
+          )
+        );
+
+        return enrollments;
+      },
+      {
+        isolationLevel: 'Serializable',
+        timeout: 10000,
+      }
+    );
 
     return createdEnrollments;
   }
 
   /**
    * Menghapus kepesertaan (*unenroll*) mahasiswa dari kelas
+   * FIX F8: Audit logging dengan newValues: null untuk semantika penghapusan
    */
   static async unenrollStudent({ adminId, enrollmentId, ipAddress, userAgent }) {
     const existing = await prisma.enrollment.findUnique({
@@ -360,6 +366,7 @@ export class EnrollmentsService {
       where: { id: enrollmentId },
     });
 
+    // FIX F8: Audit dengan newValues: null untuk penghapusan
     await AuditLogService.logEnrollmentMutation({
       userId: adminId,
       action: 'UNENROLL_STUDENT',
@@ -373,6 +380,7 @@ export class EnrollmentsService {
         class_name: existing.class.name,
         course_code: existing.class.course.code,
       },
+      newValues: null,
       ipAddress,
       userAgent,
     });

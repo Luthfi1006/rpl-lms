@@ -8,7 +8,7 @@ export class EnrollmentsController {
    */
   static async getClassEnrollments(req, res, next) {
     try {
-      const classId = req.params.classId || req.params.id;
+      const classId = req.params.classId;
       const result = await EnrollmentsService.getClassEnrollments(classId, req.query);
       return apiResponse.success(res, {
         message: 'Daftar mahasiswa terdaftar berhasil diambil',
@@ -28,7 +28,7 @@ export class EnrollmentsController {
    */
   static async getAvailableStudents(req, res, next) {
     try {
-      const classId = req.params.classId || req.params.id;
+      const classId = req.params.classId;
       const result = await EnrollmentsService.getAvailableStudents(classId, req.query);
       return apiResponse.success(res, {
         message: 'Daftar mahasiswa tersedia berhasil diambil',
@@ -45,6 +45,7 @@ export class EnrollmentsController {
 
   /**
    * Mendaftarkan mahasiswa ke kelas secara langsung (individual maupun batch)
+   * FIX F4: Selalu kembalikan array dalam data, tidak pernah objek tunggal
    */
   static async enrollStudents(req, res, next) {
     try {
@@ -64,7 +65,7 @@ export class EnrollmentsController {
       return apiResponse.success(res, {
         statusCode: 201,
         message: `Berhasil mendaftarkan ${enrollments.length} mahasiswa ke dalam kelas (BR-002)`,
-        data: enrollments.length === 1 && student_id ? enrollments[0] : enrollments,
+        data: enrollments,
       });
     } catch (error) {
       return next(error);
