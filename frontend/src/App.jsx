@@ -327,7 +327,7 @@ function App() {
         <Breadcrumb />
         <GreetingBanner />
         <SummaryCards />
-        <CourseCards />
+        <CourseCards onNavigate={navigateTo} />
         <AnnouncementBanner />
 
         {/* Quick Metrics / Central Timeline Mini Widget */}
