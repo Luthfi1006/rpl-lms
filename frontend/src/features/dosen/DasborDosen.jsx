@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { dosenApi } from '../../services/api';
+import KelasDiampu from './KelasDiampu';
 
 /**
  * DasborDosen — Feature Component
@@ -336,6 +337,9 @@ export default function DasborDosen({ onRoleChange }) {
 
         {/* ── Main Dashboard Body ── */}
         <main className="w-full pt-16 bg-surface min-h-[calc(100vh-4rem)] p-space-md">
+          {activeMenu === 'kelas-diampu' ? (
+            <KelasDiampu onNavigate={setActiveMenu} />
+          ) : (
           <div className="flex flex-col w-full space-y-space-lg pb-space-xl">
 
             {/* Top Breadcrumb & Metadata Path */}
@@ -838,6 +842,7 @@ export default function DasborDosen({ onRoleChange }) {
             </div>
 
           </div>
+          )}
         </main>
       </div>
     </div>

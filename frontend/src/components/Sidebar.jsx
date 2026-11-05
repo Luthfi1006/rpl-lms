@@ -9,7 +9,8 @@ const menuMahasiswa = [
 ];
 
 const menuDosen = [
-  { icon: 'co_present', label: 'Kelas Diampu (Dasbor Dosen)', path: 'dasbor-dosen' },
+  { icon: 'co_present', label: 'Dasbor Dosen', path: 'dasbor-dosen' },
+  { icon: 'class', label: 'Kelas Diampu', path: 'kelas-diampu' },
   { icon: 'assignment_turned_in', label: 'Pemeriksaan Tugas', path: 'pemeriksaan-tugas' },
 ];
 
@@ -49,7 +50,7 @@ function Sidebar({ isOpen, activeRole = 'mahasiswa', onRoleChange }) {
 
   const handleNavClick = (path) => {
     setActivePath(path);
-    if (path === 'dasbor-dosen' && onRoleChange) {
+    if ((path === 'dasbor-dosen' || path === 'kelas-diampu') && onRoleChange) {
       onRoleChange('dosen');
     } else if (path === 'dasbor-mahasiswa' && onRoleChange) {
       onRoleChange('mahasiswa');
