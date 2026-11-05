@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 
 const menuMahasiswa = [
   { icon: 'dashboard', label: 'Dasbor Mahasiswa', path: 'dasbor-mahasiswa' },
+  { icon: 'menu_book', label: 'Ruang Kelas (RPL)', path: 'ruang-kelas' },
   { icon: 'auto_stories', label: 'Mata Kuliah Saya', path: 'mata-kuliah-saya' },
   { icon: 'assignment', label: 'Sentral Penugasan', path: 'sentral-penugasan' },
   { icon: 'calendar_today', label: 'Central Timeline', path: 'central-timeline' },
@@ -53,6 +54,13 @@ function Sidebar({ isOpen, activeRole = 'mahasiswa', onRoleChange }) {
     if ((path === 'dasbor-dosen' || path === 'kelas-diampu') && onRoleChange) {
       onRoleChange('dosen');
     } else if (path === 'dasbor-mahasiswa' && onRoleChange) {
+      onRoleChange('mahasiswa');
+    }
+    if (path === 'ruang-kelas') {
+      const url = new URL(window.location.href);
+      url.searchParams.set('page', 'ruang-kelas');
+      window.history.pushState({}, '', url);
+      window.location.reload();
       onRoleChange('mahasiswa');
     }
   };

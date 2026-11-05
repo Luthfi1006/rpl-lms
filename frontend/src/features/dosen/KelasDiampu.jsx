@@ -918,6 +918,10 @@ export default function KelasDiampu({ onNavigate }) {
                 onClick={() => {
                   showToast(`Navigasi ke Ruang Kelas ${modalManageClass.code}...`);
                   setModalManageClass(null);
+                  const url = new URL(window.location.href);
+                  url.searchParams.set('page', 'ruang-kelas');
+                  window.history.pushState({}, '', url);
+                  window.location.reload();
                 }}
                 className="px-4 py-2 rounded-lg bg-primary text-on-primary font-label-md font-semibold"
               >
@@ -972,3 +976,4 @@ export default function KelasDiampu({ onNavigate }) {
     </div>
   );
 }
+

@@ -11,6 +11,7 @@ import AttendanceWidget from './components/AttendanceWidget';
 import ForgotPasswordPage from './pages/ForgotPassword';
 import DasborDosenPage from './pages/DasborDosen';
 import KelasDiampuPage from './pages/KelasDiampu';
+import RuangKelasPage from './pages/RuangKelas';
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -23,6 +24,21 @@ function App() {
 
   const isForgotPassword = pathname === '/forgot-password' || searchParams.get('page') === 'forgot-password';
   const isKelasDiampu = pathname === '/kelas-diampu' || pathname === '/dosen/kelas-diampu' || searchParams.get('page') === 'kelas-diampu';
+  const isRuangKelas = pathname === '/ruang-kelas' || pathname.startsWith('/kelas/') || searchParams.get('page') === 'ruang-kelas';
+
+  if (isRuangKelas) {
+    return (
+      <RuangKelasPage
+        role={activeRole}
+        onRoleChange={(newRole) => {
+          setActiveRole(newRole);
+          const url = new URL(window.location.href);
+          url.searchParams.set('role', newRole);
+          window.history.pushState({}, '', url);
+        }}
+      />
+    );
+  }
 
   if (isKelasDiampu) {
     return (
