@@ -44,7 +44,6 @@ export default function KlsSayaMahasiswa({ onNavigate, onRoleChange }) {
         lecturer: {
           name: course.lecturer,
           nidn: `NIDN: ${course.nidn}`,
-          avatar: course.avatar,
         },
         progress: {
           current: course.currentMeeting,
@@ -296,11 +295,12 @@ export default function KlsSayaMahasiswa({ onNavigate, onRoleChange }) {
 
                       {/* Lecturer Info Profile */}
                       <div className="flex items-center gap-3 p-2.5 rounded-xl bg-surface-container-low border border-outline-variant/20">
-                        <img
-                          className="w-10 h-10 rounded-full object-cover shadow-sm shrink-0"
-                          src={item.lecturer.avatar}
-                          alt={item.lecturer.name}
-                        />
+                        <span
+                          className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0"
+                          aria-hidden="true"
+                        >
+                          <span className="material-symbols-outlined text-[22px]">person</span>
+                        </span>
                         <div className="flex flex-col min-w-0">
                           <span className="text-sm font-semibold text-on-surface truncate">
                             {item.lecturer.name}
@@ -399,11 +399,12 @@ export default function KlsSayaMahasiswa({ onNavigate, onRoleChange }) {
                     className="bg-surface-container rounded-xl p-4 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4 border border-outline-variant/20 hover:border-primary/40 transition-all group"
                   >
                     <div className="flex items-start md:items-center gap-4 min-w-0">
-                      <img
-                        className="w-12 h-12 rounded-full object-cover shrink-0 shadow-sm"
-                        src={item.lecturer.avatar}
-                        alt={item.lecturer.name}
-                      />
+                      <span
+                        className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0"
+                        aria-hidden="true"
+                      >
+                        <span className="material-symbols-outlined text-[24px]">person</span>
+                      </span>
                       <div className="flex flex-col min-w-0">
                         <div className="flex items-center gap-2 flex-wrap mb-1">
                           <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-primary-container text-on-primary-container">
