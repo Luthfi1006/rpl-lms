@@ -1,4 +1,4 @@
-/**
+﻿/**
  * pages/AppShellGlobal.jsx
  *
  * Halaman-level wrapper untuk App Shell Global SPADA LMS UPGRIS.
@@ -6,6 +6,12 @@
  */
 import AppShellGlobal from '../features/shell/AppShellGlobal';
 
-export default function AppShellGlobalPage({ currentRole, onRoleChange }) {
-  return <AppShellGlobal currentRole={currentRole} onRoleChange={onRoleChange} />;
+export default function AppShellGlobalPage({ currentRole, activeRole, onRoleChange, onNavigate, onNavChange }) {
+  return (
+    <AppShellGlobal
+      currentRole={currentRole || activeRole}
+      onRoleChange={onRoleChange}
+      onNavigate={onNavigate || onNavChange}
+    />
+  );
 }

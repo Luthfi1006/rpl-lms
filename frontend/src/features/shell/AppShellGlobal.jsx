@@ -1,17 +1,17 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import AppShell from '../../components/AppShell';
 import { statCards, timelineItems, courseList } from './fixtures';
 import { useAuthStore } from '../../stores/authStore';
 
 /**
- * AppShellGlobal — Feature Component
+ * AppShellGlobal â€” Feature Component
  *
  * Implementasi React untuk App Shell Global SPADA LMS UPGRIS.
  * Memanfaatkan AppShell tunggal modular dengan penegakan RBAC,
  * role visual switcher, banner sambutan dinamis, stat cards,
  * central timeline perkuliahan, dan modul akses cepat kelas.
  */
-export default function AppShellGlobal({ currentRole = 'mahasiswa', onRoleChange }) {
+export default function AppShellGlobal({ currentRole = 'mahasiswa', onRoleChange, onNavigate }) {
   const [activeRole, setActiveRole] = useState(currentRole);
   const [activeNavPath, setActiveNavPath] = useState(
     currentRole === 'dosen'
@@ -57,7 +57,7 @@ export default function AppShellGlobal({ currentRole = 'mahasiswa', onRoleChange
       activeRole={activeRole}
       onRoleChange={handleRoleSelect}
       activeNavPath={activeNavPath}
-      onNavChange={setActiveNavPath}
+      onNavChange={(path) => { setActiveNavPath(path); if (onNavigate) onNavigate(path); }}
     >
       {/* Toast Notification Lokal */}
       {toastMessage && (
@@ -447,3 +447,4 @@ export default function AppShellGlobal({ currentRole = 'mahasiswa', onRoleChange
     </AppShell>
   );
 }
+

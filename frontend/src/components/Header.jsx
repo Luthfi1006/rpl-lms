@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { useAuthStore } from '../stores/authStore';
 import { userFixtures } from '../features/shell/fixtures';
 
@@ -8,6 +8,7 @@ function Header({
   onRoleChange,
   onOpenChangePassword,
   onLogout,
+  onNavigate,
 }) {
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [serverTime, setServerTime] = useState('08:30 WIB');
@@ -234,8 +235,8 @@ function Header({
                   <a
                     href="#profile"
                     role="menuitem"
-                    onClick={(e) => { e.preventDefault(); setProfileDropdownOpen(false); }}
-                    className="flex items-center gap-space-sm px-space-sm py-space-xs rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface font-label-md text-label-md transition-colors"
+                    onClick={(e) => { e.preventDefault(); setProfileDropdownOpen(false); if (onNavigate) onNavigate('profile'); }}
+                    className="flex items-center gap-space-sm px-space-sm py-space-xs rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface font-label-md text-label-md transition-colors cursor-pointer"
                   >
                     <span className="material-symbols-outlined text-[18px]">badge</span>
                     <span>Profil Saya</span>
@@ -279,3 +280,6 @@ function Header({
 }
 
 export default Header;
+
+
+
