@@ -12,6 +12,7 @@ import ForgotPasswordPage from './pages/ForgotPassword';
 import DasborDosenPage from './pages/DasborDosen';
 import KelasDiampuPage from './pages/KelasDiampu';
 import RuangKelasPage from './pages/RuangKelas';
+import ManajemenMaterialPage from './pages/ManajemenMaterial';
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -24,6 +25,20 @@ function App() {
 
   const isForgotPassword = pathname === '/forgot-password' || searchParams.get('page') === 'forgot-password';
   const isKelasDiampu = pathname === '/kelas-diampu' || pathname === '/dosen/kelas-diampu' || searchParams.get('page') === 'kelas-diampu';
+  const isManajemenMaterial = pathname === '/manajemen-material' || searchParams.get('page') === 'manajemen-material';
+
+  if (isManajemenMaterial) {
+    return (
+      <ManajemenMaterialPage
+        onRoleChange={(newRole) => {
+          setActiveRole(newRole);
+          const url = new URL(window.location.href);
+          url.searchParams.set('role', newRole);
+          window.history.pushState({}, '', url);
+        }}
+      />
+    );
+  }
   const isRuangKelas = pathname === '/ruang-kelas' || pathname.startsWith('/kelas/') || searchParams.get('page') === 'ruang-kelas';
 
   if (isRuangKelas) {
