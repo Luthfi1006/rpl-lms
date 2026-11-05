@@ -52,6 +52,32 @@ export default {
         'inverse-surface': '#d6e4f9',
         'surface-variant': '#283646',
         'on-primary': '#002e6a',
+        // === MVP2 Semantic Tokens (Light Clean Surface) ===
+        // Portal gateway tetap dark; seluruh layar kelas, materi, presensi, dan
+        // rekap memakai permukaan terang. Lihat DESIGN_INSTRUCTIONS_MVP2_UIUX.md §6.
+        'mvp-page': '#F8FAFC', // latar halaman
+        'mvp-card': '#FFFFFF', // kartu / panel
+        'mvp-subtle': '#F1F5F9', // chip, track, baris tabel alternatif
+        'mvp-line': '#E2E8F0', // garis pemisah & border
+        'mvp-ink': '#0F172A', // teks utama
+        'mvp-body': '#334155', // teks isi
+        'mvp-muted': '#64748B', // teks sekunder (min. 4.5:1 di atas mvp-card)
+        'mvp-primary': '#2563EB', // aksi utama
+        'mvp-primary-strong': '#1D4ED8', // hover / tautan
+        'mvp-primary-soft': '#EFF6FF', // latar aksen utama
+        'mvp-primary-tint': '#DBEAFE', // chip aksen utama
+        'mvp-success': '#059669',
+        'mvp-success-strong': '#047857',
+        'mvp-success-soft': '#ECFDF5',
+        'mvp-success-tint': '#D1FAE5',
+        'mvp-warning': '#B45309',
+        'mvp-warning-base': '#F59E0B',
+        'mvp-warning-soft': '#FFFBEB',
+        'mvp-warning-tint': '#FEF3C7',
+        'mvp-danger': '#DC2626',
+        'mvp-danger-strong': '#BE123C',
+        'mvp-danger-soft': '#FEF2F2',
+        'mvp-danger-tint': '#FEE2E2',
       },
       borderRadius: {
         DEFAULT: '0.25rem',
