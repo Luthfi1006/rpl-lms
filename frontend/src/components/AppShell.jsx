@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+﻿import React, { useState, useRef, useEffect } from 'react';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import ChangePasswordModal from '../features/auth/ChangePasswordModal';
@@ -53,6 +53,14 @@ export default function AppShell({
         localStorage.removeItem('refresh_token');
       }
       showToast('Sesi Anda berhasil diakhiri. Token otentikasi telah dibersihkan.');
+      if (onNavChange) {
+        onNavChange('login');
+      } else if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href);
+        url.search = '?page=login';
+        window.history.pushState({}, '', url);
+        window.dispatchEvent(new PopStateEvent('popstate'));
+      }
     }
   };
 
@@ -88,6 +96,7 @@ export default function AppShell({
         onRoleChange={onRoleChange}
         onOpenChangePassword={() => setChangePasswordOpen(true)}
         onLogout={handleLogout}
+        onNavigate={onNavChange}
       />
 
       {/* RBAC Filtered Sidebar */}

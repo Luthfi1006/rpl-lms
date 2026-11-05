@@ -1,14 +1,21 @@
-import { useState } from 'react';
-import StatusPresensi from '../features/mahasiswa/StatusPresensi';
-
-/**
+﻿/**
  * pages/StatusPresensi.jsx
  *
  * Page wrapper untuk tampilan Status Presensi Mahasiswa (FR-023 / FR-024).
- * Menggunakan AppShell terpusat dengan RBAC enforcement.
+ * Menggunakan AppShell terpusat dengan penegakan RBAC yang mempertahankan peran aktif.
  */
-export default function StatusPresensiPage({ onRoleChange, onNavigate }) {
+import StatusPresensi from '../features/mahasiswa/StatusPresensi';
+import AppShell from '../components/AppShell';
+
+export default function StatusPresensiPage({ onRoleChange, onNavigate, activeRole, activeNavPath }) {
   return (
-    <StatusPresensi onNavigate={onNavigate} onRoleChange={onRoleChange} />
+    <AppShell
+      activeRole={activeRole || 'mahasiswa'}
+      onRoleChange={onRoleChange}
+      activeNavPath={activeNavPath || 'status-presensi'}
+      onNavChange={onNavigate}
+    >
+      <StatusPresensi onNavigate={onNavigate} onRoleChange={onRoleChange} />
+    </AppShell>
   );
 }

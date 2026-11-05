@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { navSections } from '../features/shell/fixtures';
 
 function NavItem({ item, isActive, onClick }) {
@@ -23,7 +23,7 @@ function NavItem({ item, isActive, onClick }) {
 function Sidebar({ isOpen, activeRole = 'mahasiswa', onRoleChange, activeNavPath, onNavChange }) {
   const getDefaultPath = (role) => {
     if (role === 'dosen') return 'dasbor-dosen';
-    if (role === 'admin') return 'manajemen-pengguna';
+    if (role === 'admin') return 'dasbor-admin';
     return 'dasbor-mahasiswa';
   };
 
@@ -52,6 +52,8 @@ function Sidebar({ isOpen, activeRole = 'mahasiswa', onRoleChange, activeNavPath
       onRoleChange && onRoleChange('dosen');
     } else if (path === 'dasbor-mahasiswa' && activeRole !== 'mahasiswa') {
       onRoleChange && onRoleChange('mahasiswa');
+    } else if (path === 'dasbor-admin' && activeRole !== 'admin') {
+      onRoleChange && onRoleChange('admin');
     }
     // Admin pages don't auto-switch role - let App.jsx handle routing based on activeRole
   };
@@ -126,3 +128,4 @@ function Sidebar({ isOpen, activeRole = 'mahasiswa', onRoleChange, activeNavPath
 }
 
 export default Sidebar;
+

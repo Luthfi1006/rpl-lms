@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import AppShell from '../../components/AppShell';
 import { dosenApi } from '../../services/api';
 
 /**
- * DasborDosen — Feature Component
+ * DasborDosen â€” Feature Component
  * Implementasi React untuk Dasbor Dosen SPADA LMS UPGRIS
  * Memanfaatkan AppShell tunggal modular dengan penegakan RBAC.
  * Mendukung kurikulum 16 Pertemuan Terstruktur, sinkronisasi SIAKAD,
@@ -43,7 +43,7 @@ export default function DasborDosen({ onRoleChange, onNavigate }) {
         setClassList(classesRes.data.items.map((cls, idx) => ({
           code: cls.code || `MK-${idx + 1}`,
           title: cls.name || cls.course?.name || 'Mata Kuliah',
-          sks: `Bobot ${cls.course?.credits || 3} SKS • ${cls.course?.is_active ? 'Aktif' : 'Nonaktif'}`,
+          sks: `Bobot ${cls.course?.credits || 3} SKS â€¢ ${cls.course?.is_active ? 'Aktif' : 'Nonaktif'}`,
           badge: cls.is_active ? 'Sesi Presensi Aktif' : 'Tidak Aktif',
           badgeType: cls.is_active ? 'active' : 'inactive',
           alarm: cls.schedule ? `${cls.schedule.day}, ${cls.schedule.start_time} - ${cls.schedule.end_time} WIB` : 'Jadwal belum ditentukan',
@@ -118,9 +118,9 @@ export default function DasborDosen({ onRoleChange, onNavigate }) {
 
   const defaultClasses = [
     {
-      code: 'INF308 • 3 SKS',
+      code: 'INF308 â€¢ 3 SKS',
       title: 'Rekayasa Perangkat Lunak - Kelas 3A',
-      sks: 'Bobot 3 SKS • Kurikulum 16 Sesi Terstruktur',
+      sks: 'Bobot 3 SKS â€¢ Kurikulum 16 Sesi Terstruktur',
       badge: 'Sesi Presensi Aktif',
       badgeType: 'active',
       alarm: 'Senin, 08:00 - 10:30 WIB',
@@ -134,9 +134,9 @@ export default function DasborDosen({ onRoleChange, onNavigate }) {
       btnPresensiIcon: 'how_to_reg',
     },
     {
-      code: 'INF312 • 3 SKS',
+      code: 'INF312 â€¢ 3 SKS',
       title: 'Pemrograman Web Berbasis Komponen - Kelas 3B',
-      sks: 'Bobot 3 SKS • Kurikulum 16 Sesi Terstruktur',
+      sks: 'Bobot 3 SKS â€¢ Kurikulum 16 Sesi Terstruktur',
       badge: 'Menunggu Jadwal',
       badgeType: 'inactive',
       alarm: 'Selasa, 13:00 - 15:30 WIB',
@@ -382,7 +382,7 @@ export default function DasborDosen({ onRoleChange, onNavigate }) {
           <div className="flex flex-col gap-space-xs p-space-sm bg-surface-container rounded-xl border border-outline-variant/20">
             <button
               type="button"
-              onClick={() => showToast('Membuka modul input nilai tugas')}
+              onClick={() => { if (onNavigate) onNavigate('pemeriksaan-tugas'); else showToast('Membuka modul input nilai tugas'); }}
               className="flex items-center gap-space-sm p-space-sm rounded-lg hover:bg-surface-container-high text-left transition-colors"
             >
               <div className="w-9 h-9 rounded-lg bg-primary-container/20 text-primary flex items-center justify-center shrink-0">
@@ -450,3 +450,4 @@ export default function DasborDosen({ onRoleChange, onNavigate }) {
     </AppShell>
   );
 }
+
