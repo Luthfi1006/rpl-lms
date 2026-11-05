@@ -12,7 +12,7 @@ import AppShell from '../../components/AppShell';
  */
 
 const LECTURER = {
-  name: 'Dr. Awan Rosi, M.Kom.',
+  name: 'Dr. Bayu Pratama, M.Kom.',
   nidn: '0612345601',
 };
 

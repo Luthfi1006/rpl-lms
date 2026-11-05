@@ -110,7 +110,7 @@ const rawCourses = [
     classGroup: 'TI-A',
     sks: 3,
     name: 'Rekayasa Perangkat Lunak',
-    lecturer: 'Dr. Awan Rosi, M.Kom.',
+    lecturer: 'Dr. Bayu Pratama, M.Kom.',
     nidn: '0612345601',
     schedule: 'Senin, 08:00 - 10:30 WIB • Lab Komputasi 3',
     semester: 'SEMESTER GANJIL 2026/2027',

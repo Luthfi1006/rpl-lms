@@ -18,7 +18,7 @@ const COURSE_CONTEXT = {
   name: 'Rekayasa Perangkat Lunak',
   classGroup: 'TI-A',
   sks: 3,
-  lecturer: 'Dr. Awan Rosi, M.Kom.',
+  lecturer: 'Dr. Bayu Pratama, M.Kom.',
   nidn: '0612345601',
   room: 'Lab RPL 3.02 & SPADA Hybrid',
   meeting: 'Pertemuan 3 — Analisis Kebutuhan Sistem & Spesifikasi SRS IEEE 830',
@@ -60,7 +60,7 @@ const INITIAL_AUDIT_LOGS = [
   {
     id: 'log-1',
     time: '08:29:12',
-    message: 'Token handshake 0x9AF83B diverifikasi untuk Dr. Awan Rosi (Dosen).',
+    message: 'Token handshake 0x9AF83B diverifikasi untuk Dr. Bayu Pratama (Dosen).',
     status: 'SUCCESS (200)',
     statusColor: 'text-tertiary',
   },

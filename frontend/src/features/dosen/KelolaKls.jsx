@@ -24,7 +24,7 @@ import { getCourseById } from '../../data/courseCatalog';
  *     (verifikasi sesi + progres unduh).
  */
 
-// NIDN dosen yang sedang login pada demo ini (Dr. Awan Rosi, M.Kom.).
+// NIDN dosen yang sedang login pada demo ini (Dr. Bayu Pratama, M.Kom.).
 // Dipakai untuk menguji jalur 403 saat `?course=` menunjuk kelas dosen lain.
 const SIGNED_IN_LECTURER_NIDN = '0612345601';
 

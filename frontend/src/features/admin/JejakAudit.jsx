@@ -64,11 +64,11 @@ const initialLogs = [
     timestampTime: '08:15:03 WIB',
     isoTimestamp: '2026-10-13T08:15:03+07:00',
     actor: {
-      name: 'Dr. Awan Rosi, M.Kom.',
+      name: 'Dr. Bayu Pratama, M.Kom.',
       id: '0612345601',
       idType: 'NIDN',
       role: 'Dosen',
-      initial: 'AR',
+      initial: 'BP',
       initialBg: 'bg-secondary-container text-on-secondary-container',
     },
     actionType: 'GRADE_MUTATION',
@@ -89,7 +89,7 @@ const initialLogs = [
       badgeBg: 'bg-[#D97706]',
       entity: 'assignments_submissions',
       targetId: '9041',
-      actorName: 'Dr. Awan Rosi, M.Kom.',
+      actorName: 'Dr. Bayu Pratama, M.Kom.',
       actorRole: 'Dosen Pengampu',
       timestamp: '13 Okt 2026, 08:15:03 WIB',
       oldValues: {

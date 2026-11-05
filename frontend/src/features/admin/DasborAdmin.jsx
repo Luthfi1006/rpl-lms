@@ -140,7 +140,7 @@ export default function DasborAdmin({ onRoleChange, activeNavPath, onNavChange }
     {
       id: 'log-2',
       timestamp: '2026-10-29 07:58:30',
-      actor: 'Dr. Awan Rosi, M.Kom.',
+      actor: 'Dr. Bayu Pratama, M.Kom.',
       actorSub: 'NIDN: 0612345601 â€¢ Dosen',
       actionType: 'GRADE_MUTATION',
       actionBadgeClass: 'bg-primary-container/30 text-primary',
@@ -368,7 +368,7 @@ export default function DasborAdmin({ onRoleChange, activeNavPath, onNavChange }
                         Dosen Pengampu
                       </label>
                       <select className="w-full mt-1 px-3 py-2 rounded-lg bg-surface-container-high border border-outline-variant/40 text-on-surface text-sm focus:outline-none focus:border-primary">
-                        <option>Dr. Awan Rosi, M.Kom.</option>
+                        <option>Dr. Bayu Pratama, M.Kom.</option>
                         <option>Ir. Nina Kartika, M.T.</option>
                         <option>Dr. Supriyono, M.Kom.</option>
                       </select>

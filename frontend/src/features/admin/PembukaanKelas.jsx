@@ -15,8 +15,8 @@ const initialClassesData = [
     tipe: 'Teori & Praktik Komputasi',
     prodi: 'S1 Teknik Informatika',
     dosen: {
-      nama: 'Dr. Awan Rosi, M.Kom.',
-      inisial: 'AR',
+      nama: 'Dr. Bayu Pratama, M.Kom.',
+      inisial: 'BP',
       nidn: '0612345601',
     },
     jadwal: {
@@ -39,8 +39,8 @@ const initialClassesData = [
     tipe: 'Teori & Praktik Komputasi',
     prodi: 'S1 Teknik Informatika',
     dosen: {
-      nama: 'Dr. Awan Rosi, M.Kom.',
-      inisial: 'AR',
+      nama: 'Dr. Bayu Pratama, M.Kom.',
+      inisial: 'BP',
       nidn: '0612345601',
     },
     jadwal: {
@@ -135,8 +135,8 @@ const initialClassesData = [
     tipe: 'Studi Kasus Industri',
     prodi: 'S1 Teknik Informatika',
     dosen: {
-      nama: 'Dr. Awan Rosi, M.Kom.',
-      inisial: 'AR',
+      nama: 'Dr. Bayu Pratama, M.Kom.',
+      inisial: 'BP',
       nidn: '0612345601',
     },
     jadwal: {
@@ -160,7 +160,7 @@ const availableCourses = [
 ];
 
 const availableLecturers = [
-  { nama: 'Dr. Awan Rosi, M.Kom.', inisial: 'AR', nidn: '0612345601', homebase: 'Homebase TI' },
+  { nama: 'Dr. Bayu Pratama, M.Kom.', inisial: 'BP', nidn: '0612345601', homebase: 'Homebase TI' },
   { nama: 'Ir. Siti Aminah, M.T.', inisial: 'SA', nidn: '0628098701', homebase: 'Homebase TI' },
   { nama: 'Budi Santoso, M.Cs.', inisial: 'BS', nidn: '0615048201', homebase: 'Homebase TI' },
   { nama: 'Prof. Dr. Hendra Wijaya, M.T.', inisial: 'HW', nidn: '0601017502', homebase: 'Homebase TI' },

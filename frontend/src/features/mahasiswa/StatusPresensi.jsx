@@ -134,7 +134,7 @@ export default function StatusPresensi({ onNavigate }) {
       setCorrectionNote('');
       showToast(
         'Permohonan Koreksi Terkirim',
-        'Menunggu verifikasi dan persetujuan Dr. Awan Rosi, M.Kom. (FR-039)',
+        'Menunggu verifikasi dan persetujuan Dr. Bayu Pratama, M.Kom. (FR-039)',
         'outgoing_mail',
         'bg-blue-100 text-blue-600'
       );
@@ -218,7 +218,7 @@ export default function StatusPresensi({ onNavigate }) {
                 <span className="material-symbols-outlined text-[18px]">badge</span>
               </div>
               <span>
-                Dosen Pengampu: <strong className="text-on-surface">Dr. Awan Rosi, M.Kom.</strong>{' '}
+                Dosen Pengampu: <strong className="text-on-surface">Dr. Bayu Pratama, M.Kom.</strong>{' '}
                 <span className="text-outline font-caption text-caption">(NIDN: 0612345601)</span>
               </span>
             </div>
@@ -745,7 +745,7 @@ export default function StatusPresensi({ onNavigate }) {
             </div>
 
             <div className="text-slate-600 font-body-sm text-body-sm bg-slate-50 p-space-sm rounded-lg border border-slate-200">
-              Anda mengajukan permohonan dispensasi presensi untuk <strong className="text-slate-800">Pertemuan 3: Rekayasa Perangkat Lunak (TI-A)</strong> kepada <strong className="text-slate-800">Dr. Awan Rosi, M.Kom.</strong>
+              Anda mengajukan permohonan dispensasi presensi untuk <strong className="text-slate-800">Pertemuan 3: Rekayasa Perangkat Lunak (TI-A)</strong> kepada <strong className="text-slate-800">Dr. Bayu Pratama, M.Kom.</strong>
             </div>
 
             <form onSubmit={handleCorrectionSubmit} className="flex flex-col gap-space-md">
