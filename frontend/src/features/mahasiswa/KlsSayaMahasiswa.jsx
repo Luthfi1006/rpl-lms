@@ -1,24 +1,32 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import AppShell from '../../components/AppShell';
 import { courseCatalog } from '../../data/courseCatalog';
 
 /**
  * KlsSayaMahasiswa — Komponen React Kelas Perkuliahan Saya (Mahasiswa)
  * Menggunakan katalog terpusat courseCatalog (konsisten dengan Dashboard & Ruang Kelas),
- * mendukung filter pencarian, filter semester, tata letak grid/list,
- * navigasi ruang kelas per mata kuliah, dan simulasi state (Normal, Empty, Skeleton).
+ * mendukung filter pencarian, filter semester, tata letak grid/list, dan
+ * navigasi ruang kelas per mata kuliah.
  */
 export default function KlsSayaMahasiswa({ onNavigate, onRoleChange }) {
   // State interaktif
-  const [viewState, setViewState] = useState('normal'); // 'normal' | 'empty' | 'skeleton'
   const [layoutMode, setLayoutMode] = useState('grid'); // 'grid' | 'list'
-  const [selectedSemester, setSelectedSemester] = useState('2026-ganjil');
+  const [selectedSemester, setSelectedSemester] = useState(null); // null = semester terbaru
   const [searchQuery, setSearchQuery] = useState('');
   const [toastMessage, setToastMessage] = useState(null);
 
+  const toastTimeoutRef = useRef(null);
+
+  // Bersihkan timer saat unmount agar tidak ada setState setelah komponen lepas.
+  useEffect(() => () => clearTimeout(toastTimeoutRef.current), []);
+
   const showToast = (msg) => {
+    clearTimeout(toastTimeoutRef.current);
     setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3500);
+    toastTimeoutRef.current = setTimeout(() => {
+      setToastMessage(null);
+      toastTimeoutRef.current = null;
+    }, 3500);
   };
 
   // Sumber data kelas terpusat dari courseCatalog
@@ -29,6 +37,7 @@ export default function KlsSayaMahasiswa({ onNavigate, onRoleChange }) {
         code: course.code,
         className: course.classGroup,
         title: course.name,
+        semester: course.semester,
         sks: `${course.sks} SKS`,
         sksNumber: course.sks,
         schedule: course.schedule,
@@ -53,20 +62,48 @@ export default function KlsSayaMahasiswa({ onNavigate, onRoleChange }) {
     []
   );
 
-  const totalSks = useMemo(() => classes.reduce((sum, cls) => sum + cls.sksNumber, 0), [classes]);
+  // Pilihan semester diturunkan dari katalog agar label opsi tidak pernah
+  // menyimpang dari data yang benar-benar dimiliki mahasiswa.
+  const titleCaseSemester = (value) =>
+    value
+      .toLowerCase()
+      .split(' ')
+      .map((word) => (word ? word.charAt(0).toUpperCase() + word.slice(1) : word))
+      .join(' ');
 
-  // Filter kelas berdasarkan pencarian nama mata kuliah, kode kelas, atau dosen
+  const semesterOptions = useMemo(() => {
+    const seen = new Map();
+    classes.forEach((item) => {
+      const value = item.semester.toLowerCase().replace(/\s+/g, '-');
+      if (!seen.has(value)) seen.set(value, titleCaseSemester(item.semester));
+    });
+    return Array.from(seen, ([value, label]) => ({ value, label }));
+  }, [classes]);
+
+  // Filter kelas berdasarkan semester terpilih, lalu pencarian nama mata
+  // kuliah, kode kelas, atau dosen. Opsi "semua" menampilkan seluruh kelas.
+  const activeSemester = selectedSemester || (semesterOptions[0] ? semesterOptions[0].value : null);
+
   const filteredClasses = useMemo(() => {
-    if (!searchQuery.trim()) return classes;
+    const bySemester =
+      activeSemester && activeSemester !== 'semua'
+        ? classes.filter((item) => item.semester.toLowerCase().replace(/\s+/g, '-') === activeSemester)
+        : classes;
+    if (!searchQuery.trim()) return bySemester;
     const q = searchQuery.toLowerCase();
-    return classes.filter(
+    return bySemester.filter(
       (item) =>
         item.title.toLowerCase().includes(q) ||
         item.code.toLowerCase().includes(q) ||
         item.className.toLowerCase().includes(q) ||
         item.lecturer.name.toLowerCase().includes(q)
     );
-  }, [classes, searchQuery]);
+  }, [classes, searchQuery, activeSemester]);
+
+  const filteredSks = useMemo(
+    () => filteredClasses.reduce((sum, cls) => sum + cls.sksNumber, 0),
+    [filteredClasses]
+  );
 
   const handleOpenRoom = (courseId) => {
     if (onNavigate) {
@@ -85,7 +122,11 @@ export default function KlsSayaMahasiswa({ onNavigate, onRoleChange }) {
     >
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-surface-container-highest text-on-surface px-4 py-3 rounded-xl shadow-2xl border border-primary/40">
+        <div
+          className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-surface-container-highest text-on-surface px-4 py-3 rounded-xl shadow-2xl border border-primary/40"
+          role="status"
+          aria-live="polite"
+        >
           <span className="material-symbols-outlined text-primary text-[20px]">info</span>
           <span className="font-label-md text-sm">{toastMessage}</span>
         </div>
@@ -114,7 +155,7 @@ export default function KlsSayaMahasiswa({ onNavigate, onRoleChange }) {
                 Kelas Perkuliahan Saya
               </h1>
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-primary-container text-on-primary-container font-label-sm text-label-sm font-bold">
-                {viewState === 'empty' ? '0 Kelas' : `${classes.length} Kelas (${totalSks} SKS)`}
+                {filteredClasses.length} Kelas ({filteredSks} SKS)
               </span>
             </div>
             <p className="font-body-md text-body-md text-on-surface-variant">
@@ -127,13 +168,17 @@ export default function KlsSayaMahasiswa({ onNavigate, onRoleChange }) {
             {/* Semester Dropdown Selector */}
             <div className="relative min-w-[210px]">
               <select
-                value={selectedSemester}
+                value={activeSemester || ''}
                 onChange={(e) => setSelectedSemester(e.target.value)}
+                aria-label="Pilih semester"
                 className="w-full appearance-none bg-surface-container-low text-on-surface font-label-md text-label-md pl-3 pr-9 py-2 rounded-lg cursor-pointer focus:outline-none focus:bg-surface-container transition-all border border-outline-variant/20"
               >
-                <option value="2026-ganjil">Semester Ganjil 2026/2027</option>
-                <option value="2025-genap">Semester Genap 2025/2026</option>
-                <option value="2025-ganjil">Semester Ganjil 2025/2026</option>
+                <option value="semua">Semua Semester</option>
+                {semesterOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
               <span className="material-symbols-outlined pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">
                 expand_more
@@ -193,10 +238,8 @@ export default function KlsSayaMahasiswa({ onNavigate, onRoleChange }) {
           </div>
         </div>
 
-        {/* VIEW 1: NORMAL STATE */}
-        {viewState === 'normal' && (
-          <>
-            {filteredClasses.length === 0 ? (
+        {/* DAFTAR KELAS */}
+        {filteredClasses.length === 0 ? (
               <div className="w-full py-16 px-6 bg-surface-container-low rounded-3xl text-center">
                 <span className="material-symbols-outlined text-outline text-[48px] mb-2 block">
                   search_off
@@ -205,7 +248,9 @@ export default function KlsSayaMahasiswa({ onNavigate, onRoleChange }) {
                   Tidak ada kelas yang cocok
                 </h3>
                 <p className="font-body-md text-on-surface-variant max-w-md mx-auto mb-4">
-                  Tidak ditemukan hasil untuk kata kunci "{searchQuery}". Silakan coba kata kunci lain.
+                  {searchQuery.trim()
+                    ? `Tidak ditemukan hasil untuk kata kunci "${searchQuery}". Silakan coba kata kunci lain.`
+                    : 'Tidak ada kelas terdaftar pada semester yang dipilih. Sesuai kebijakan BR-002, seluruh enrollment dilakukan secara terpusat oleh Biro Akademik.'}
                 </p>
                 <button
                   type="button"
@@ -285,17 +330,17 @@ export default function KlsSayaMahasiswa({ onNavigate, onRoleChange }) {
                       {/* Status & Activity Indicators */}
                       <div className="flex flex-col gap-2 pt-1">
                         {item.attendance.status === 'active' ? (
-                          <div className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
+                          <div className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-tertiary-container/10 border border-tertiary/30">
                             <div className="flex items-center gap-2">
                               <span className="relative flex h-2 w-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-tertiary opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-tertiary"></span>
                               </span>
-                              <span className="text-xs font-semibold text-emerald-400">
+                              <span className="text-xs font-semibold text-tertiary">
                                 {item.attendance.label}
                               </span>
                             </div>
-                            <span className="text-[11px] font-medium text-emerald-400">
+                            <span className="text-[11px] font-medium text-tertiary">
                               {item.attendance.sublabel}
                             </span>
                           </div>
@@ -397,7 +442,7 @@ export default function KlsSayaMahasiswa({ onNavigate, onRoleChange }) {
                         type="button"
                         className="flex items-center justify-center gap-1.5 py-2 px-4 rounded-xl bg-primary hover:bg-primary-fixed hover:text-on-primary-fixed text-on-primary font-medium text-sm transition-all shadow-sm cursor-pointer"
                       >
-                        <span>Buka Kelas</span>
+                        <span>Buka Ruang Kelas</span>
                         <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
                       </button>
                     </div>
@@ -405,133 +450,27 @@ export default function KlsSayaMahasiswa({ onNavigate, onRoleChange }) {
                 ))}
               </div>
             )}
-          </>
-        )}
 
-        {/* VIEW 2: EMPTY STATE DEMO */}
-        {viewState === 'empty' && (
-          <div
-            className="w-full flex flex-col items-center justify-center py-16 px-6 bg-surface-container-low rounded-3xl text-center border border-outline-variant/20"
-            id="state-empty"
-          >
-            <div className="w-24 h-24 mb-6 rounded-2xl bg-surface-container-high flex items-center justify-center shadow-inner">
-              <svg
-                className="w-12 h-12 text-secondary"
-                fill="none"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="1.6"
-                viewBox="0 0 24 24"
-              >
-                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
-                <path d="M6 6h10" />
-                <path d="M6 10h10" />
-                <path d="M14 18l3-3 3 3" />
-              </svg>
-            </div>
-            <h3 className="font-headline-md text-headline-md text-on-surface mb-2 font-bold">
-              Belum Ada Kelas yang Diikuti
-            </h3>
-            <p className="font-body-md text-body-md text-on-surface-variant max-w-lg mb-6 leading-relaxed">
-              Administrator belum mendaftarkan Anda ke kelas semester ini. Sesuai kebijakan{' '}
-              <span className="font-mono text-secondary font-semibold">BR-002</span>, seluruh enrollment
-              dilakukan secara terpusat oleh Biro Akademik.
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-space-sm">
-              <button
-                type="button"
-                onClick={() => showToast('Membuka kontak layanan Biro Akademik (BAA)...')}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-surface-container-high text-on-surface hover:bg-surface-bright font-label-md text-label-md transition-colors cursor-pointer"
-              >
-                <span className="material-symbols-outlined text-[18px]">contact_support</span>
-                <span>Hubungi Biro Akademik</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewState('normal')}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary-container text-on-primary-container font-label-md text-label-md shadow-sm cursor-pointer font-bold"
-              >
-                <span className="material-symbols-outlined text-[18px]">refresh</span>
-                <span>Periksa Kembali</span>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* VIEW 3: SKELETON LOADING STATE */}
-        {viewState === 'skeleton' && (
-          <div
-            className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 w-full"
-            id="state-skeleton"
-          >
-            {[1, 2, 3].map((index) => (
-              <div
-                key={index}
-                className="bg-surface-container rounded-2xl p-6 flex flex-col justify-between animate-pulse border border-outline-variant/20"
-              >
-                <div className="flex flex-col gap-4">
-                  <div className="flex justify-between items-center">
-                    <div className="w-20 h-6 rounded-full bg-surface-container-highest"></div>
-                    <div className="w-14 h-6 rounded-full bg-surface-container-highest"></div>
-                  </div>
-                  <div className="h-6 w-3/4 rounded bg-surface-container-highest"></div>
-                  <div className="h-4 w-1/2 rounded bg-surface-container-highest"></div>
-                  <div className="flex items-center gap-3 p-2.5 rounded-xl bg-surface-container-low">
-                    <div className="w-10 h-10 rounded-full bg-surface-container-highest shrink-0"></div>
-                    <div className="w-full flex flex-col gap-2">
-                      <div className="w-2/3 h-3 rounded bg-surface-container-highest"></div>
-                      <div className="w-1/3 h-2.5 rounded bg-surface-container-highest"></div>
-                    </div>
-                  </div>
-                  <div className="h-2 w-full rounded-full bg-surface-container-highest"></div>
-                  <div className="h-8 w-full rounded-lg bg-surface-container-highest"></div>
-                </div>
-                <div className="h-10 w-full rounded-xl bg-surface-container-highest mt-6"></div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* INTERACTIVE STATE SWITCHER FOOTER (DESIGN SYSTEM INSPECTION TOOLBAR) */}
+        {/* Bantuan akademik */}
         <div className="mt-12 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 bg-surface-container-low p-4 rounded-xl border border-outline-variant/20">
           <div className="flex items-center gap-2 text-on-surface-variant font-label-sm text-label-sm">
-            <span className="material-symbols-outlined text-primary text-[18px]">tune</span>
-            <span>Simulasi Status Halaman:</span>
+            <span className="material-symbols-outlined text-primary text-[18px]">help</span>
+            <span>Ada kelas yang seharusnya terdaftar tetapi tidak muncul di sini?</span>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={() => setViewState('normal')}
-              className={`px-3 py-1.5 rounded-lg font-label-sm text-label-sm transition-all cursor-pointer ${
-                viewState === 'normal'
-                  ? 'bg-primary-container text-on-primary-container font-bold shadow-sm'
-                  : 'bg-surface-container-high text-on-surface-variant hover:text-on-surface'
-              }`}
+              onClick={() => onNavigate && onNavigate('status-presensi')}
+              className="px-3 py-1.5 rounded-lg bg-surface-container-high text-on-surface hover:text-primary font-label-sm text-label-sm transition-all cursor-pointer"
             >
-              Tampilan Normal ({classes.length} Kelas Aktif)
+              Cek Status Presensi
             </button>
             <button
               type="button"
-              onClick={() => setViewState('empty')}
-              className={`px-3 py-1.5 rounded-lg font-label-sm text-label-sm transition-all cursor-pointer ${
-                viewState === 'empty'
-                  ? 'bg-primary-container text-on-primary-container font-bold shadow-sm'
-                  : 'bg-surface-container-high text-on-surface-variant hover:text-on-surface'
-              }`}
+              onClick={() => showToast('Membuka kontak layanan Biro Akademik (BAA)...')}
+              className="px-3 py-1.5 rounded-lg bg-primary-container text-on-primary-container font-bold font-label-sm text-label-sm shadow-sm cursor-pointer"
             >
-              Empty State Demo
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewState('skeleton')}
-              className={`px-3 py-1.5 rounded-lg font-label-sm text-label-sm transition-all cursor-pointer ${
-                viewState === 'skeleton'
-                  ? 'bg-primary-container text-on-primary-container font-bold shadow-sm'
-                  : 'bg-surface-container-high text-on-surface-variant hover:text-on-surface'
-              }`}
-            >
-              Skeleton Loading
+              Hubungi Biro Akademik
             </button>
           </div>
         </div>

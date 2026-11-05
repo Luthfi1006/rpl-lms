@@ -299,7 +299,11 @@ function App() {
     }
   }, []);
 
-  const courseId = routeKey === 'ruang-kelas' ? extractCourseId(currentRoute) : null;
+  // Halaman yang menampilkan satu mata kuliah tertentu: ruang kelas (mahasiswa)
+  // dan kelola kelas (dosen). Keduanya membaca `?course=` dan memakai katalog
+  // terpusat, sehingga identitas kelas tidak di-hardcode di komponen.
+  const COURSE_SCOPED_ROUTES = ['ruang-kelas', 'kelola-kelas'];
+  const courseId = COURSE_SCOPED_ROUTES.includes(routeKey) ? extractCourseId(currentRoute) : null;
 
   // 1. Auth route: halaman Lupa Password / Login selalu tampil standalone
   if (routeKey === 'forgot-password') {
@@ -328,8 +332,8 @@ function App() {
         onNavChange={navigateTo}
       />;
     }
-    // Pass courseId to ruang-kelas page (key forces remount when course changes)
-    if (routeKey === 'ruang-kelas') {
+    // Pass courseId to course-scoped pages (key forces remount when course changes)
+    if (COURSE_SCOPED_ROUTES.includes(routeKey)) {
       return (
         <RoutedPage
           key={courseId || 'default'}
