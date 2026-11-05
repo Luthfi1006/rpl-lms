@@ -82,6 +82,7 @@ const SPECIAL_ROUTES = {
 const ROUTED_PAGES = {
   // Mahasiswa feature pages (each has AppShell built-in)
   'status-presensi': StatusPresensiPage,
+  'kelas-saya': KlsSayaMahasiswaPage,
   'kelas-saya-mahasiswa': KlsSayaMahasiswaPage,
   'ruang-kelas': RuangKlsPage,
   // Dosen feature pages (each has AppShell built-in)
