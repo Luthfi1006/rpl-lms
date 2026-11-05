@@ -1,4 +1,4 @@
-/**
+﻿/**
  * features/shell/fixtures.js
  *
  * Mock data dan konfigurasi navigasi untuk App Shell SPADA LMS.
@@ -43,6 +43,7 @@ export const navSections = [
     title: 'Administrasi SPADA',
     role: 'admin',
     items: [
+      { path: 'dasbor-admin', label: 'Dasbor Admin', icon: 'space_dashboard' },
       { path: 'direct-enrollment', label: 'Direct Enrollment', icon: 'how_to_reg' },
       { path: 'manajemen-pengguna', label: 'Manajemen Pengguna', icon: 'group' },
       { path: 'master-mata-kuliah', label: 'Master Mata Kuliah', icon: 'local_library' },
@@ -207,3 +208,5 @@ export const userFixtures = {
     email: 'admin.spada@upgris.ac.id',
   },
 };
+
+

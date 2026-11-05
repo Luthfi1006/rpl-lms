@@ -1,4 +1,4 @@
-/**
+﻿/**
  * pages/Login.jsx
  *
  * Halaman-level wrapper untuk rute /login.
@@ -7,7 +7,7 @@
 import React, { useState } from 'react';
 import { useAuthStore } from '../stores/authStore';
 
-export default function LoginPage({ onNavigate, onRoleChange }) {
+export default function LoginPage({ onNavigate, onRoleChange, onBack }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -19,14 +19,31 @@ export default function LoginPage({ onNavigate, onRoleChange }) {
     setError('');
     setIsLoading(true);
 
-    // Mock login - in real app this would call API
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Mock login delay
+    await new Promise(resolve => setTimeout(resolve, 600));
 
     if (username && password) {
-      login({ name: username, role: 'mahasiswa' });
-      onNavigate?.('dasbor-mahasiswa');
+      const lower = username.toLowerCase();
+      const detectedRole = lower.includes('admin')
+        ? 'admin'
+        : lower.includes('dosen') || lower.includes('awan')
+        ? 'dosen'
+        : 'mahasiswa';
+
+      login({ name: username, role: detectedRole });
+      if (onRoleChange) {
+        onRoleChange(detectedRole);
+      }
+
+      const targetPage = detectedRole === 'admin'
+        ? 'dasbor-admin'
+        : detectedRole === 'dosen'
+        ? 'dasbor-dosen'
+        : 'dasbor-mahasiswa';
+
+      onNavigate?.(targetPage);
     } else {
-      setError('Username dan password wajib diisi');
+      setError('Username dan kata sandi wajib diisi');
     }
     setIsLoading(false);
   };
@@ -34,6 +51,15 @@ export default function LoginPage({ onNavigate, onRoleChange }) {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-gutter">
       <div className="w-full max-w-md bg-surface-container-low rounded-2xl shadow-xl border border-outline-variant/20 p-space-xl">
+        <button
+          type="button"
+          onClick={() => (onBack ? onBack() : onNavigate?.('dasbor-mahasiswa'))}
+          className="flex items-center gap-1 text-label-sm font-semibold text-on-surface-variant hover:text-primary mb-space-md transition-colors"
+        >
+          <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+          <span>Kembali ke Beranda</span>
+        </button>
+
         <div className="text-center mb-space-xl">
           <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-primary-container flex items-center justify-center">
             <span className="material-symbols-outlined text-3xl text-on-primary-container">school</span>
@@ -60,7 +86,7 @@ export default function LoginPage({ onNavigate, onRoleChange }) {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               className="w-full px-3 py-2.5 rounded-lg bg-surface-container border border-outline-variant/30 text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:ring-1 focus:ring-primary font-body-md text-body-md"
-              placeholder="cth: dimas.arya"
+              placeholder="cth: dimas.arya / dosen / admin"
               required
               autoComplete="username"
             />
@@ -100,7 +126,7 @@ export default function LoginPage({ onNavigate, onRoleChange }) {
 
         <div className="mt-space-lg pt-space-lg border-t border-outline-variant/20">
           <p className="font-caption text-caption text-center text-on-surface-variant">
-            Belum punya akun?{' '}
+            Belum punya akun atau lupa sandi?{' '}
             <button
               type="button"
               onClick={() => onNavigate?.('forgot-password')}
@@ -112,8 +138,8 @@ export default function LoginPage({ onNavigate, onRoleChange }) {
         </div>
 
         <div className="mt-space-md p-space-sm rounded-lg bg-surface-container-high text-center">
-          <p className="font-caption text-caption text-on-surface-variant">Demo Credentials:</p>
-          <p className="font-body-sm text-body-sm text-on-surface font-mono">dimas.arya / UPGRIS#2026Secure!</p>
+          <p className="font-caption text-caption text-on-surface-variant">Demo Kredensial Cepat:</p>
+          <p className="font-body-sm text-body-sm text-on-surface font-mono">dimas.arya (Mhs) / dosen / admin</p>
         </div>
       </div>
     </div>
