@@ -5,7 +5,7 @@ const assignments = [
     iconColor: 'text-error',
     title: 'Tugas 02: Analisis Kebutuhan SRS IEEE 830',
     course: 'Rekayasa Perangkat Lunak',
-    lecturer: 'Dr. Awan Rosi, M.Kom.',
+    lecturer: 'Dr. Bayu Pratama, M.Kom.',
     deadline: 'Hari Ini, 23:59 WIB',
     deadlineColor: 'text-error',
     remaining: 'Sisa 15 jam lagi',

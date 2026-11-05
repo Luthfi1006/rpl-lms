@@ -204,7 +204,7 @@ export default function DasborDosen({ onRoleChange, onNavigate }) {
               <span>PORTAL DOSEN PENGAMPU &bull; Sinkronisasi Terpusat Aktif</span>
             </div>
             <h1 className="font-headline-lg text-headline-lg text-on-surface tracking-tight font-bold">
-              Selamat Datang, <span className="text-primary font-bold">Dr. Awan Rosi, M.Kom.</span>
+              Selamat Datang, <span className="text-primary font-bold">Dr. Bayu Pratama, M.Kom.</span>
             </h1>
             <p className="font-body-md text-body-md text-on-surface-variant flex flex-wrap items-center gap-y-1 gap-x-space-sm">
               <span className="inline-flex items-center gap-1 font-mono text-tertiary font-semibold">

@@ -5,7 +5,7 @@ const INITIAL_CLASSES = [
   {
     id: 'TI-A-RPL',
     name: 'TI-A • Rekayasa Perangkat Lunak',
-    lecturer: 'Dr. Awan Rosi, M.Kom.',
+    lecturer: 'Dr. Bayu Pratama, M.Kom.',
     sks: 3,
     semester: 'Semester Ganjil 2026/2027',
     type: 'Reguler Pagi',
@@ -47,7 +47,7 @@ const INITIAL_CLASSES = [
   {
     id: 'TI-B-RPL',
     name: 'TI-B • Rekayasa Perangkat Lunak',
-    lecturer: 'Dr. Awan Rosi, M.Kom.',
+    lecturer: 'Dr. Bayu Pratama, M.Kom.',
     sks: 3,
     semester: 'Semester Ganjil 2026/2027',
     type: 'Reguler Siang',

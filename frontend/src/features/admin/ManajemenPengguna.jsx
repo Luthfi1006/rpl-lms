@@ -21,18 +21,18 @@ const INITIAL_USERS = [
   {
     id: 'usr-2',
     nim: '0612345601',
-    name: 'Dr. Awan Rosi, M.Kom.',
-    initials: 'AR',
+    name: 'Dr. Bayu Pratama, M.Kom.',
+    initials: 'BP',
     avatarBg: 'bg-secondary-container/30 text-secondary',
     subtext: 'Lektor Kepala • FPTIK',
-    email: 'awan.rosi@upgris.ac.id',
+    email: 'bayu.pratama@upgris.ac.id',
     phone: '+62 813-8821-9003',
     role: 'DOSEN',
     status: 'ACTIVE',
     lastLogin: '13 Okt 2026, 08:15 WIB',
     device: '182.253.18.90 • Safari 18',
     prodi: 'TI',
-    username: 'awan.rosi'
+    username: 'bayu.pratama'
   },
   {
     id: 'usr-3',

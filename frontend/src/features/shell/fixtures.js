@@ -191,12 +191,12 @@ export const userFixtures = {
   },
   dosen: {
     id: 'usr-dsn-01',
-    name: 'Dr. Awan Rosi, M.Kom.',
+    name: 'Dr. Bayu Pratama, M.Kom.',
     role: 'dosen',
     identifier: 'NIDN: 0612345601',
     sub: 'Dosen Pengampu',
-    initials: 'AR',
-    email: 'awan.rosi@upgris.ac.id',
+    initials: 'BP',
+    email: 'bayu.pratama@upgris.ac.id',
   },
   admin: {
     id: 'usr-adm-01',

@@ -224,7 +224,7 @@ MAHASISWA VARIANT — CLASS CARD GRID (3 columns, gap 24px):
 Each card: white #FFFFFF, border #E2E8F0, radius 12px, padding 20px, elevation-1.
 - Top row: Class code pill "TI-A" (monospace, #EFF6FF bg / #2563EB text) + SKS pill "3 SKS".
 - Title: Course name "Rekayasa Perangkat Lunak" (18px semibold).
-- Lecturer row: small avatar + "Dr. Awan Rosi, M.Kom."
+- Lecturer row: small avatar + "Dr. Bayu Pratama, M.Kom."
 - Progress block: label "Progres Pertemuan" + "3 dari 16 pertemuan" + thin progress bar (25%, #2563EB on #E2E8F0).
 - Status row: badge "Sesi Presensi Aktif" (green pulse) OR "Belum Ada Sesi Aktif" (slate) + material count icon "5 Materi".
 - Footer action: primary button "Buka Ruang Kelas →" full width.
@@ -249,7 +249,7 @@ Generate the Mahasiswa Classroom page (Ruang Kelas) for SPADA LMS UPGRIS.
 CLASS HEADER CARD (white, radius 12px, padding 24px):
 - Left: Course code pill "TI-A" + SKS pill "3 SKS".
 - Title: "Rekayasa Perangkat Lunak" (24px bold).
-- Meta row with icons: Lecturer "Dr. Awan Rosi, M.Kom." | Semester "Ganjil 2026/2027" | "16 Pertemuan Terstruktur".
+- Meta row with icons: Lecturer "Dr. Bayu Pratama, M.Kom." | Semester "Ganjil 2026/2027" | "16 Pertemuan Terstruktur".
 - Right side: Attendance summary ring — circular progress ring showing "75%" with label "Kehadiran Saya" and caption "12 dari 16 pertemuan".
 - Below header: horizontal progress bar "Progres Kelas: 3 / 16 Pertemuan Selesai" with percentage.
 - Tabs: "Pertemuan" (active), "Rekap Kehadiran Saya".

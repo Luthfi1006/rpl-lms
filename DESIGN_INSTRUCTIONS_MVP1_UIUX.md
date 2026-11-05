@@ -235,7 +235,7 @@ Generate the Mahasiswa Dashboard screen inside the App Shell for SPADA LMS UPGRI
 - Summary Cards (Row of 3): Program Studi ("S1 Teknik Informatika"), Angkatan ("2024"), Status Akun ("AKTIF" - green badge).
 - Enrolled Classes Grid (Title: "Kelas Perkuliahan Semester Ini"):
   - Grid of interactive cards representing classes enrolled by Admin:
-    - Card 1: Badge "TI-A • 3 SKS" (Blue), Title "Rekayasa Perangkat Lunak", Lecturer "Dr. Awan Rosi, M.Kom.", Status "16 Pertemuan Terstruktur", Button "Buka Ruang Kelas →" (#2563EB).
+    - Card 1: Badge "TI-A • 3 SKS" (Blue), Title "Rekayasa Perangkat Lunak", Lecturer "Dr. Bayu Pratama, M.Kom.", Status "16 Pertemuan Terstruktur", Button "Buka Ruang Kelas →" (#2563EB).
     - Card 2: Badge "TI-B • 3 SKS", Title "Pemrograman Web Lanjut", Lecturer "Ir. Siti Aminah, M.T.", Status "16 Pertemuan Terstruktur", Button "Buka Ruang Kelas →".
     - Card 3: Badge "TI-A • 2 SKS", Title "Basis Data Terdistribusi", Lecturer "Budi Santoso, M.Cs.", Status "16 Pertemuan Terstruktur", Button "Buka Ruang Kelas →".
 - Info Banner: Blue informative banner announcing operational schedule and timeline reminders.
@@ -245,7 +245,7 @@ Generate the Mahasiswa Dashboard screen inside the App Shell for SPADA LMS UPGRI
 **Template Prompt Google Stitch:**
 ```text
 Generate the Dosen Dashboard screen for SPADA LMS UPGRIS.
-- Greeting: "Selamat Datang, Dr. Awan Rosi, M.Kom. (NIDN: 0612345601)".
+- Greeting: "Selamat Datang, Dr. Bayu Pratama, M.Kom. (NIDN: 0612345601)".
 - 3 Teaching Metric Cards:
   1) Total Kelas Diampu ("3 Kelas Aktif") with chalkboard icon.
   2) Beban SKS Semester Ini ("8 SKS") with award icon.
@@ -305,7 +305,7 @@ SCREEN B (PEMBUKAAN KELAS):
 Generate the Direct Enrollment Management screen for Admin in SPADA LMS UPGRIS based on Business Rule BR-002 (Direct Admin Assignment without KRS).
 
 TOP BAR / CLASS SELECTOR:
-- Dropdown selector for active class: e.g. "TI-A • Rekayasa Perangkat Lunak (Dosen: Dr. Awan Rosi, M.Kom.)".
+- Dropdown selector for active class: e.g. "TI-A • Rekayasa Perangkat Lunak (Dosen: Dr. Bayu Pratama, M.Kom.)".
 - Capacity Progress Widget: Visual meter showing "Terisi: 28 / Kuota: 40 Mahasiswa (Sisa 12 Kursi)" with a smooth progress bar.
 
 TWO-COLUMN SPLIT VIEW LAYOUT:
@@ -569,7 +569,7 @@ TOPBAR (STICKY, HEIGHT 64PX):
 - Surface: Solid White #FFFFFF, bottom border #E2E8F0.
 - Left: Sidebar collapse toggle icon + UPGRIS campus logo + "SPADA UPGRIS" text + Active semester badge "🟢 Semester Ganjil 2026/2027" (green pill).
 - Right: Notification bell icon (with unread badge) + User Profile Menu:
-  - Circular avatar (40px) + User full name "Dr. Awan Rosi, M.Kom." + Role badge pill "DOSEN" + dropdown chevron.
+  - Circular avatar (40px) + User full name "Dr. Bayu Pratama, M.Kom." + Role badge pill "DOSEN" + dropdown chevron.
   - Dropdown Menu: "Profil Saya", "Ganti Kata Sandi", separator line, "Keluar" (Crimson red #DC2626 with logout icon).
 
 SIDEBAR (WIDTH 260PX):
@@ -624,7 +624,7 @@ Generate the Mahasiswa Dashboard screen inside the App Shell for SPADA LMS UPGRI
   3) Status Keaktifan: "AKTIF" (green badge pill) with checkmark icon.
 - Section Header: "Kelas Perkuliahan Semester Ini" with count badge "3 Kelas Terdaftar".
 - Enrolled Classes Grid (3 interactive cards for classes enrolled by Admin):
-  - Card 1: Badge "TI-A • 3 SKS" (Blue), Title "Rekayasa Perangkat Lunak", Lecturer "Dr. Awan Rosi, M.Kom.", Status Badge "16 Pertemuan Terstruktur", Button "Buka Ruang Kelas →" (#2563EB).
+  - Card 1: Badge "TI-A • 3 SKS" (Blue), Title "Rekayasa Perangkat Lunak", Lecturer "Dr. Bayu Pratama, M.Kom.", Status Badge "16 Pertemuan Terstruktur", Button "Buka Ruang Kelas →" (#2563EB).
   - Card 2: Badge "TI-B • 3 SKS", Title "Pemrograman Web Lanjut", Lecturer "Ir. Siti Aminah, M.T.", Status Badge "16 Pertemuan Terstruktur", Button "Buka Ruang Kelas →".
   - Card 3: Badge "TI-A • 2 SKS", Title "Basis Data Terdistribusi", Lecturer "Budi Santoso, M.Cs.", Status Badge "16 Pertemuan Terstruktur", Button "Buka Ruang Kelas →".
 - Info Banner (Bottom): Informative blue alert regarding operational SPADA guidelines.
@@ -633,7 +633,7 @@ Generate the Mahasiswa Dashboard screen inside the App Shell for SPADA LMS UPGRI
 ```text
 [PROMPT SIAP KIRIM - GOOGLE STITCH FASE 4.2: DASBOR DOSEN]
 Generate the Dosen Dashboard screen inside the App Shell for SPADA LMS UPGRIS:
-- Greeting: "Selamat Datang, Dr. Awan Rosi, M.Kom. (NIDN: 0612345601)".
+- Greeting: "Selamat Datang, Dr. Bayu Pratama, M.Kom. (NIDN: 0612345601)".
 - 3 Teaching Metric Cards (Horizontal Grid):
   1) Total Kelas Diampu: "3 Kelas Aktif" with chalkboard icon (#2563EB).
   2) Total Beban SKS: "8 SKS Semester Ini" with award icon (#10B981).
@@ -717,7 +717,7 @@ VIEW B: PEMBUKAAN KELAS PERKULIAHAN (/admin/classes):
 Generate the Direct Enrollment Management screen for Admin in SPADA LMS UPGRIS based on Business Rule BR-002:
 
 TOP BAR:
-- Class Selector Combobox: e.g. "TI-A • Rekayasa Perangkat Lunak (Dosen: Dr. Awan Rosi, M.Kom.)".
+- Class Selector Combobox: e.g. "TI-A • Rekayasa Perangkat Lunak (Dosen: Dr. Bayu Pratama, M.Kom.)".
 - Capacity Progress Indicator: Visual progress meter showing "Terisi: 28 / Kuota: 40 Mahasiswa (Sisa 12 Kursi)" with smooth color bar.
 
 TWO-COLUMN SPLIT VIEW LAYOUT:
