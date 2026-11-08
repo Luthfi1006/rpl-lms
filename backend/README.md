@@ -177,6 +177,7 @@ Seeder juga membuat 5 master mata kuliah (`TIF101`–`TIF105`) dan 2 kelas perku
   - CRUD mata kuliah dengan pencarian, paginasi, validasi SKS 1–6, dan penonaktifan yang mempertahankan relasi kelas.
   - CRUD kelas dengan filter akademik, validasi mata kuliah/dosen aktif, jejak audit, dan perlindungan kapasitas serta enrollment.
   - Seluruh pengujian otomatis Fase 2–4: **70 test**.
+  - Pengujian Fase 6 menambahkan validasi kepatuhan dan dokumentasi handoff OpenAPI; jalankan seluruh suite melalui `npm test`.
 
 ### Modul SRS yang **belum diimplementasikan**
 

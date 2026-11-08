@@ -9,6 +9,7 @@ import { ROLES } from '../../constants/roles.js';
 import {
   classIdParamSchema,
   classListQuerySchema,
+  adminClassListQuerySchema,
   createClassSchema,
   updateClassSchema,
 } from './classes.validation.js';
@@ -22,7 +23,7 @@ const router = Router();
 router.use(authenticateToken);
 router.use(requireRole(ROLES.ADMIN));
 
-router.get('/', validate(classListQuerySchema), ClassesController.getClasses);
+router.get('/', validate(adminClassListQuerySchema), ClassesController.getClasses);
 router.post(
   '/',
   adminOperationsLimiter,

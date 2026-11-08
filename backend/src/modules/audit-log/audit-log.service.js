@@ -32,6 +32,7 @@ export class AuditLogService {
     newValues = null,
     ipAddress = null,
     userAgent = null,
+    dbClient = prisma,
   }) {
     const payload = {
       user_id: userId || null,
@@ -65,7 +66,7 @@ export class AuditLogService {
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        const result = await prisma.auditLog.create({ data: payload });
+        const result = await dbClient.auditLog.create({ data: payload });
 
         // Reset failure count jika berhasil
         if (this.#circuitBreaker.failureCount > 0) {
@@ -443,6 +444,7 @@ export class AuditLogService {
     newValues = null,
     ipAddress,
     userAgent,
+    dbClient = prisma,
   }) {
     return this.record({
       userId,
@@ -450,13 +452,16 @@ export class AuditLogService {
       entity: 'enrollments',
       entityId: enrollmentId,
       oldValues,
-      newValues: {
-        student_id: studentId,
-        class_id: classId,
-        ...(newValues || {}),
-      },
+      newValues: newValues === null
+        ? null
+        : {
+            student_id: studentId,
+            class_id: classId,
+            ...(newValues || {}),
+          },
       ipAddress,
       userAgent,
+      dbClient,
     });
   }
 

@@ -253,6 +253,30 @@ paths:
         - $ref: '#/components/parameters/EntityId'
       responses:
         '200': { description: Mahasiswa dicabut dari kelas }
+  /admin/classes/{classId}/enrollments:
+    get:
+      tags: [Enrollments]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: classId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Daftar mahasiswa terdaftar pada kelas }
+  /admin/classes/{classId}/available-students:
+    get:
+      tags: [Enrollments]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: classId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Daftar mahasiswa aktif yang tersedia untuk dienroll }
   /dashboard:
     get:
       tags: [Dashboard]
