@@ -313,6 +313,7 @@ export class EnrollmentsService {
               },
               ipAddress,
               userAgent,
+              dbClient: tx,
             })
           )
         );
@@ -362,27 +363,29 @@ export class EnrollmentsService {
       throw new AppError('Data kepesertaan (enrollment) tidak ditemukan', 404);
     }
 
-    await prisma.enrollment.delete({
-      where: { id: enrollmentId },
-    });
+    await prisma.$transaction(async (tx) => {
+      await tx.enrollment.delete({
+        where: { id: enrollmentId },
+      });
 
-    // FIX F8: Audit dengan newValues: null untuk penghapusan
-    await AuditLogService.logEnrollmentMutation({
-      userId: adminId,
-      action: 'UNENROLL_STUDENT',
-      enrollmentId,
-      studentId: existing.student_id,
-      classId: existing.class_id,
-      oldValues: {
-        enrollment_id: existing.id,
-        student_nim: existing.student.nim,
-        student_name: existing.student.user.profile?.full_name || null,
-        class_name: existing.class.name,
-        course_code: existing.class.course.code,
-      },
-      newValues: null,
-      ipAddress,
-      userAgent,
+      await AuditLogService.logEnrollmentMutation({
+        userId: adminId,
+        action: 'UNENROLL_STUDENT',
+        enrollmentId,
+        studentId: existing.student_id,
+        classId: existing.class_id,
+        oldValues: {
+          enrollment_id: existing.id,
+          student_nim: existing.student.nim,
+          student_name: existing.student.user.profile?.full_name || null,
+          class_name: existing.class.name,
+          course_code: existing.class.course.code,
+        },
+        newValues: null,
+        ipAddress,
+        userAgent,
+        dbClient: tx,
+      });
     });
 
     return {
