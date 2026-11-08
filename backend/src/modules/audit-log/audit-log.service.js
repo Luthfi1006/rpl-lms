@@ -441,7 +441,7 @@ export class AuditLogService {
     studentId,
     classId,
     oldValues = null,
-    newValues = null,
+    newValues = undefined,
     ipAddress,
     userAgent,
     dbClient = prisma,

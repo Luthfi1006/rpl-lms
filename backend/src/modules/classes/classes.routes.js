@@ -8,7 +8,6 @@ import { adminOperationsLimiter } from '../../middlewares/rateLimit.middleware.j
 import { ROLES } from '../../constants/roles.js';
 import {
   classIdParamSchema,
-  classListQuerySchema,
   adminClassListQuerySchema,
   createClassSchema,
   updateClassSchema,

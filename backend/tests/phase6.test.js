@@ -130,4 +130,47 @@ describe('Fase 6: Kepatuhan MVP 1 & Handoff API', () => {
       orderBy: { created_at: 'desc' },
     }));
   });
+
+  test('Enrollment konkuren tidak boleh melewati kapasitas kelas', async () => {
+    const course = await prisma.course.findFirst();
+    const lecturer = await prisma.dosen.findFirst();
+    const students = await prisma.mahasiswa.findMany({
+      where: { user: { status: 'ACTIVE' } },
+      take: 3,
+      select: { id: true },
+    });
+    assert.ok(students.length >= 3);
+
+    const testClass = await prisma.class.create({
+      data: {
+        course_id: course.id,
+        lecturer_id: lecturer.id,
+        academic_year: '2026/2027',
+        semester: 'ganjil',
+        name: `KAP-${Date.now()}`,
+        capacity: 1,
+      },
+    });
+
+    try {
+      const responses = await Promise.all(
+        students.map((student) =>
+          request('/api/admin/enrollments', {
+            method: 'POST',
+            body: { class_id: testClass.id, student_id: student.id },
+          })
+        )
+      );
+
+      const statuses = responses.map((response) => response.status);
+      assert.equal(statuses.filter((status) => status === 201).length, 1);
+      assert.ok(statuses.every((status) => status === 201 || status === 409));
+      assert.equal(
+        await prisma.enrollment.count({ where: { class_id: testClass.id } }),
+        1
+      );
+    } finally {
+      await prisma.class.delete({ where: { id: testClass.id } });
+    }
+  });
 });
