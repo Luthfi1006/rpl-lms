@@ -1,9 +1,23 @@
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
+import SwaggerParser from '@apidevtools/swagger-parser';
 import app from '../src/app.js';
 import prisma from '../src/config/prisma.js';
 import { formatLecturerName } from '../src/utils/format.js';
+import {
+  BODYLESS_MUTATIONS,
+  MULTIPART_MUTATIONS,
+  MUTATING_METHODS,
+  OPENAPI_PATH,
+  collectRefs,
+  listOperations,
+  loadOpenApiDocument,
+  resolveContentSchema,
+  resolveJsonPointer,
+  resolveOperationParameters,
+} from './openapi.js';
+import { TEST_DB } from './setup.js';
 
 describe('Fase 6: Kepatuhan MVP 1 & Handoff API', () => {
   let server;
@@ -51,36 +65,228 @@ describe('Fase 6: Kepatuhan MVP 1 & Handoff API', () => {
     await prisma.$disconnect();
   });
 
-  test('OpenAPI 3.0 memuat endpoint MVP 1 yang menjadi handoff frontend dengan requestBody & response schemas', async () => {
-    const specification = await readFile(new URL('../docs/openapi.yaml', import.meta.url), 'utf8');
+  describe('Kontrak OpenAPI 3.0 (divalidasi dengan parser YAML, bukan pencocokan substring)', () => {
+    /** Dokumen OpenAPI ter-parse, dimuat sekali untuk seluruh pengujian kontrak. */
+    let specification;
 
-    assert.match(specification, /^openapi: 3\.0\.3$/m);
-    for (const endpoint of [
-      '/auth/login:',
-      '/auth/refresh:',
-      '/auth/logout:',
-      '/auth/forgot-password:',
-      '/profile:',
-      '/profile/avatar:',
-      '/profile/password:',
-      '/admin/users:',
-      '/admin/courses:',
-      '/admin/classes:',
-      '/admin/enrollments:',
-      '/admin/classes/{classId}/enrollments:',
-      '/admin/classes/{classId}/available-students:',
-      '/dashboard:',
-      '/classes:',
-      '/admin/audit-logs:',
-    ]) {
-      assert.ok(specification.includes(endpoint), `Dokumentasi belum memuat ${endpoint}`);
-    }
+    before(async () => {
+      specification = await loadOpenApiDocument();
+    });
 
-    // Pastikan requestBody dan skema respon didefinisikan
-    assert.ok(specification.includes('$ref: \'#/components/schemas/CreateEnrollmentRequest\''));
-    assert.ok(specification.includes('$ref: \'#/components/schemas/CreateCourseRequest\''));
-    assert.ok(specification.includes('$ref: \'#/components/schemas/CreateClassRequest\''));
-    assert.ok(specification.includes('$ref: \'#/components/schemas/ApiResponse\''));
+    test('Dokumen dapat diparse sebagai YAML dan mendeklarasikan OpenAPI 3.0.3', () => {
+      assert.equal(typeof specification, 'object');
+      assert.equal(specification.openapi, '3.0.3');
+      assert.ok(specification.info?.title, 'info.title wajib didefinisikan');
+      assert.ok(specification.info?.version, 'info.version wajib didefinisikan');
+      assert.ok(specification.paths && typeof specification.paths === 'object');
+    });
+
+    test('Dokumen lolos validasi penuh OpenAPI 3.0 (swagger-parser)', async () => {
+      // Validasi spesifikasi sesungguhnya: struktur, tipe, dan seluruh $ref.
+      const api = await SwaggerParser.validate(fileURLToPath(OPENAPI_PATH));
+      assert.equal(api.openapi, '3.0.3');
+      assert.ok(api.info.title);
+      assert.ok(Object.keys(api.paths).length >= 20);
+    });
+
+    test('Seluruh endpoint MVP 1 terdefinisi sebagai operasi HTTP nyata', () => {
+      const required = [
+        ['/auth/login', 'post'],
+        ['/auth/refresh', 'post'],
+        ['/auth/logout', 'post'],
+        ['/auth/forgot-password', 'post'],
+        ['/profile', 'get'],
+        ['/profile', 'put'],
+        ['/profile/avatar', 'post'],
+        ['/profile/password', 'put'],
+        ['/admin/users', 'get'],
+        ['/admin/users', 'post'],
+        ['/admin/courses', 'get'],
+        ['/admin/courses', 'post'],
+        ['/admin/classes', 'get'],
+        ['/admin/classes', 'post'],
+        ['/admin/enrollments', 'post'],
+        ['/admin/classes/{classId}/enrollments', 'get'],
+        ['/admin/classes/{classId}/available-students', 'get'],
+        ['/dashboard', 'get'],
+        ['/classes', 'get'],
+        ['/admin/audit-logs', 'get'],
+      ];
+
+      for (const [path, method] of required) {
+        assert.ok(specification.paths[path], `Path ${path} belum didefinisikan`);
+        assert.ok(
+          specification.paths[path][method],
+          `Operasi ${method.toUpperCase()} ${path} belum didefinisikan`
+        );
+      }
+    });
+
+    test('Setiap operasi mutasi mendefinisikan requestBody dengan skema body yang sah', () => {
+      const operations = listOperations(specification);
+
+      for (const entry of operations) {
+        if (!MUTATING_METHODS.includes(entry.method)) continue;
+        const key = `${entry.method} ${entry.path}`;
+        if (BODYLESS_MUTATIONS.has(key)) continue;
+
+        const requestBody = entry.operation.requestBody;
+        assert.ok(requestBody, `${key.toUpperCase()} ${entry.path} wajib mendefinisikan requestBody`);
+
+        const resolvedBody = requestBody.$ref
+          ? resolveJsonPointer(specification, requestBody.$ref)
+          : requestBody;
+        assert.ok(resolvedBody?.content, `${entry.method.toUpperCase()} ${entry.path}: requestBody tanpa content`);
+
+        const mediaType = MULTIPART_MUTATIONS.get(key) ?? 'application/json';
+        const bodySchema = resolveContentSchema(specification, resolvedBody, mediaType);
+        assert.ok(
+          bodySchema,
+          `${entry.method.toUpperCase()} ${entry.path}: requestBody wajib memiliki skema ${mediaType}`
+        );
+        assert.equal(
+          bodySchema.type,
+          'object',
+          `${entry.method.toUpperCase()} ${entry.path}: skema requestBody harus bertipe object`
+        );
+        assert.ok(
+          bodySchema.properties && Object.keys(bodySchema.properties).length > 0,
+          `${entry.method.toUpperCase()} ${entry.path}: skema requestBody wajib mendefinisikan properti`
+        );
+      }
+    });
+
+    test('Setiap operasi mendefinisikan respons dan memakai envelope ApiResponse', () => {
+      const operations = listOperations(specification);
+
+      for (const entry of operations) {
+        const responses = entry.operation.responses;
+        assert.ok(responses, `${entry.method.toUpperCase()} ${entry.path}: responses wajib ada`);
+        assert.ok(
+          Object.keys(responses).length > 0,
+          `${entry.method.toUpperCase()} ${entry.path}: minimal satu respons harus didefinisikan`
+        );
+
+        const successStatus = Object.keys(responses).find((status) => status.startsWith('2'));
+        assert.ok(
+          successStatus,
+          `${entry.method.toUpperCase()} ${entry.path}: wajib mendefinisikan minimal satu respons 2xx`
+        );
+
+        const successSchema = resolveContentSchema(specification, responses[successStatus]);
+        assert.ok(
+          successSchema,
+          `${entry.method.toUpperCase()} ${entry.path}: respons ${successStatus} wajib memiliki skema application/json`
+        );
+        assert.ok(
+          successSchema.properties?.success,
+          `${entry.method.toUpperCase()} ${entry.path}: skema respons wajib memuat properti "success"`
+        );
+      }
+
+      const envelope = specification.components?.schemas?.ApiResponse;
+      assert.ok(envelope, 'components.schemas.ApiResponse wajib didefinisikan');
+      assert.deepEqual([...(envelope.required ?? [])].sort(), ['message', 'success']);
+    });
+
+    test('Parameter operasi ter-resolve lengkap dengan tipe dan lokasi yang sah', () => {
+      const operations = listOperations(specification);
+
+      for (const entry of operations) {
+        for (const parameter of resolveOperationParameters(specification, entry)) {
+          assert.ok(parameter, `${entry.method.toUpperCase()} ${entry.path}: parameter $ref tidak dapat di-resolve`);
+          assert.ok(parameter.name, `${entry.method.toUpperCase()} ${entry.path}: parameter tanpa name`);
+          assert.ok(
+            ['path', 'query', 'header', 'cookie'].includes(parameter.in),
+            `${entry.method.toUpperCase()} ${entry.path}: parameter "${parameter.name}" memiliki "in" tidak sah (${parameter.in})`
+          );
+          assert.ok(
+            parameter.schema,
+            `${entry.method.toUpperCase()} ${entry.path}: parameter "${parameter.name}" tanpa schema`
+          );
+        }
+      }
+
+      // Setiap token `{...}` pada template path wajib dideklarasikan
+      // sebagai parameter `in: path` pada operasi yang memakai path tersebut.
+      for (const entry of operations) {
+        const declaredPathParams = new Set(
+          resolveOperationParameters(specification, entry)
+            .filter((parameter) => parameter?.in === 'path')
+            .map((parameter) => parameter.name)
+        );
+
+        for (const token of entry.path.match(/\{[^}]+\}/g) ?? []) {
+          const name = token.slice(1, -1);
+          assert.ok(
+            declaredPathParams.has(name),
+            `${entry.method.toUpperCase()} ${entry.path}: parameter path "${name}" belum dideklarasikan`
+          );
+        }
+      }
+    });
+
+    test('Seluruh $ref menunjuk ke komponen yang benar-benar ada', () => {
+      const refs = collectRefs(specification);
+      assert.ok(refs.length > 0, 'Kontrak OpenAPI harus memakai $ref untuk komponen bersama');
+
+      for (const ref of refs) {
+        assert.ok(ref.startsWith('#/'), `Hanya $ref lokal yang didukung, ditemukan: ${ref}`);
+        assert.ok(
+          resolveJsonPointer(specification, ref) !== undefined,
+          `$ref tidak dapat di-resolve (komponen tidak ada): ${ref}`
+        );
+      }
+    });
+
+    test('Skema utama yang dirujuk endpoint benar-benar terdefinisi', () => {
+      for (const schemaName of [
+        'ApiResponse',
+        'PaginationMeta',
+        'LoginRequest',
+        'CreateUserRequest',
+        'CreateCourseRequest',
+        'CreateClassRequest',
+        'CreateEnrollmentRequest',
+      ]) {
+        assert.ok(
+          specification.components?.schemas?.[schemaName],
+          `components.schemas.${schemaName} wajib didefinisikan`
+        );
+      }
+
+      // CreateEnrollmentRequest harus mendukung pendaftaran tunggal maupun batch.
+      const enrollment = specification.components.schemas.CreateEnrollmentRequest;
+      assert.ok(enrollment.properties.class_id, 'CreateEnrollmentRequest.class_id wajib ada');
+      assert.ok(
+        enrollment.properties.student_id || enrollment.properties.student_ids,
+        'CreateEnrollmentRequest wajib mendukung student_id atau student_ids'
+      );
+      assert.ok(
+        enrollment.required?.includes('class_id'),
+        'class_id wajib menjadi field required pada CreateEnrollmentRequest'
+      );
+    });
+  });
+
+  describe('Isolasi database pengujian (DoD B4)', () => {
+    test('Suite terhubung ke database non-operasional', async () => {
+      assert.equal(TEST_DB.name, 'rpl_review', 'Pengujian wajib berjalan pada database rpl_review');
+      assert.ok(
+        !TEST_DB.operational.includes(TEST_DB.name),
+        `Pengujian tidak boleh berjalan pada database operasional: ${TEST_DB.name}`
+      );
+
+      // Bukti runtime: koneksi Prisma yang dipakai suite benar-benar ke rpl_review.
+      const [{ current_database: currentDatabase }] = await prisma.$queryRaw`
+        SELECT current_database()
+      `;
+      assert.equal(
+        currentDatabase,
+        TEST_DB.name,
+        `Koneksi Prisma mengarah ke "${currentDatabase}", bukan "${TEST_DB.name}"`
+      );
+    });
   });
 
   test('Multi-role login dan penolakan akun suspended tetap konsisten (dengan teardown terjamin)', async () => {

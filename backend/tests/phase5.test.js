@@ -2,6 +2,7 @@ import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import app from '../src/app.js';
 import prisma from '../src/config/prisma.js';
+import { cleanupTestArtifacts } from './setup.js';
 
 describe('Fase 5: Modul Direct Enrollment (BR-002), Dasbor Kontekstual & Ruang Kelas', () => {
   let server;
@@ -123,6 +124,14 @@ describe('Fase 5: Modul Direct Enrollment (BR-002), Dasbor Kontekstual & Ruang K
     }
     if (server) {
       await new Promise((resolve) => server.close(resolve));
+    }
+
+    // Jaring pengaman: sapu sisa kelas uji bila suite terhenti sebelum blok di atas tuntas.
+    const swept = await cleanupTestArtifacts(prisma);
+    if (swept.classes > 0 || swept.enrollments > 0) {
+      console.info(
+        `[phase5.test.js] Membersihkan sisa data uji: ${swept.classes} kelas, ${swept.enrollments} kepesertaan.`
+      );
     }
   });
 
