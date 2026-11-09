@@ -1,7 +1,7 @@
-﻿import prisma from '../../config/prisma.js';
+import prisma from '../../config/prisma.js';
 import { AppError } from '../../utils/errors.js';
 import { AuditLogService } from '../audit-log/audit-log.service.js';
-import { ACADEMIC } from '../../constants/academic.js';
+
 
 export class EnrollmentsService {
   /**
@@ -209,8 +209,13 @@ export class EnrollmentsService {
       }
     }
 
-    // FIX F1: Race condition - transaksi Serializable dengan lock baris kelas
-    const createdEnrollments = await prisma.$transaction(
+    // FIX F1 & B1: Race condition & serialization failure retry
+    const MAX_RETRY = 3;
+    let lastError = null;
+
+    for (let attempt = 1; attempt <= MAX_RETRY; attempt++) {
+      try {
+        const createdEnrollments = await prisma.$transaction(
       async (tx) => {
         // Lock kelas agar count & insert serial (SELECT ... FOR UPDATE)
         const [classLock] = await tx.$queryRaw`
@@ -313,6 +318,7 @@ export class EnrollmentsService {
               },
               ipAddress,
               userAgent,
+              tx,
             })
           )
         );
@@ -326,6 +332,16 @@ export class EnrollmentsService {
     );
 
     return createdEnrollments;
+      } catch (error) {
+        lastError = error;
+        if (error.code === 'P2034' && attempt < MAX_RETRY) {
+          await new Promise((resolve) => setTimeout(resolve, 50 * attempt));
+          continue;
+        }
+        throw error;
+      }
+    }
+    throw lastError;
   }
 
   /**

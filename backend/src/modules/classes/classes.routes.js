@@ -1,4 +1,4 @@
-﻿import { Router } from 'express';
+import { Router } from 'express';
 import { ClassesController } from './classes.controller.js';
 import { EnrollmentsController } from '../enrollments/enrollments.controller.js';
 import { authenticateToken } from '../../middlewares/auth.middleware.js';
@@ -8,7 +8,7 @@ import { adminOperationsLimiter } from '../../middlewares/rateLimit.middleware.j
 import { ROLES } from '../../constants/roles.js';
 import {
   classIdParamSchema,
-  classListQuerySchema,
+  adminClassListQuerySchema,
   createClassSchema,
   updateClassSchema,
 } from './classes.validation.js';
@@ -22,7 +22,7 @@ const router = Router();
 router.use(authenticateToken);
 router.use(requireRole(ROLES.ADMIN));
 
-router.get('/', validate(classListQuerySchema), ClassesController.getClasses);
+router.get('/', validate(adminClassListQuerySchema), ClassesController.getClasses);
 router.post(
   '/',
   adminOperationsLimiter,

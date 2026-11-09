@@ -1,4 +1,4 @@
-﻿import { Router } from "express";
+import { Router } from "express";
 import { EnrollmentsController } from "./enrollments.controller.js";
 import { authenticateToken } from "../../middlewares/auth.middleware.js";
 import { requireRole } from "../../middlewares/rbac.middleware.js";

@@ -1,4 +1,4 @@
-﻿import prisma from '../../config/prisma.js';
+import prisma from '../../config/prisma.js';
 import { AppError } from '../../utils/errors.js';
 
 /**
@@ -32,6 +32,7 @@ export class AuditLogService {
     newValues = null,
     ipAddress = null,
     userAgent = null,
+    tx = prisma,
   }) {
     const payload = {
       user_id: userId || null,
@@ -45,7 +46,7 @@ export class AuditLogService {
     };
 
     // Cek circuit breaker
-    if (this.#circuitBreaker.isOpen) {
+    if ((!tx || tx === prisma) && this.#circuitBreaker.isOpen) {
       const now = Date.now();
       const timeSinceFailure = now - this.#circuitBreaker.lastFailureTime;
 
@@ -55,20 +56,20 @@ export class AuditLogService {
         this.#circuitBreaker.failureCount = 0;
       } else {
         // Circuit breaker masih open, gunakan fallback logging
-        return this.#fallbackLog(payload);
+        if (!tx || tx === prisma) { if (!tx || tx === prisma) { return this.#fallbackLog(payload); } throw error; } throw error;
       }
     }
 
     // Coba tulis ke database dengan retry mechanism
-    const maxRetries = 3;
+    const maxRetries = (!tx || tx === prisma) ? 3 : 1;
     const baseDelay = 100; // 100ms
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        const result = await prisma.auditLog.create({ data: payload });
+        const result = await tx.auditLog.create({ data: payload });
 
         // Reset failure count jika berhasil
-        if (this.#circuitBreaker.failureCount > 0) {
+        if ((!tx || tx === prisma) && this.#circuitBreaker.failureCount > 0) {
           this.#circuitBreaker.failureCount = 0;
           this.#circuitBreaker.isOpen = false;
         }
@@ -76,12 +77,14 @@ export class AuditLogService {
         return result;
       } catch (error) {
         // Update circuit breaker state
-        this.#circuitBreaker.failureCount++;
-        this.#circuitBreaker.lastFailureTime = Date.now();
+        if (!tx || tx === prisma) { if (!tx || tx === prisma) { this.#circuitBreaker.failureCount++; } }
+        if (!tx || tx === prisma) { if (!tx || tx === prisma) { this.#circuitBreaker.lastFailureTime = Date.now(); } }
 
-        if (this.#circuitBreaker.failureCount >= this.#circuitBreaker.FAILURE_THRESHOLD) {
-          this.#circuitBreaker.isOpen = true;
-          console.error('[AuditLogService] Circuit breaker OPEN - database mungkin down');
+        if (!tx || tx === prisma) {
+          if (this.#circuitBreaker.failureCount >= this.#circuitBreaker.FAILURE_THRESHOLD) {
+            this.#circuitBreaker.isOpen = true;
+            console.error('[AuditLogService] Circuit breaker OPEN - database mungkin down');
+          }
         }
 
         if (attempt === maxRetries) {
@@ -440,9 +443,10 @@ export class AuditLogService {
     studentId,
     classId,
     oldValues = null,
-    newValues = null,
+    newValues = undefined,
     ipAddress,
     userAgent,
+    tx = prisma,
   }) {
     return this.record({
       userId,
@@ -450,13 +454,17 @@ export class AuditLogService {
       entity: 'enrollments',
       entityId: enrollmentId,
       oldValues,
-      newValues: {
-        student_id: studentId,
-        class_id: classId,
-        ...(newValues || {}),
-      },
+      newValues:
+        newValues === null
+          ? null
+          : {
+              student_id: studentId,
+              class_id: classId,
+              ...(newValues || {}),
+            },
       ipAddress,
       userAgent,
+      tx,
     });
   }
 

@@ -78,6 +78,14 @@ export function errorHandler(err, req, res, next) {
     });
   }
 
+  // FIX B1: Handle P2034 (serialization failure / write conflict dari Serializable isolation)
+  if (err.code === 'P2034') {
+    return apiResponse.error(res, {
+      statusCode: 409,
+      message: 'Permintaan bentrok dengan transaksi lain. Silakan coba lagi.',
+    });
+  }
+
   // Kesalahan Server Tak Terduga
   console.error('[Unhandled Error]:', err);
   return apiResponse.error(res, {

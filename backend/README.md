@@ -131,7 +131,7 @@ npm run db:seed         # Isi akun pengguna & master awal
 ```bash
 npm run dev             # Mode development (nodemon)
 npm start               # Mode produksi
-npm test                # Menjalankan seluruh pengujian otomatis (70 test, Fase 2–4)
+npm test                # Menjalankan seluruh pengujian otomatis (87 test, Fase 2–5)
 ```
 
 ### 4. Database Alternatif (Embedded Postgres)

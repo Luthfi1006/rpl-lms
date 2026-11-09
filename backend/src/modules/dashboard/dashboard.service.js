@@ -1,4 +1,4 @@
-﻿import prisma from "../../config/prisma.js";
+import prisma from "../../config/prisma.js";
 import { AppError } from "../../utils/errors.js";
 import { ROLES } from "../../constants/roles.js";
 import { ACADEMIC } from "../../constants/academic.js";

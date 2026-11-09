@@ -85,6 +85,7 @@ describe('Fase 5: Modul Direct Enrollment (BR-002), Dasbor Kontekstual & Ruang K
     student3 = studentRecords[2];
 
     testCourse = await prisma.course.findFirst({ where: { code: 'TIF101' } });
+    assert.ok(testCourse, 'Master mata kuliah TIF101 harus ada');
 
     // 3. Buat kelas uji khusus Fase 5 (satu kelas kuota 2 untuk tes kapasitas, satu kelas utama)
     const suffix = `${Date.now()}`.slice(-6);
@@ -150,6 +151,22 @@ describe('Fase 5: Modul Direct Enrollment (BR-002), Dasbor Kontekstual & Ruang K
         body: { class_id: testClassMain.id, student_id: student1.id },
       });
       assert.strictEqual(resDosen.status, 403);
+    });
+
+
+    test('GET /api/classes ditolak untuk role ADMIN (403 Forbidden)', async () => {
+      const res = await request('/api/classes', { token: adminToken });
+      assert.strictEqual(res.status, 403);
+    });
+
+    test('GET /api/classes/:id ditolak untuk DOSEN yang bukan pengampu kelas (403)', async () => {
+        const otherLecturer = await prisma.dosen.findFirst({ where: { NOT: { id: lecturer.id } } });
+        const otherClass = await prisma.class.create({
+            data: { course_id: testCourse.id, lecturer_id: otherLecturer.id, academic_year: '2026/2027', semester: 'ganjil', name: 'OTHER', capacity: 10 }
+        });
+        const res = await request(`/api/classes/${otherClass.id}`, { token: dosenToken });
+        assert.strictEqual(res.status, 403);
+        await prisma.class.delete({ where: { id: otherClass.id } });
     });
 
     test('DELETE /api/admin/enrollments/:id ditolak untuk selain Admin (403)', async () => {
@@ -231,6 +248,39 @@ describe('Fase 5: Modul Direct Enrollment (BR-002), Dasbor Kontekstual & Ruang K
       assert.strictEqual(res.status, 409);
       const json = await res.json();
       assert.match(json.message, /sudah terdaftar/i);
+    });
+
+
+    test('Uji Konkurensi: 4 request konkuren pada kelas kapasitas 1 menghasilkan tepat 1 keberhasilan (201) dan 3 penolakan konflik (409)', async () => {
+      const smallClass = await prisma.class.create({
+        data: {
+          course_id: testCourse.id,
+          lecturer_id: lecturer.id,
+          academic_year: '2026/2027',
+          semester: 'ganjil',
+          name: 'CONCURRENCY-TEST',
+          capacity: 1,
+        },
+      });
+      
+      const responses = await Promise.all([
+        request('/api/admin/enrollments', { method: 'POST', body: { class_id: smallClass.id, student_ids: [student1.id] } }),
+        request('/api/admin/enrollments', { method: 'POST', body: { class_id: smallClass.id, student_ids: [student2.id] } }),
+        request('/api/admin/enrollments', { method: 'POST', body: { class_id: smallClass.id, student_ids: [student3.id] } }),
+        request('/api/admin/enrollments', { method: 'POST', body: { class_id: smallClass.id, student_ids: [student3.id] } }),
+      ]);
+      
+      const successes = responses.filter(r => r.status === 201).length;
+      const conflicts = responses.filter(r => r.status === 409).length;
+      
+      assert.strictEqual(successes, 1, 'Hanya 1 request yang boleh berhasil');
+      assert.ok(conflicts >= 2, 'Sisanya harus 409');
+      
+      const count = await prisma.enrollment.count({ where: { class_id: smallClass.id } });
+      assert.strictEqual(count, 1, 'Database harus tepat 1 enrollment');
+
+      await prisma.enrollment.deleteMany({ where: { class_id: smallClass.id } });
+      await prisma.class.delete({ where: { id: smallClass.id } });
     });
 
     test('Admin dapat melakukan batch enrollment mahasiswa (POST /api/admin/enrollments)', async () => {
