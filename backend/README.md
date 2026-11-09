@@ -140,6 +140,25 @@ Dokumentasi OpenAPI 3.0 untuk seluruh endpoint MVP 1 tersedia di [docs/openapi.y
 
 Komitmen pengujian Fase 6 memvalidasi regresi alur utama, RBAC, penolakan akun suspended, kapasitas enrollment, jejak audit, serta kelengkapan artefak OpenAPI.
 
+Dokumen tersebut **diparse sebagai YAML** oleh `tests/openapi.js` dan divalidasi secara struktural pada `tests/phase6.test.js`: keberadaan setiap operasi HTTP, `requestBody` bertipe objek pada seluruh operasi mutasi, respons 2xx ber-skema, parameter path yang terdeklarasi, serta integritas seluruh `$ref`. Pencocokan substring pada teks mentah sudah tidak dipakai lagi.
+
+### Isolasi Database Pengujian (DoD B4)
+
+`tests/setup.js` berjalan sebelum seluruh suite (via `--import ./tests/setup.js`) dan **memaksa pengujian terhubung ke database non-operasional `rpl_review`**:
+
+- Bila `DATABASE_URL` menunjuk `rpl_lms` (database operasional), setup otomatis mengganti nama database menjadi `rpl_review` dan mencatat peralihan itu di log.
+- Developer dapat menetapkan `DATABASE_URL_TEST` secara eksplisit untuk memakai database uji lain.
+- Guard terakhir menolak proses bila hasil resolusi tetap menunjuk ke `rpl_lms`.
+- `cleanupTestArtifacts()` menyapu sisa kelas uji (prefix `TEST-` dan `KAP-`) sebagai jaring pengaman bila sebuah suite terhenti sebelum blok `finally`/`after()`-nya berjalan. Data seed tidak pernah tersentuh.
+
+Siapkan database uji sekali di awal:
+
+```bash
+createdb rpl_review
+DATABASE_URL="postgresql://postgres:password@localhost:5432/rpl_review?schema=public" npx prisma migrate deploy
+DATABASE_URL="postgresql://postgres:password@localhost:5432/rpl_review?schema=public" npm run db:seed
+```
+
 ### 4. Database Alternatif (Embedded Postgres)
 Tanpa instalasi PostgreSQL manual, `scripts/run-pg.js` menyediakan embedded-postgres di port 5433:
 ```bash
