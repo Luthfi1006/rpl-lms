@@ -332,7 +332,7 @@ describe('Fase 5: Modul Direct Enrollment (BR-002), Dasbor Kontekstual & Ruang K
       assert.strictEqual(json.success, true);
       assert.strictEqual(json.data.role, 'dosen');
       assert.strictEqual(json.data.profile.nidn, '198501152010121002');
-      assert.match(json.data.profile.formatted_name, /Dr\./);
+      assert.strictEqual(json.data.profile.formatted_name, 'Dr. Budi Santoso, M.Kom.');
       assert.ok(Array.isArray(json.data.teaching_classes));
       assert.ok(json.data.teaching_classes.length > 0);
       assert.strictEqual(json.data.teaching_classes[0].total_meetings, 16);

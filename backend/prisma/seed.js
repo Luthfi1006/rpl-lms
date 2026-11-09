@@ -44,7 +44,7 @@ async function main() {
     {
       nidn: '198501152010121002',
       nip: '198501152010121002',
-      full_name: 'Dr. Budi Santoso, M.Kom.',
+      full_name: 'Budi Santoso',
       gelar_depan: 'Dr.',
       gelar_belakang: 'M.Kom.',
       email: 'budi.santoso@upgris.ac.id',
@@ -52,7 +52,7 @@ async function main() {
     {
       nidn: '199003202015042001',
       nip: '199003202015042001',
-      full_name: 'Siti Aminah, S.Kom., M.T.',
+      full_name: 'Siti Aminah',
       gelar_depan: '',
       gelar_belakang: 'S.Kom., M.T.',
       email: 'siti.aminah@upgris.ac.id',
@@ -60,7 +60,7 @@ async function main() {
     {
       nidn: '197805102003122001',
       nip: '197805102003122001',
-      full_name: 'Prof. Hadi Wijaya, M.Sc.',
+      full_name: 'Hadi Wijaya',
       gelar_depan: 'Prof.',
       gelar_belakang: 'M.Sc.',
       email: 'hadi.wijaya@upgris.ac.id',

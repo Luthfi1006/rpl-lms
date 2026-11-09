@@ -1,4 +1,6 @@
-﻿import prisma from '../../config/prisma.js';
+﻿import fs from 'node:fs';
+import path from 'node:path';
+import prisma from '../../config/prisma.js';
 import { AppError } from '../../utils/errors.js';
 
 /**
@@ -33,6 +35,7 @@ export class AuditLogService {
     ipAddress = null,
     userAgent = null,
     dbClient = prisma,
+    throwOnFailure = false,
   }) {
     const payload = {
       user_id: userId || null,
@@ -44,6 +47,24 @@ export class AuditLogService {
       ip_address: ipAddress || null,
       user_agent: userAgent || null,
     };
+
+    const isTransactional = Boolean(dbClient && dbClient !== prisma);
+
+    if (isTransactional || throwOnFailure) {
+      try {
+        return await dbClient.auditLog.create({ data: payload });
+      } catch (error) {
+        console.error('[AuditLogService] Gagal merekam audit dalam transaksi:', {
+          action: payload.action,
+          entity: payload.entity,
+          error: error?.message,
+        });
+        throw new AppError(
+          `Gagal mencatat jejak audit (${payload.action} ${payload.entity}): ${error.message}`,
+          500
+        );
+      }
+    }
 
     // Cek circuit breaker
     if (this.#circuitBreaker.isOpen) {
@@ -131,10 +152,6 @@ export class AuditLogService {
    */
   static #fallbackLog(payload) {
     try {
-      // Coba tulis ke file system sebagai fallback
-      const fs = require('fs');
-      const path = require('path');
-
       const logDir = path.join(process.cwd(), 'logs', 'audit-fallback');
       if (!fs.existsSync(logDir)) {
         fs.mkdirSync(logDir, { recursive: true });

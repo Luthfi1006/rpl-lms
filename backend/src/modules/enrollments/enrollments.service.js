@@ -3,6 +3,21 @@ import { AppError } from '../../utils/errors.js';
 import { AuditLogService } from '../audit-log/audit-log.service.js';
 import { ACADEMIC } from '../../constants/academic.js';
 
+async function executeWithRetry(operation, maxRetries = 3) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (err) {
+      if (err.code === 'P2034' && attempt < maxRetries) {
+        const jitter = Math.random() * 50;
+        await new Promise((r) => setTimeout(r, attempt * 80 + jitter));
+        continue;
+      }
+      throw err;
+    }
+  }
+}
+
 export class EnrollmentsService {
   /**
    * Mengambil daftar mahasiswa yang telah terdaftar di suatu kelas
@@ -209,51 +224,56 @@ export class EnrollmentsService {
       }
     }
 
-    // FIX F1: Race condition - transaksi Serializable dengan lock baris kelas
-    const createdEnrollments = await prisma.$transaction(
-      async (tx) => {
-        // Lock kelas agar count & insert serial (SELECT ... FOR UPDATE)
-        const [classLock] = await tx.$queryRaw`
-          SELECT id, capacity FROM classes WHERE id = ${classId}::uuid FOR UPDATE
-        `;
+    // FIX F1: Race condition - transaksi Serializable dengan lock baris kelas & automatic retry
+    const createdEnrollments = await executeWithRetry(() =>
+      prisma.$transaction(
+        async (tx) => {
+          // Lock kelas agar count & insert serial (SELECT ... FOR UPDATE)
+          const [classLock] = await tx.$queryRaw`
+            SELECT id, capacity FROM classes WHERE id = ${classId}::uuid FOR UPDATE
+          `;
 
-        if (!classLock) {
-          throw new AppError('Kelas perkuliahan tidak ditemukan', 404);
-        }
+          if (!classLock) {
+            throw new AppError('Kelas perkuliahan tidak ditemukan', 404);
+          }
 
-        // Hitung enrollment terkini dalam transaksi (not stale)
-        const currentEnrolled = await tx.enrollment.count({
-          where: { class_id: classId },
-        });
+          // Hitung enrollment terkini dalam transaksi (not stale)
+          const currentEnrolled = await tx.enrollment.count({
+            where: { class_id: classId },
+          });
 
-        const remainingQuota = classLock.capacity - currentEnrolled;
+          const remainingQuota = classLock.capacity - currentEnrolled;
 
-        // Validasi daya tampung
-        if (uniqueStudentIds.length > remainingQuota) {
-          throw new AppError(
-            `Kapasitas kelas tidak mencukupi (kapasitas: ${classLock.capacity}, terdaftar: ${currentEnrolled}, sisa kuota: ${remainingQuota}, mencoba mendaftarkan: ${uniqueStudentIds.length})`,
-            409
-          );
-        }
+          // Validasi daya tampung
+          if (uniqueStudentIds.length > remainingQuota) {
+            throw new AppError(
+              `Kapasitas kelas tidak mencukupi (kapasitas: ${classLock.capacity}, terdaftar: ${currentEnrolled}, sisa kuota: ${remainingQuota}, mencoba mendaftarkan: ${uniqueStudentIds.length})`,
+              409,
+              null,
+              'CLASS_CAPACITY_FULL'
+            );
+          }
 
-        // Periksa mahasiswa yang sudah terdaftar
-        const existingEnrollments = await tx.enrollment.findMany({
-          where: {
-            class_id: classId,
-            student_id: { in: uniqueStudentIds },
-          },
-          include: {
-            student: { select: { nim: true } },
-          },
-        });
+          // Periksa mahasiswa yang sudah terdaftar
+          const existingEnrollments = await tx.enrollment.findMany({
+            where: {
+              class_id: classId,
+              student_id: { in: uniqueStudentIds },
+            },
+            include: {
+              student: { select: { nim: true } },
+            },
+          });
 
-        if (existingEnrollments.length > 0) {
-          const alreadyNims = existingEnrollments.map((e) => e.student.nim).join(', ');
-          throw new AppError(
-            `Mahasiswa dengan NIM [${alreadyNims}] sudah terdaftar pada kelas ini`,
-            409
-          );
-        }
+          if (existingEnrollments.length > 0) {
+            const alreadyNims = existingEnrollments.map((e) => e.student.nim).join(', ');
+            throw new AppError(
+              `Mahasiswa dengan NIM [${alreadyNims}] sudah terdaftar pada kelas ini`,
+              409,
+              null,
+              'STUDENT_ALREADY_ENROLLED'
+            );
+          }
 
         // Insert semua enrollment sekaligus dalam transaksi yang sama
         const enrollments = await Promise.all(
@@ -324,7 +344,7 @@ export class EnrollmentsService {
         isolationLevel: 'Serializable',
         timeout: 10000,
       }
-    );
+    ));
 
     return createdEnrollments;
   }
