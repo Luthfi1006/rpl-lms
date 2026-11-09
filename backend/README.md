@@ -131,7 +131,32 @@ npm run db:seed         # Isi akun pengguna & master awal
 ```bash
 npm run dev             # Mode development (nodemon)
 npm start               # Mode produksi
-npm test                # Menjalankan seluruh pengujian otomatis (70 test, Fase 2–4)
+npm test                # Menjalankan seluruh pengujian otomatis (Fase 2–6)
+```
+
+## Dokumentasi API Fase 6
+
+Dokumentasi OpenAPI 3.0 untuk seluruh endpoint MVP 1 tersedia di [docs/openapi.yaml](docs/openapi.yaml). Dokumen tersebut mencakup autentikasi, manajemen pengguna, mata kuliah, kelas, enrollment, dashboard, ruang kelas, dan audit log.
+
+Komitmen pengujian Fase 6 memvalidasi regresi alur utama, RBAC, penolakan akun suspended, kapasitas enrollment, jejak audit, serta kelengkapan artefak OpenAPI.
+
+Dokumen tersebut **diparse sebagai YAML** oleh `tests/openapi.js` dan divalidasi secara struktural pada `tests/phase6.test.js`: keberadaan setiap operasi HTTP, `requestBody` bertipe objek pada seluruh operasi mutasi, respons 2xx ber-skema, parameter path yang terdeklarasi, serta integritas seluruh `$ref`. Pencocokan substring pada teks mentah sudah tidak dipakai lagi.
+
+### Isolasi Database Pengujian (DoD B4)
+
+`tests/setup.js` berjalan sebelum seluruh suite (via `--import ./tests/setup.js`) dan **memaksa pengujian terhubung ke database non-operasional `rpl_review`**:
+
+- Bila `DATABASE_URL` menunjuk `rpl_lms` (database operasional), setup otomatis mengganti nama database menjadi `rpl_review` dan mencatat peralihan itu di log.
+- Developer dapat menetapkan `DATABASE_URL_TEST` secara eksplisit untuk memakai database uji lain.
+- Guard terakhir menolak proses bila hasil resolusi tetap menunjuk ke `rpl_lms`.
+- `cleanupTestArtifacts()` menyapu sisa kelas uji (prefix `TEST-` dan `KAP-`) sebagai jaring pengaman bila sebuah suite terhenti sebelum blok `finally`/`after()`-nya berjalan. Data seed tidak pernah tersentuh.
+
+Siapkan database uji sekali di awal:
+
+```bash
+createdb rpl_review
+DATABASE_URL="postgresql://postgres:password@localhost:5432/rpl_review?schema=public" npx prisma migrate deploy
+DATABASE_URL="postgresql://postgres:password@localhost:5432/rpl_review?schema=public" npm run db:seed
 ```
 
 ### 4. Database Alternatif (Embedded Postgres)
@@ -170,7 +195,8 @@ Seeder juga membuat 5 master mata kuliah (`TIF101`–`TIF105`) dan 2 kelas perku
   - Manajemen pengguna Admin: pencarian username/email/nama/NIM/NIDN/NIP, filter role/status, dan pembuatan akun dengan identitas mahasiswa/dosen.
   - CRUD mata kuliah dengan pencarian, paginasi, validasi SKS 1–6, dan penonaktifan yang mempertahankan relasi kelas.
   - CRUD kelas dengan filter akademik, validasi mata kuliah/dosen aktif, jejak audit, dan perlindungan kapasitas serta enrollment.
-  - Seluruh pengujian otomatis Fase 2–4: **70 test**.
+  - Suite backend saat ini mencakup Fase 2–6; jumlah aktual ditampilkan oleh `npm test`.
+  - Pengujian Fase 6 menambahkan validasi kepatuhan, kapasitas enrollment konkuren, dan dokumentasi handoff OpenAPI.
 
 ### Modul SRS yang **belum diimplementasikan**
 
