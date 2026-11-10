@@ -1,8 +1,8 @@
 openapi: 3.0.3
 info:
-  title: SPADA LMS Backend API
+  title: E-Learning Kampus Backend API
   version: 1.0.0
-  description: Dokumentasi resmi API MVP 1 untuk sistem pembelajaran daring SPADA LMS Universitas PGRI Semarang.
+  description: Dokumentasi resmi API MVP 1 untuk sistem pembelajaran daring E-Learning Kampus.
 servers:
   - url: http://localhost:5000/api
     description: Server Lokal Pengembangan
@@ -121,7 +121,7 @@ components:
         email:
           type: string
           format: email
-          example: mahasiswa@upgris.ac.id
+          example: mahasiswa@kampus.ac.id
 
     UpdateProfileRequest:
       type: object
@@ -164,7 +164,7 @@ components:
         email:
           type: string
           format: email
-          example: mhs.baru@upgris.ac.id
+          example: mhs.baru@kampus.ac.id
         password:
           type: string
           format: password

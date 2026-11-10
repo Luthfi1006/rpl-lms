@@ -4,7 +4,7 @@ import prisma from '../../config/prisma.js';
 import { AppError } from '../../utils/errors.js';
 
 /**
- * Layanan terpusat Audit Trail Engine SPADA LMS (SRS Bab 15 & Bab 35)
+ * Layanan terpusat Audit Trail Engine E-Learning Kampus (SRS Bab 15 & Bab 35)
  */
 export class AuditLogService {
   /**

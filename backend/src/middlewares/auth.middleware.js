@@ -5,7 +5,7 @@ import { apiResponse } from '../utils/apiResponse.js';
 /**
  * Middleware untuk memverifikasi JWT Access Token.
  *
- * Revised SPADA LMS: role disimpan langsung di field `user.role` (enum),
+ * Revised E-Learning Kampus: role disimpan langsung di field `user.role` (enum),
  * bukan di tabel relasi `user_roles → role → role_permissions`.
  */
 export async function authenticateToken(req, res, next) {

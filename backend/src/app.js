@@ -59,12 +59,12 @@ if (ENV.NODE_ENV !== 'test') {
 // Health check endpoint (FIX F13: Hapus publicApiLimiter ganda, cukup generalLimiter global)
 app.get('/health', (req, res) => {
   return apiResponse.success(res, {
-    message: 'SPADA LMS Backend API is operational',
+    message: 'E-Learning Kampus Backend API is operational',
     data: {
       timestamp: new Date().toISOString(),
       env: ENV.NODE_ENV,
       status: 'healthy',
-      service: 'SPADA LMS Backend API',
+      service: 'E-Learning Kampus Backend API',
       version: '1.0.0',
     },
   });
@@ -73,7 +73,7 @@ app.get('/health', (req, res) => {
 // Root API welcome (flat /api per SRS Bab 21)
 app.get('/api', (req, res) => {
   return apiResponse.success(res, {
-    message: 'Selamat datang di API SPADA LMS — Universitas PGRI Semarang',
+    message: 'Selamat datang di API E-Learning Kampus — Universitas',
     data: {
       version: '1.0.0 (MVP 1)',
       status: 'active',
@@ -96,7 +96,7 @@ app.get('/api', (req, res) => {
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/forgot-password', authLimiter);
 
-// === Modul Inti SPADA LMS (flat /api paths per SRS Bab 21) ===
+// === Modul Inti E-Learning Kampus (flat /api paths per SRS Bab 21) ===
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/dashboard', dashboardRoutes);

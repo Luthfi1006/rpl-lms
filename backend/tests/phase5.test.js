@@ -317,7 +317,7 @@ describe('Fase 5: Modul Direct Enrollment (BR-002), Dasbor Kontekstual & Ruang K
     });
   });
 
-  describe('3. Dasbor Kontekstual SPADA LMS (GET /api/dashboard)', () => {
+  describe('3. Dasbor Kontekstual E-Learning Kampus (GET /api/dashboard)', () => {
     test('Dasbor Admin menyajikan 4 metrik sistem utama dan jalan pintas', async () => {
       const res = await request('/api/dashboard', { token: adminToken });
       assert.strictEqual(res.status, 200);
