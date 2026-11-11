@@ -200,7 +200,7 @@ export default function RuangKelas({ onNavigate, onRoleChange, courseId }) {
               className="hover:text-primary transition-colors flex items-center gap-1 cursor-pointer"
             >
               <span className="material-symbols-outlined text-[18px]">home</span>
-              <span>Dasbor</span>
+              <span>Dashboard</span>
             </button>
             <span className="material-symbols-outlined text-[16px] text-outline">chevron_right</span>
             <button

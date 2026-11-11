@@ -440,7 +440,7 @@ export default function KelolaKls({ onNavigate, onRoleChange, courseId }) {
             className="hover:text-primary transition-colors flex items-center gap-1 cursor-pointer"
           >
             <span className="material-symbols-outlined text-[18px]">home</span>
-            <span>Dasbor</span>
+            <span>Dashboard</span>
           </button>
           <span className="material-symbols-outlined text-[16px] text-outline">chevron_right</span>
           <button
@@ -1390,7 +1390,7 @@ function DownloadStatusCard({ state, onDismiss, onBackToDashboard }) {
           onClick={onBackToDashboard}
           className="px-3 py-1.5 rounded-lg bg-mvp-card border border-mvp-danger text-mvp-danger-strong text-xs font-semibold transition-colors cursor-pointer"
         >
-          Kembali ke Dasbor
+          Kembali ke Dashboard
         </button>
       </div>
     );

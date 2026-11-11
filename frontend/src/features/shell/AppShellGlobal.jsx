@@ -172,8 +172,7 @@ export default function AppShellGlobal({ currentRole = 'mahasiswa', onRoleChange
               )}
             </div>
             <p className="font-body-sm text-body-sm text-on-surface-variant">
-              Dasbor, Kelas Saya, Panduan Belajar, Central Timeline, Rekap Nilai &amp; Presensi
-            </p>
+              Dashboard, Kelas Saya, Panduan Belajar, Central Timeline, Rekap Nilai & Presensi         </p>
           </button>
 
           {/* Tab 2: Dosen */}
@@ -202,7 +201,7 @@ export default function AppShellGlobal({ currentRole = 'mahasiswa', onRoleChange
               )}
             </div>
             <p className="font-body-sm text-body-sm text-outline">
-              Dasbor Dosen, Kelas Diampu, Panduan Dosen, Central Timeline, Pemeriksaan Tugas
+              Dashboard Dosen, Kelas Diampu, Panduan Dosen, Central Timeline, Pemeriksaan Tugas
             </p>
           </button>
 

@@ -178,7 +178,7 @@ export default function DaftarHadirKoreksi({ onNavigate, onRoleChange }) {
               className="hover:text-primary transition-colors flex items-center gap-1"
             >
               <span className="material-symbols-outlined text-[16px]">home</span>
-              Dasbor
+              Dashboard
             </button>
             <span>/</span>
             <button
