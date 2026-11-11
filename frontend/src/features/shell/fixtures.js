@@ -1,7 +1,7 @@
 ﻿/**
  * features/shell/fixtures.js
  *
- * Mock data dan konfigurasi navigasi untuk App Shell SPADA LMS.
+ * Mock data dan konfigurasi navigasi untuk App Shell E-Learning Kampus.
  * Termasuk skema navigasi RBAC, metrik stat cards, linimasa perkuliahan, dan daftar mata kuliah.
  */
 
@@ -40,7 +40,7 @@ export const navSections = [
     ],
   },
   {
-    title: 'Administrasi SPADA',
+    title: 'Administrasi E-Learning Kampus',
     role: 'admin',
     items: [
       { path: 'dasbor-admin', label: 'Dasbor Admin', icon: 'space_dashboard' },
@@ -78,8 +78,8 @@ export const statCards = [
     footnoteColor: 'text-error',
   },
   {
-    id: 'spada-score',
-    title: 'Rata-rata Skor SPADA',
+    id: 'elearning-score',
+    title: 'Rata-rata Skor E-Learning Kampus',
     value: '88.50',
     unit: '/ 100.00',
     valueColor: 'text-tertiary',
@@ -187,7 +187,7 @@ export const userFixtures = {
     identifier: 'NIM: 22670014',
     sub: 'Informatika',
     initials: 'DP',
-    email: 'dimas.arya@student.upgris.ac.id',
+    email: 'dimas.arya@student.kampus.ac.id',
   },
   dosen: {
     id: 'usr-dsn-01',
@@ -196,16 +196,16 @@ export const userFixtures = {
     identifier: 'NIDN: 0612345601',
     sub: 'Dosen Pengampu',
     initials: 'BP',
-    email: 'bayu.pratama@upgris.ac.id',
+    email: 'bayu.pratama@kampus.ac.id',
   },
   admin: {
     id: 'usr-adm-01',
-    name: 'Administrator SPADA',
+    name: 'Administrator E-Learning Kampus',
     role: 'admin',
     identifier: 'NIP: 19880101',
-    sub: 'Admin PTIK UPGRIS',
+    sub: 'Admin Kampus',
     initials: 'AD',
-    email: 'admin.spada@upgris.ac.id',
+    email: 'admin.elearning@kampus.ac.id',
   },
 };
 

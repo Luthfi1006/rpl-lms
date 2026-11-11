@@ -1,8 +1,8 @@
-﻿# Backend API: SPADA (Learning Management System)
+﻿# Backend API: E-Learning Kampus (Learning Management System)
 
-Implementasi backend REST API berbasis Node.js, Express, dan Prisma ORM dengan PostgreSQL untuk **SPADA LMS — Universitas PGRI Semarang**.
+Implementasi backend REST API berbasis Node.js, Express, dan Prisma ORM dengan PostgreSQL untuk **E-Learning Kampus — Universitas**.
 
-Mengacu pada dokumen [SRS.md](../SRS.md) hasil revisi (fokus eksklusif modul SPADA/LMS).
+Mengacu pada dokumen [SRS.md](../SRS.md) hasil revisi (fokus eksklusif modul E-Learning Kampus/LMS).
 
 > **Catatan revisi (BR-001 & BR-002):** Seluruh modul di luar kegiatan pembelajaran digital (SIA, PMB, KRS manual, KHS, transkrip, sidang) **telah dihapus dari ruang lingkup**. Peran disederhanakan menjadi **3 role tunggal**; Dosen Wali/PA dan varian Admin multirangkap ditiadakan. Enrollment mahasiswa ke kelas dilakukan langsung oleh Admin.
 
@@ -24,7 +24,7 @@ Mengacu pada dokumen [SRS.md](../SRS.md) hasil revisi (fokus eksklusif modul SPA
 | --- | --- |
 | `admin` | Pengelola teknis & operasional sistem (peran tunggal — menyatukan Super Admin, Admin Akademik, Admin LMS). |
 | `dosen` | Tenaga pendidik pengampu kelas perkuliahan. |
-| `mahasiswa` | Peserta didik yang terdaftar pada kelas SPADA (via enrollment Admin). |
+| `mahasiswa` | Peserta didik yang terdaftar pada kelas E-Learning Kampus (via enrollment Admin). |
 
 ## Struktur Modul
 
@@ -171,11 +171,11 @@ Password default seluruh akun: `password123`
 
 | Role | Username | Email | Keterangan |
 | --- | --- | --- | --- |
-| Admin | `admin` | `admin@upgris.ac.id` | Administrator SPADA |
-| Dosen | `198501152010121002` | `budi.santoso@upgris.ac.id` | NIDN sebagai username |
-| Dosen | `199003202015042001` | `siti.aminah@upgris.ac.id` | NIDN sebagai username |
-| Dosen | `197805102003122001` | `hadi.wijaya@upgris.ac.id` | NIDN sebagai username |
-| Mahasiswa | `2024001001`–`2024001010` | `<nim>@mhs.upgris.ac.id` | NIM sebagai username |
+| Admin | `admin` | `admin@kampus.ac.id` | Administrator E-Learning Kampus |
+| Dosen | `198501152010121002` | `budi.santoso@kampus.ac.id` | NIDN sebagai username |
+| Dosen | `199003202015042001` | `siti.aminah@kampus.ac.id` | NIDN sebagai username |
+| Dosen | `197805102003122001` | `hadi.wijaya@kampus.ac.id` | NIDN sebagai username |
+| Mahasiswa | `2024001001`–`2024001010` | `<nim>@mhs.kampus.ac.id` | NIM sebagai username |
 
 Seeder juga membuat 5 master mata kuliah (`TIF101`–`TIF105`) dan 2 kelas perkuliahan (`TI-A`, `SI-B`) untuk tahun ajaran `2026/2027` semester `ganjil`.
 
@@ -191,7 +191,7 @@ Seeder juga membuat 5 master mata kuliah (`TIF101`–`TIF105`) dan 2 kelas perku
   - Endpoint peninjau jejak audit untuk Admin: `GET /api/admin/audit-logs` (filter tanggal, aksi, entitas, user, search, sorting, pagination) dan `GET /api/admin/audit-logs/:id` (detail JSON diff).
   - Endpoint reset password Admin: `PUT /api/admin/users/:id/reset-password`.
   - HTTP Security Hardening: Helmet security headers, CORS terproteksi dengan validasi origin ketat, general & auth rate limiting (`express-rate-limit`).
-- ✅ **Fase 4: Master Data Akademik SPADA (Selesai — 5 test integrasi)**
+- ✅ **Fase 4: Master Data Akademik E-Learning Kampus (Selesai — 5 test integrasi)**
   - Manajemen pengguna Admin: pencarian username/email/nama/NIM/NIDN/NIP, filter role/status, dan pembuatan akun dengan identitas mahasiswa/dosen.
   - CRUD mata kuliah dengan pencarian, paginasi, validasi SKS 1–6, dan penonaktifan yang mempertahankan relasi kelas.
   - CRUD kelas dengan filter akademik, validasi mata kuliah/dosen aktif, jejak audit, dan perlindungan kapasitas serta enrollment.

@@ -1004,7 +1004,7 @@ export default function KelolaKls({ onNavigate, onRoleChange, courseId }) {
                   <span>Catatan Dosen Pengampu</span>
                 </div>
                 <p className="text-[11px] text-mvp-muted leading-relaxed">
-                  Toleransi keterlambatan baku SPADA UPGRIS adalah 15 menit. Mahasiswa yang mengisi
+                  Toleransi keterlambatan baku E-Learning Kampus adalah 15 menit. Mahasiswa yang mengisi
                   presensi di luar radius lab atau jaringan WiFi kampus akan ditandai label{' '}
                   <span className="text-mvp-body font-medium">Mobile</span> untuk ditinjau saat
                   evaluasi kehadiran mingguan.

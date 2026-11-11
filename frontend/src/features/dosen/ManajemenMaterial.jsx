@@ -20,7 +20,7 @@ const COURSE_CONTEXT = {
   sks: 3,
   lecturer: 'Dr. Bayu Pratama, M.Kom.',
   nidn: '0612345601',
-  room: 'Lab RPL 3.02 & SPADA Hybrid',
+  room: 'Lab RPL 3.02 & E-Learning Kampus Hybrid',
   meeting: 'Pertemuan 3 — Analisis Kebutuhan Sistem & Spesifikasi SRS IEEE 830',
   quotaUsed: 42,
   quotaTotal: 45,
@@ -420,7 +420,7 @@ export default function ManajemenMaterial({ onNavigate, onRoleChange }) {
                       </button>
                       <button
                         type="button"
-                        onClick={() => showToast('Menghubungi Tim Dukungan BAAK UPGRIS...')}
+                        onClick={() => showToast('Menghubungi Tim Dukungan BAAK...')}
                         className="font-label-md text-label-md text-error hover:text-on-error-container underline flex items-center gap-1 transition-colors cursor-pointer"
                       >
                         <span className="material-symbols-outlined text-[16px]">support_agent</span>
@@ -471,7 +471,7 @@ export default function ManajemenMaterial({ onNavigate, onRoleChange }) {
                     Validasi Akses Berkas
                   </h4>
                   <p className="font-caption text-caption text-outline">
-                    Protokol Keamanan SPADA UPGRIS
+                    Protokol Keamanan E-Learning Kampus
                   </p>
                 </div>
               </div>
@@ -561,7 +561,7 @@ export default function ManajemenMaterial({ onNavigate, onRoleChange }) {
                   </span>
                   <p className="text-[12px] leading-relaxed font-medium">
                     Tindakan ini tidak dapat dibatalkan. Riwayat audit akan mencatat penghapusan
-                    berkas ini sesuai regulasi SPADA UPGRIS.
+                    berkas ini sesuai regulasi E-Learning Kampus.
                   </p>
                 </div>
 

@@ -1,5 +1,5 @@
 ﻿/**
- * Konstanta akademik SPADA LMS
+ * Konstanta akademik E-Learning Kampus
  * Sumber kebenaran tunggal untuk konfigurasi akademik
  * FR-050: Admin dapat mengonfigurasi ambang kehadiran (default 70%)
  */

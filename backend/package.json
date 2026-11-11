@@ -1,7 +1,7 @@
 {
   "name": "rpl-lms-backend",
   "version": "1.0.0",
-  "description": "Backend API untuk SPADA LMS — Sistem Pembelajaran Daring Universitas PGRI Semarang",
+  "description": "Backend API untuk E-Learning Kampus — Sistem Pembelajaran Daring",
   "main": "src/server.js",
   "type": "module",
   "scripts": {

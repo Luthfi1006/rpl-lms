@@ -1,5 +1,5 @@
 # Implementation Plan: Backend MVP 2
-# SPADA (Learning Management System) Universitas PGRI Semarang (UPGRIS)
+# E-Learning Kampus (Learning Management System) Universitas
 **Team Membangun Negeri — Rencana Eksekusi Teknis Backend: Ruang Kelas 16 Pertemuan, Distribusi Materi & Presensi Digital**
 
 ---
@@ -57,11 +57,11 @@ Rencana ini adalah **kelanjutan langsung** dari [IMPLEMENTATION_PLAN_MVP1_BACKEN
 
 ---
 
-## 3. Desain Skema Database Tambahan (Migrasi `add_spada_mvp2_meetings_attendance`)
+## 3. Desain Skema Database Tambahan (Migrasi `add_elearning_mvp2_meetings_attendance`)
 
 ```prisma
 // ==========================================
-// 1. STRUKTUR 16 PERTEMUAN KELAS SPADA
+// 1. STRUKTUR 16 PERTEMUAN KELAS E-LEARNING KAMPUS
 // ==========================================
 
 model Meeting {
@@ -212,7 +212,7 @@ backend/src/modules/
 
 ### Fase 1: Migrasi Skema Database MVP 2 (Hari 1)
 - Menambahkan model `Meeting`, `Material`, `AttendanceSession`, `AttendanceRecord`, serta enum `ExamType`, `AttendanceStatus`, `PresenceStatus` pada `schema.prisma`.
-- Menjalankan migrasi database: `npx prisma migrate dev --name add_spada_mvp2_meetings_attendance`.
+- Menjalankan migrasi database: `npx prisma migrate dev --name add_elearning_mvp2_meetings_attendance`.
 - Menambahkan hook auto-generate 16 pertemuan saat kelas dibuat di service kelas MVP 1.
 
 ### Fase 2: Service & API 16 Pertemuan Terstruktur (Hari 2–3)

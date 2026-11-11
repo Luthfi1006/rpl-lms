@@ -231,7 +231,7 @@ export default function KelasDiampu({ onNavigate, onRoleChange }) {
     syncTimeoutRef.current = setTimeout(() => {
       setIsSyncing(false);
       setClasses(DEFAULT_CLASSES);
-      showToast('Sinkronisasi SIM-AKAD UPGRIS berhasil! 3 kelas siap diampu.', 'success');
+      showToast('Sinkronisasi SIM-AKAD berhasil! 3 kelas siap diampu.', 'success');
     }, 1200);
   };
 
@@ -492,7 +492,7 @@ export default function KelasDiampu({ onNavigate, onRoleChange }) {
                   <span className="material-symbols-outlined text-[16px] text-secondary">
                     verified_user
                   </span>
-                  <span>NIDN: {LECTURER.nidn} • Dosen Tetap Informatika UPGRIS</span>
+                  <span>NIDN: {LECTURER.nidn} • Dosen Tetap Informatika</span>
                 </div>
               )}
             </div>
@@ -974,15 +974,15 @@ export default function KelasDiampu({ onNavigate, onRoleChange }) {
               </div>
               <div className="py-4 space-y-3 font-body-sm text-body-sm text-on-surface-variant">
                 <p>
-                  Jika penugasan kelas Anda belum muncul di SPADA LMS, silakan verifikasi SK
+                  Jika penugasan kelas Anda belum muncul di E-Learning Kampus, silakan verifikasi SK
                   Mengajar pada operator:
                 </p>
                 <div className="p-3 rounded-lg bg-surface-container space-y-1">
                   <div className="font-label-md text-on-surface font-semibold">
-                    BAAK Fakultas Teknik Informatika UPGRIS
+                    BAAK Fakultas Teknik Informatika
                   </div>
                   <div>Gedung B Lt. 2 • Telp: (024) 87654321 ext 204</div>
-                  <div className="text-secondary">Email: prodi-ti@upgris.ac.id</div>
+                  <div className="text-secondary">Email: prodi-ti@kampus.ac.id</div>
                 </div>
               </div>
               <div className="pt-2 flex justify-end">

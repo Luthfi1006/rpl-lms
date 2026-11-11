@@ -211,7 +211,7 @@ export default function PemeriksaanTugas({ onRoleChange, onNavigate }) {
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
               <span className="px-2.5 py-0.5 rounded-full bg-primary-container text-on-primary-container font-label-sm text-[12px] font-bold">
-                Penilaian OBE SPADA
+                Penilaian OBE E-Learning
               </span>
               <span className="font-caption text-caption text-on-surface-variant">
                 Semester Ganjil 2026/2027
