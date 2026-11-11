@@ -123,7 +123,7 @@ Pembuatan akun mahasiswa memerlukan `nim`, `prodi`, dan `angkatan`; pembuatan ak
 cd backend
 npm install
 cp .env.example .env    # Sesuaikan konfigurasi DATABASE_URL
-npm run db:migrate      # Eksekusi migrasi awal (init_elearning_mvp1)
+npm run db:migrate      # Eksekusi migrasi awal (init_spada_mvp1)
 npm run db:seed         # Isi akun pengguna & master awal
 ```
 
@@ -182,7 +182,7 @@ Seeder juga membuat 5 master mata kuliah (`TIF101`–`TIF105`) dan 2 kelas perku
 ## Status Pengerjaan Backend
 
 - ✅ **Fase 1: Setup Lingkungan & Skema Database (Selesai)**
-  - `schema.prisma` (10 model), migrasi awal `init_elearning_mvp1`, seeder idempoten, konfigurasi storage berkas privat (BR-009).
+  - `schema.prisma` (10 model), migrasi awal `init_spada_mvp1`, seeder idempoten, konfigurasi storage berkas privat (BR-009).
 - ✅ **Fase 2: Autentikasi, Profil & RBAC Guard (Selesai — 24 test)**
   - Multi-credential login (username/email/NIM/NIDN/NIP), penolakan akun INACTIVE/SUSPENDED, refresh token & revocation, RBAC guard, modul profil mandiri, unggah avatar privat (2MB limit).
 - ✅ **Fase 3: Layanan Audit Trail Engine & Keamanan Server (Selesai — 33 test)**
