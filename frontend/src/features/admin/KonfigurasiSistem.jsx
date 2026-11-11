@@ -67,7 +67,7 @@ export default function KonfigurasiSistem({ onRoleChange, onNavigate }) {
           className="hover:text-primary transition-colors flex items-center gap-1"
         >
           <span className="material-symbols-outlined text-[16px]">home</span>
-          <span>Dasbor Admin</span>
+          <span>Dashboard Admin</span>
         </a>
         <span className="material-symbols-outlined text-[14px] text-outline">chevron_right</span>
         <span className="text-secondary font-semibold">Konfigurasi Sistem &amp; Kebijakan E-Learning Kampus</span>

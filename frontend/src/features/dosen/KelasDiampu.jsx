@@ -286,7 +286,7 @@ export default function KelasDiampu({ onNavigate, onRoleChange }) {
               className="inline-flex items-center gap-1 hover:text-primary transition-colors cursor-pointer"
             >
               <span className="material-symbols-outlined text-[16px]">home</span>
-              <span>Dasbor</span>
+              <span>Dashboard</span>
             </button>
             <span className="material-symbols-outlined text-[14px] text-outline">chevron_right</span>
             <span className="text-on-surface font-label-md font-semibold">Kelas Diampu</span>

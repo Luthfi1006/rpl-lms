@@ -3,9 +3,9 @@ import AppShell from '../../components/AppShell';
 import { adminApi } from '../../services/api';
 
 /**
- * DasborAdmin â€” Feature Component
+ * DasborAdmin — Feature Component
  *
- * Implementasi React untuk Dasbor Administrator E-Learning Kampus.
+ * Implementasi React untuk Dashboard Administrator E-Learning Kampus.
  * Memanfaatkan AppShell tunggal terpadu dengan penegakan RBAC.
  * Pengelolaan terpusat Master Data, Direct Enrollment, Rekap Audit Trail,
  * dan Pemantauan Integritas Sistem (Storage, MIME Whitelist, Gatekeeping Presensi).
@@ -446,7 +446,7 @@ export default function DasborAdmin({ onRoleChange, activeNavPath, onNavChange }
         <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-space-lg">
           <div className="flex flex-col gap-1 max-w-3xl">
             <h1 className="font-headline-lg text-headline-lg text-on-surface tracking-tight font-bold">
-              Dasbor Administrator E-Learning Kampus
+              Dashboard Administrator E-Learning Kampus
             </h1>
             <p className="font-body-md text-body-md text-on-surface-variant leading-relaxed">
               Semester Ganjil 2026/2027 &bull; Pengelolaan Terpusat Master Data, Direct Enrollment, dan Jejak Keamanan Sistem

@@ -10,7 +10,7 @@ export const navSections = [
     title: 'Menu Utama',
     role: 'mahasiswa',
     items: [
-      { path: 'dasbor-mahasiswa', label: 'Dasbor', icon: 'grid_view' },
+      { path: 'dasbor-mahasiswa', label: 'Dashboard', icon: 'grid_view' },
       { path: 'kelas-saya-mahasiswa', label: 'Kelas Saya', icon: 'menu_book' },
       { path: 'ruang-kelas', label: 'Ruang Kelas', icon: 'school' },
       { path: 'panduan-belajar', label: 'Panduan Belajar', icon: 'explore' },
@@ -29,7 +29,7 @@ export const navSections = [
     title: 'Menu Dosen',
     role: 'dosen',
     items: [
-      { path: 'dasbor-dosen', label: 'Dasbor Dosen', icon: 'co_present' },
+      { path: 'dasbor-dosen', label: 'Dashboard Dosen', icon: 'co_present' },
       { path: 'kelas-diampu', label: 'Kelas Diampu', icon: 'class' },
       { path: 'kelola-kelas', label: 'Kelola Kelas', icon: 'settings_applications' },
       { path: 'daftar-hadir-koreksi', label: 'Daftar Hadir & Koreksi', icon: 'fact_check' },
@@ -43,7 +43,7 @@ export const navSections = [
     title: 'Administrasi E-Learning Kampus',
     role: 'admin',
     items: [
-      { path: 'dasbor-admin', label: 'Dasbor Admin', icon: 'space_dashboard' },
+      { path: 'dasbor-admin', label: 'Dashboard Admin', icon: 'space_dashboard' },
       { path: 'direct-enrollment', label: 'Direct Enrollment', icon: 'how_to_reg' },
       { path: 'manajemen-pengguna', label: 'Manajemen Pengguna', icon: 'group' },
       { path: 'master-mata-kuliah', label: 'Master Mata Kuliah', icon: 'local_library' },

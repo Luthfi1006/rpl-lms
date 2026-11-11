@@ -185,7 +185,7 @@ export default function ManajemenMaterial({ onNavigate, onRoleChange }) {
               className="hover:text-primary transition-colors flex items-center gap-1 cursor-pointer"
             >
               <span className="material-symbols-outlined text-[14px]">school</span>
-              <span>Dasbor Dosen</span>
+              <span>Dashboard Dosen</span>
             </button>
             <span>/</span>
             <button
@@ -416,7 +416,7 @@ export default function ManajemenMaterial({ onNavigate, onRoleChange }) {
                         className="px-4 py-2 rounded-lg bg-surface-container-lowest hover:bg-surface-container-high text-on-surface font-label-md text-label-md flex items-center gap-1.5 transition-colors shadow-sm cursor-pointer"
                       >
                         <span className="material-symbols-outlined text-[16px]">arrow_back</span>
-                        <span>Kembali ke Dasbor</span>
+                        <span>Kembali ke Dashboard</span>
                       </button>
                       <button
                         type="button"

@@ -164,7 +164,7 @@ export default function StatusPresensi({ onNavigate }) {
             className="hover:text-primary transition-colors cursor-pointer"
             type="button"
           >
-            Dasbor
+            Dashboard
           </button>
           <span className="material-symbols-outlined text-[16px] text-outline">chevron_right</span>
           <button

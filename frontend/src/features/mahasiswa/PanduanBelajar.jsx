@@ -120,7 +120,7 @@ export default function PanduanBelajar({ onRoleChange, onNavigate, activeRole = 
           className="hover:text-primary transition-colors flex items-center gap-1"
         >
           <span className="material-symbols-outlined text-[16px]">home</span>
-          <span>Dasbor Mahasiswa</span>
+          <span>Dashboard Mahasiswa</span>
         </a>
         <span className="material-symbols-outlined text-[14px] text-outline">chevron_right</span>
         <span className="text-secondary font-semibold">Panduan Belajar Mahasiswa</span>
