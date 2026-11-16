@@ -54,6 +54,8 @@ Rencana ini adalah **kelanjutan langsung** dari [IMPLEMENTATION_PLAN_MVP1_BACKEN
 2. **Penyimpanan Berkas Terproteksi:** File materi tidak diletakkan di public assets, melainkan di direktori privat terisolasi server (`storage/materials/`). Pengunduhan dilakukan melalui endpoint perantara yang memverifikasi JWT dan kepesertaan (*enrollment check*) sebelum melakukan pipe streaming (*res.download / res.sendFile*).
 3. **State Machine Sesi Presensi:** Sesi presensi berstatus `CLOSED` secara default. Transisi status dikendalikan oleh dosen: `CLOSED → OPEN → CLOSED`. Check-in mahasiswa hanya valid saat `status == 'OPEN'`.
 4. **Idempotensi & Pencegahan Konkurensi:** Pengecekan check-in ganda ditegakkan oleh unique composite constraint database `@@unique([session_id, student_id])` untuk menjamin tidak ada duplikasi data kehadiran.
+5. **Penutupan Sesi Manual, Bukan Otomatis:** Sesi hanya berpindah ke `CLOSED` melalui aksi eksplisit dosen (`POST /api/meetings/:id/attendance/close`). `tolerance_minutes` tersimpan sebagai konfigurasi sesi dan ditampilkan di antarmuka sebagai konteks bagi mahasiswa, tetapi **belum** memicu penutupan otomatis — timer auto-close adalah lingkup Fase 5. Sampai itu ada, sesi `OPEN` bertahan hingga dosen menutupnya.
+6. **Penanda ALPA Otomatis Terpisah dari Keputusan Dosen:** ALPA yang dibuat sistem saat penutupan sesi ditandai kolom `is_auto_generated = true`; setiap koreksi dosen menurunkannya menjadi `false`. Pembukaan ulang sesi hanya menghapus baris bertanda `true`, sehingga ALPA yang sengaja ditetapkan dosen tidak pernah ikut terhapus. Kolom `notes` **tidak** dipakai sebagai penanda karena ia juga diisi manusia.
 
 ---
 
@@ -135,12 +137,13 @@ enum AttendanceStatus {
 }
 
 model AttendanceRecord {
-  id          String         @id @default(uuid()) @db.Uuid
-  session_id  String         @db.Uuid
-  student_id  String         @db.Uuid // Relasi ke Mahasiswa
-  status      PresenceStatus @default(HADIR)
-  recorded_at DateTime       @default(now())
-  notes       String?        @db.Text // Catatan khusus (misal alasan sakit/izin)
+  id                String         @id @default(uuid()) @db.Uuid
+  session_id        String         @db.Uuid
+  student_id        String         @db.Uuid // Relasi ke Mahasiswa
+  status            PresenceStatus @default(HADIR)
+  recorded_at       DateTime       @default(now())
+  notes             String?        @db.Text // Catatan khusus (misal alasan sakit/izin)
+  is_auto_generated Boolean        @default(false) // true = ALPA otomatis sistem, bukan keputusan dosen
 
   session AttendanceSession @relation(fields: [session_id], references: [id], onDelete: Cascade)
   student Mahasiswa         @relation(fields: [student_id], references: [id], onDelete: Cascade)
@@ -283,14 +286,18 @@ Tiga komponen berikut dipakai berulang oleh Fase 2–5 namun **belum ada di MVP 
 
 ---
 
-### Fase 4: Sesi Presensi & Check-in Mandiri Mahasiswa (Hari 6–7)
+### Fase 4: Sesi Presensi & Check-in Mandiri Mahasiswa (Hari 6–7) ✅ **SELESAI**
 
-- [ ] Implementasi endpoint buka sesi presensi `POST /api/meetings/:meetingId/attendance/open` dan tutup sesi `close`.
-- [ ] Implementasi endpoint check-in mahasiswa `POST /api/attendance/:sessionId/check-in`:
+- [x] Implementasi endpoint buka sesi presensi `POST /api/meetings/:meetingId/attendance/open` dan tutup sesi `close`.
+- [x] Implementasi endpoint check-in mahasiswa `POST /api/attendance/:sessionId/check-in`:
   - Pengecekan status sesi (`OPEN`). Jika `CLOSED`, tolak dengan status 400 Bad Request: *"Sesi presensi belum dibuka atau telah ditutup oleh Dosen Pengampu."*
   - Pengecekan kepesertaan: Mahasiswa wajib berstatus *enrolled* di kelas terkait.
   - Pencatatan kehadiran mandiri (`HADIR`).
-- [ ] Implementasi endpoint koreksi kehadiran oleh dosen `PUT /api/attendance/records/:id`.
+- [x] Implementasi endpoint koreksi kehadiran oleh dosen `PUT /api/attendance/records/:id`.
+- [x] Pelengkap: `GET /api/attendance/:sessionId/records` untuk dosen melihat roster kehadiran (termasuk mahasiswa yang belum check-in).
+- [x] **Penyetelan batas toleransi menit** saat membuka sesi (`tolerance_minutes`, rentang 1–180) — divalidasi Zod dan benar-benar tersimpan.
+- [x] **Pemisahan ALPA otomatis dari keputusan dosen** melalui kolom `is_auto_generated`, sehingga koreksi dosen tidak terhapus saat sesi dibuka ulang.
+- [ ] **Timer penutupan sesi otomatis** berdasarkan `tolerance_minutes` — lingkup Fase 5; sampai ada, sesi hanya ditutup manual oleh dosen.
 
 ---
 
