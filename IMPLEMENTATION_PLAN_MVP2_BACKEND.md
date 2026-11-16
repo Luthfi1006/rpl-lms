@@ -283,14 +283,15 @@ Tiga komponen berikut dipakai berulang oleh Fase 2–5 namun **belum ada di MVP 
 
 ---
 
-### Fase 4: Sesi Presensi & Check-in Mandiri Mahasiswa (Hari 6–7)
+### Fase 4: Sesi Presensi & Check-in Mandiri Mahasiswa (Hari 6–7) ✅ **SELESAI**
 
-- [ ] Implementasi endpoint buka sesi presensi `POST /api/meetings/:meetingId/attendance/open` dan tutup sesi `close`.
-- [ ] Implementasi endpoint check-in mahasiswa `POST /api/attendance/:sessionId/check-in`:
+- [x] Implementasi endpoint buka sesi presensi `POST /api/meetings/:meetingId/attendance/open` dan tutup sesi `close`.
+- [x] Implementasi endpoint check-in mahasiswa `POST /api/attendance/:sessionId/check-in`:
   - Pengecekan status sesi (`OPEN`). Jika `CLOSED`, tolak dengan status 400 Bad Request: *"Sesi presensi belum dibuka atau telah ditutup oleh Dosen Pengampu."*
   - Pengecekan kepesertaan: Mahasiswa wajib berstatus *enrolled* di kelas terkait.
   - Pencatatan kehadiran mandiri (`HADIR`).
-- [ ] Implementasi endpoint koreksi kehadiran oleh dosen `PUT /api/attendance/records/:id`.
+- [x] Implementasi endpoint koreksi kehadiran oleh dosen `PUT /api/attendance/records/:id`.
+- [x] Pelengkap: `GET /api/attendance/:sessionId/records` untuk dosen melihat roster kehadiran (termasuk mahasiswa yang belum check-in).
 
 ---
 

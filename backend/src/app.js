@@ -14,6 +14,10 @@ import usersRoutes from './modules/users/users.routes.js';
 import coursesRoutes from './modules/courses/courses.routes.js';
 import classesRoutes from './modules/classes/classes.routes.js';
 import enrollmentsRoutes from './modules/enrollments/enrollments.routes.js';
+import {
+  meetingAttendanceRoutes,
+  attendanceRoutes,
+} from './modules/attendance/attendance.routes.js';
 import { errorHandler } from './middlewares/error.middleware.js';
 import { attachAuditHelper } from './middlewares/audit.middleware.js';
 import { generalLimiter, authLimiter } from './middlewares/rateLimit.middleware.js';
@@ -107,6 +111,10 @@ app.use('/api/admin/classes', classesRoutes);
 app.use('/api/admin/enrollments', enrollmentsRoutes);
 app.use('/api/admin/audit-logs', auditLogRoutes);
 app.use('/api/audit-logs', auditLogRoutes); // Alias kemudahan akses
+
+// === Presensi Digital MVP 2 (Fase 4) ===
+app.use('/api/meetings', meetingAttendanceRoutes);
+app.use('/api/attendance', attendanceRoutes);
 
 // 404 Handler untuk rute tak terdefinisi
 app.use((req, res) => {
