@@ -17,8 +17,12 @@ export const ATTENDANCE_CLOSED_MESSAGE =
   'Sesi presensi belum dibuka atau telah ditutup oleh Dosen Pengampu.';
 
 /**
- * Catatan penanda ALPA otomatis saat dosen menutup sesi. Nilai ini dipakai
- * untuk mengenali baris yang boleh dibersihkan ketika sesi dibuka ulang.
+ * Catatan keterangan yang disematkan pada ALPA otomatis saat dosen menutup sesi.
+ *
+ * Nilai ini **hanya** teks keterangan untuk dibaca manusia — bukan penanda baris.
+ * Penanda strukturalnya adalah kolom `is_auto_generated` (lihat `openSession`
+ * dan `updateRecord`), sebab `notes` juga diisi dosen saat mengoreksi sehingga
+ * tidak dapat dipakai membedakan baris sistem dari keputusan dosen.
  */
 export const AUTO_ABSENCE_NOTE = 'Tidak melakukan check-in sebelum sesi presensi ditutup';
 
@@ -106,8 +110,12 @@ export class AttendanceService {
 
   /**
    * Dosen membuka sesi presensi pertemuan (state machine CLOSED → OPEN).
+   *
+   * `payload.tolerance_minutes` (opsional) menyetel batas toleransi sesi. Sebelum
+   * perbaikan ini field tersebut dibuang diam-diam sementara respons tetap
+   * mengembalikannya, sehingga frontend mengira nilainya tersimpan.
    */
-  static async openSession({ user, meetingId, ipAddress, userAgent }) {
+  static async openSession({ user, meetingId, payload = {}, ipAddress, userAgent }) {
     const meeting = await this.#findMeetingOrThrow(meetingId);
     ensureCanManageClass(meeting.class, user);
 
@@ -116,24 +124,36 @@ export class AttendanceService {
       throw new AppError('Sesi presensi pertemuan ini sudah dalam status dibuka', 409);
     }
 
+    const toleranceMinutes = payload.tolerance_minutes ?? previous?.tolerance_minutes;
     const openedAt = new Date();
     const session = await prisma.$transaction(async (tx) => {
       if (previous?.status === 'CLOSED') {
-        // Sesi dibuka ulang: hapus ALPA otomatis agar mahasiswa bisa check-in lagi.
-        // ALPA yang diubah dosen tidak ikut terhapus karena catatan penandanya berbeda.
+        // Sesi dibuka ulang: hapus HANYA ALPA yang dibuat sistem agar mahasiswa
+        // bisa check-in lagi. Penanda `is_auto_generated` — bukan teks catatan —
+        // yang membedakannya, sebab `notes` juga diisi dosen saat mengoreksi.
+        // Dengan begitu ALPA yang sengaja ditetapkan dosen tetap utuh.
         await tx.attendanceRecord.deleteMany({
           where: {
             session_id: previous.id,
-            status: 'ALPA',
-            notes: AUTO_ABSENCE_NOTE,
+            is_auto_generated: true,
           },
         });
       }
 
       return tx.attendanceSession.upsert({
         where: { meeting_id: meetingId },
-        create: { meeting_id: meetingId, status: 'OPEN', opened_at: openedAt },
-        update: { status: 'OPEN', opened_at: openedAt, closed_at: null },
+        create: {
+          meeting_id: meetingId,
+          status: 'OPEN',
+          opened_at: openedAt,
+          ...(toleranceMinutes !== undefined && { tolerance_minutes: toleranceMinutes }),
+        },
+        update: {
+          status: 'OPEN',
+          opened_at: openedAt,
+          closed_at: null,
+          ...(toleranceMinutes !== undefined && { tolerance_minutes: toleranceMinutes }),
+        },
       });
     });
 
@@ -187,6 +207,10 @@ export class AttendanceService {
             status: 'ALPA',
             recorded_at: closedAt,
             notes: AUTO_ABSENCE_NOTE,
+            // Penanda sistem: baris inilah yang boleh dibersihkan saat sesi
+            // dibuka ulang. `updateRecord` menurunkannya menjadi false begitu
+            // dosen mengoreksi, sehingga keputusan dosen tidak ikut terhapus.
+            is_auto_generated: true,
           })),
           skipDuplicates: true,
         });
@@ -327,9 +351,20 @@ export class AttendanceService {
 
     ensureCanManageClass(existing.session.meeting.class, user);
 
-    const data = { status: payload.status };
+    const data = {
+      status: payload.status,
+      // Begitu dosen menyentuh baris ini, ia bukan lagi catatan sistem —
+      // sehingga pembukaan ulang sesi tidak akan menghapusnya.
+      is_auto_generated: false,
+    };
+
     if (payload.notes !== undefined) {
       data.notes = payload.notes ?? null;
+    } else if (existing.is_auto_generated) {
+      // Catatan penanda ALPA otomatis dibersihkan bila dosen tidak mengirim
+      // catatan sendiri. Tanpa ini, baris berstatus IZIN/SAKIT/HADIR tetap
+      // membawa teks "Tidak melakukan check-in ..." — keterangan yang salah.
+      data.notes = null;
     }
 
     const record = await prisma.attendanceRecord.update({

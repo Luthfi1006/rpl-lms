@@ -9,6 +9,7 @@ export class AttendanceController {
       const data = await AttendanceService.openSession({
         user: req.user,
         meetingId: req.params.meetingId,
+        payload: req.body,
         ipAddress,
         userAgent,
       });

@@ -261,12 +261,13 @@ model AttendanceSession {
 }
 
 model AttendanceRecord {
-  id          String         @id @default(uuid()) @db.Uuid
-  session_id  String         @db.Uuid
-  student_id  String         @db.Uuid
-  status      PresenceStatus @default(HADIR)
-  recorded_at DateTime       @default(now())
-  notes       String?        @db.Text
+  id                String         @id @default(uuid()) @db.Uuid
+  session_id        String         @db.Uuid
+  student_id        String         @db.Uuid
+  status            PresenceStatus @default(HADIR)
+  recorded_at       DateTime       @default(now())
+  notes             String?        @db.Text
+  is_auto_generated Boolean        @default(false)
 
   session AttendanceSession @relation(fields: [session_id], references: [id], onDelete: Cascade)
   student Mahasiswa         @relation(fields: [student_id], references: [id], onDelete: Cascade)

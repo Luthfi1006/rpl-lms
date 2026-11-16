@@ -29,9 +29,12 @@ describe('Fase 4 MVP 2: Sesi Presensi & Check-in Mandiri Mahasiswa', () => {
   let testClass;
   let meeting1;
   let meeting2;
+  let meeting3;
+  let meeting4;
 
   let session1Id;
   let session2Id;
+  let session3Id;
   let record1Id;
   let record2Id;
   const auditedEntityIds = new Set();
@@ -59,8 +62,8 @@ describe('Fase 4 MVP 2: Sesi Presensi & Check-in Mandiri Mahasiswa', () => {
     return payload.data.accessToken;
   }
 
-  const openSession = (meetingId, token = dosenToken) =>
-    request(`/api/meetings/${meetingId}/attendance/open`, { method: 'POST', token });
+  const openSession = (meetingId, token = dosenToken, body) =>
+    request(`/api/meetings/${meetingId}/attendance/open`, { method: 'POST', token, body });
 
   const closeSession = (meetingId, token = dosenToken) =>
     request(`/api/meetings/${meetingId}/attendance/close`, { method: 'POST', token });
@@ -129,6 +132,8 @@ describe('Fase 4 MVP 2: Sesi Presensi & Check-in Mandiri Mahasiswa', () => {
     });
     meeting1 = meetings[0];
     meeting2 = meetings[1];
+    meeting3 = meetings[2];
+    meeting4 = meetings[3];
 
     await prisma.enrollment.createMany({
       data: [student1, student2].map((student) => ({
@@ -395,5 +400,112 @@ describe('Fase 4 MVP 2: Sesi Presensi & Check-in Mandiri Mahasiswa', () => {
 
     const finalClose = await closeSession(meeting2.id, adminToken);
     assert.equal(finalClose.status, 200);
+  });
+
+  /**
+   * Penutup Blocker 1: `tolerance_minutes` yang dikirim dosen harus benar-benar
+   * tersimpan dan dikembalikan apa adanya — bukan dibuang diam-diam sementara
+   * respons tetap memuat field tersebut.
+   */
+  test('Dosen dapat menyetel batas toleransi menit saat membuka sesi', async () => {
+    const response = await openSession(meeting3.id, dosenToken, { tolerance_minutes: 45 });
+    const payload = await response.json();
+
+    assert.equal(response.status, 200);
+    assert.equal(payload.data.tolerance_minutes, 45);
+
+    session3Id = payload.data.id;
+    auditedEntityIds.add(session3Id);
+
+    const stored = await prisma.attendanceSession.findUnique({ where: { id: session3Id } });
+    assert.equal(stored.tolerance_minutes, 45);
+  });
+
+  test('Nilai toleransi menit di luar batas atau bukan angka ditolak (400)', async () => {
+    const [nonNumeric, tooLarge, tooSmall, unknownField] = await Promise.all([
+      openSession(meeting4.id, dosenToken, { tolerance_minutes: 'lima belas' }),
+      openSession(meeting4.id, dosenToken, { tolerance_minutes: 5000 }),
+      openSession(meeting4.id, dosenToken, { tolerance_minutes: 0 }),
+      openSession(meeting4.id, dosenToken, { toleransi: 15 }),
+    ]);
+
+    for (const response of [nonNumeric, tooLarge, tooSmall, unknownField]) {
+      assert.equal(response.status, 400);
+      assert.equal((await response.json()).message, 'Validasi input gagal');
+    }
+  });
+
+  /**
+   * Penutup Blocker 2a: koreksi tanpa `notes` tidak boleh menyisakan catatan
+   * penanda ALPA otomatis pada baris yang sudah dosen koreksi.
+   */
+  test('Koreksi tanpa catatan membersihkan penanda ALPA otomatis', async () => {
+    const closed = await closeSession(meeting3.id);
+    assert.equal(closed.status, 200);
+
+    const records = await prisma.attendanceRecord.findMany({
+      where: { session_id: session3Id, student_id: student1.id },
+    });
+    assert.equal(records.length, 1);
+    assert.equal(records[0].notes, AUTO_ABSENCE_NOTE);
+    assert.equal(records[0].is_auto_generated, true);
+
+    const corrected = await request(`/api/attendance/records/${records[0].id}`, {
+      method: 'PUT',
+      token: dosenToken,
+      body: { status: 'IZIN' },
+    });
+    const payload = await corrected.json();
+    auditedEntityIds.add(records[0].id);
+
+    assert.equal(corrected.status, 200);
+    assert.equal(payload.data.status, 'IZIN');
+    assert.equal(payload.data.notes, null, 'catatan penanda ALPA harus dibersihkan');
+
+    const stored = await prisma.attendanceRecord.findUnique({ where: { id: records[0].id } });
+    assert.equal(stored.notes, null);
+    assert.equal(stored.is_auto_generated, false);
+  });
+
+  /**
+   * Penutup Blocker 2b: ALPA yang sengaja ditetapkan dosen harus bertahan saat
+   * sesi dibuka ulang — hanya ALPA buatan sistem yang boleh dibersihkan.
+   */
+  test('ALPA yang ditetapkan dosen bertahan saat sesi dibuka ulang', async () => {
+    const records = await prisma.attendanceRecord.findMany({
+      where: { session_id: session3Id, student_id: student2.id },
+    });
+    assert.equal(records.length, 1);
+    assert.equal(records[0].is_auto_generated, true);
+
+    // Dosen menetapkan ALPA secara eksplisit, tanpa catatan.
+    auditedEntityIds.add(records[0].id);
+    const corrected = await request(`/api/attendance/records/${records[0].id}`, {
+      method: 'PUT',
+      token: dosenToken,
+      body: { status: 'ALPA' },
+    });
+    assert.equal(corrected.status, 200);
+
+    const afterCorrection = await prisma.attendanceRecord.findUnique({
+      where: { id: records[0].id },
+    });
+    assert.equal(afterCorrection.status, 'ALPA');
+    assert.equal(afterCorrection.is_auto_generated, false);
+
+    // Buka ulang: ALPA otomatis dibersihkan, ALPA manual dosen tetap ada.
+    const reopened = await openSession(meeting3.id);
+    assert.equal(reopened.status, 200);
+
+    const survived = await prisma.attendanceRecord.findUnique({
+      where: { id: records[0].id },
+    });
+    assert.ok(survived, 'ALPA yang ditetapkan dosen tidak boleh terhapus saat buka ulang');
+    assert.equal(survived.status, 'ALPA');
+
+    const autoRows = await prisma.attendanceRecord.findMany({
+      where: { session_id: session3Id, is_auto_generated: true },
+    });
+    assert.equal(autoRows.length, 0, 'seluruh ALPA otomatis harus dibersihkan');
   });
 });

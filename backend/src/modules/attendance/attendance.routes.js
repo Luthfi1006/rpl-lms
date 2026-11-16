@@ -5,7 +5,8 @@ import { requireRole } from '../../middlewares/rbac.middleware.js';
 import { validate } from '../../middlewares/validate.middleware.js';
 import { ROLES } from '../../constants/roles.js';
 import {
-  meetingIdParamSchema,
+  openAttendanceSessionSchema,
+  closeAttendanceSessionSchema,
   sessionIdParamSchema,
   updateAttendanceRecordSchema,
 } from './attendance.dto.js';
@@ -21,14 +22,14 @@ meetingAttendanceRoutes.use(authenticateToken);
 meetingAttendanceRoutes.post(
   '/:meetingId/attendance/open',
   requireRole(ROLES.DOSEN, ROLES.ADMIN),
-  validate(meetingIdParamSchema),
+  validate(openAttendanceSessionSchema),
   AttendanceController.openSession
 );
 
 meetingAttendanceRoutes.post(
   '/:meetingId/attendance/close',
   requireRole(ROLES.DOSEN, ROLES.ADMIN),
-  validate(meetingIdParamSchema),
+  validate(closeAttendanceSessionSchema),
   AttendanceController.closeSession
 );
 
