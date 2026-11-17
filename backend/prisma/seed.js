@@ -240,6 +240,14 @@ async function main() {
         semester: SEMESTER,
         name: cl.name,
         capacity: cl.capacity,
+        meetings: {
+          create: ACADEMIC.generate16Meetings().map((m) => ({
+            meeting_number: m.meeting_number,
+            title: m.title,
+            is_exam: m.is_exam,
+            exam_type: m.exam_type || 'NONE',
+          })),
+        },
       },
     });
     classes.push(newClass);

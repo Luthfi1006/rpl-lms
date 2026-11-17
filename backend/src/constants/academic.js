@@ -15,17 +15,26 @@ export const ACADEMIC = {
   // Kebijakan kehadiran (FR-050)
   DEFAULT_ATTENDANCE_THRESHOLD: 70, // Persentase kehadiran minimal (%)
 
-  // Generator untuk struktur 16 pertemuan
+    // Generator untuk struktur 16 pertemuan
   generate16Meetings() {
     const meetings = [];
     for (let i = 1; i <= this.TOTAL_MEETINGS; i++) {
-      const meeting = {
+      const isExam = !!this.EXAM_MEETINGS[i];
+      const examType = this.EXAM_MEETINGS[i] || 'NONE';
+      const title = isExam
+        ? `Pertemuan ${i}: ${examType === 'UTS' ? 'Evaluasi Tengah Semester (UTS)' : 'Evaluasi Akhir Semester (UAS)'}`
+        : `Pertemuan ${i}`;
+
+      meetings.push({
         meeting_number: i,
-        title: `Pertemuan ${i}`,
-        is_exam: !!this.EXAM_MEETINGS[i],
-        exam_type: this.EXAM_MEETINGS[i] || 'NONE',
-      };
-      meetings.push(meeting);
+        title,
+        description: isExam
+          ? `Ujian ${examType === 'UTS' ? 'Tengah' : 'Akhir'} Semester`
+          : `Sesi pembelajaran perkuliahan pertemuan ke-${i}`,
+        is_exam: isExam,
+        exam_type: examType,
+        is_published: true,
+      });
     }
     return meetings;
   },

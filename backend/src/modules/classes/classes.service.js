@@ -131,8 +131,10 @@ export class ClassesService {
           create: ACADEMIC.generate16Meetings().map((m) => ({
             meeting_number: m.meeting_number,
             title: m.title,
+            description: m.description,
             is_exam: m.is_exam,
             exam_type: m.exam_type || "NONE",
+            is_published: m.is_published ?? true,
           })),
         },
       },

@@ -34,6 +34,9 @@ export const updateMeetingSchema = {
         .boolean({ message: "Status publikasi harus boolean" })
         .optional(),
     })
-    .strict(),
+    .strict()
+    .refine((data) => Object.keys(data).length > 0, {
+      message: "Tidak ada data yang diperbarui",
+    }),
 };
 
