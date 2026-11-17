@@ -6,6 +6,7 @@
  */
 import React, { useState } from 'react';
 import { useAuthStore } from '../stores/authStore';
+import ThemeToggle from '../components/ThemeToggle';
 
 export default function LoginPage({ onNavigate, onRoleChange, onBack }) {
   const [username, setUsername] = useState('');
@@ -49,7 +50,12 @@ export default function LoginPage({ onNavigate, onRoleChange, onBack }) {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-gutter">
+    <div className="relative min-h-screen bg-background flex items-center justify-center p-gutter">
+      {/* Pengalih tema untuk halaman standalone (tanpa AppShell/Header) */}
+      <div className="absolute top-space-md right-gutter">
+        <ThemeToggle variant="labeled" />
+      </div>
+
       <div className="w-full max-w-md bg-surface-container-low rounded-2xl shadow-xl border border-outline-variant/20 p-space-xl">
         <button
           type="button"
@@ -64,8 +70,8 @@ export default function LoginPage({ onNavigate, onRoleChange, onBack }) {
           <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-primary-container flex items-center justify-center">
             <span className="material-symbols-outlined text-3xl text-on-primary-container">school</span>
           </div>
-          <h1 className="font-headline-lg text-headline-lg text-on-surface font-bold">Masuk ke SPADA UPGRIS</h1>
-          <p className="font-body-md text-body-md text-on-surface-variant mt-2">Sistem Pembelajaran Daring FPTIK</p>
+          <h1 className="font-headline-lg text-headline-lg text-on-surface font-bold">Masuk ke E-Learning Kampus</h1>
+          <p className="font-body-md text-body-md text-on-surface-variant mt-2">Sistem Pembelajaran Daring</p>
         </div>
 
         {error && (

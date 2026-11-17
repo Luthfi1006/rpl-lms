@@ -199,7 +199,7 @@ export default function PemeriksaanTugas({ onRoleChange, onNavigate }) {
           className="hover:text-primary transition-colors flex items-center gap-1"
         >
           <span className="material-symbols-outlined text-[16px]">home</span>
-          <span>Dasbor Dosen</span>
+          <span>Dashboard Dosen</span>
         </a>
         <span className="material-symbols-outlined text-[14px] text-outline">chevron_right</span>
         <span className="text-secondary font-semibold">Pemeriksaan Rubrik Tugas</span>
@@ -211,7 +211,7 @@ export default function PemeriksaanTugas({ onRoleChange, onNavigate }) {
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
               <span className="px-2.5 py-0.5 rounded-full bg-primary-container text-on-primary-container font-label-sm text-[12px] font-bold">
-                Penilaian OBE SPADA
+                Penilaian OBE E-Learning
               </span>
               <span className="font-caption text-caption text-on-surface-variant">
                 Semester Ganjil 2026/2027
@@ -469,7 +469,7 @@ export default function PemeriksaanTugas({ onRoleChange, onNavigate }) {
 
       {/* Interactive Rubric Grading Modal */}
       {gradingModalOpen && currentSubmission && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-overlay backdrop-blur-sm animate-fadeIn">
           <div className="w-full max-w-2xl bg-surface-container-low rounded-2xl shadow-2xl border border-outline-variant/30 p-space-lg max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-space-sm border-b border-outline-variant/20 mb-space-md">
               <div>

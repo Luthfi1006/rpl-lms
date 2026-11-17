@@ -258,7 +258,7 @@ export default function KelasDiampu({ onNavigate, onRoleChange }) {
     syncTimeoutRef.current = setTimeout(() => {
       setIsSyncing(false);
       setClasses(DEFAULT_CLASSES);
-      showToast('Sinkronisasi SIM-AKAD UPGRIS berhasil! 3 kelas siap diampu.', 'success');
+      showToast('Sinkronisasi SIM-AKAD berhasil! 3 kelas siap diampu.', 'success');
     }, 1200);
   };
 
@@ -318,7 +318,7 @@ export default function KelasDiampu({ onNavigate, onRoleChange }) {
               className="inline-flex items-center gap-1 hover:text-primary transition-colors cursor-pointer"
             >
               <span className="material-symbols-outlined text-[16px]">home</span>
-              <span>Dasbor</span>
+              <span>Dashboard</span>
             </button>
             <span className="material-symbols-outlined text-[14px] text-outline">chevron_right</span>
             <span className="text-on-surface font-label-md font-semibold">Kelas Diampu</span>
@@ -383,7 +383,7 @@ export default function KelasDiampu({ onNavigate, onRoleChange }) {
                     setSelectedSemester(e.target.value);
                     showToast(`Memuat data untuk ${e.target.value}...`);
                   }}
-                  className="w-full bg-surface-container-high text-on-surface font-body-sm text-body-sm rounded-lg px-3 py-2 pr-9 appearance-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3B82F6] focus-visible:ring-offset-2 focus:bg-surface-bright transition-colors cursor-pointer"
+                  className="w-full bg-surface-container-high text-on-surface font-body-sm text-body-sm rounded-lg px-3 py-2 pr-9 appearance-none focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus:bg-surface-bright transition-colors cursor-pointer"
                 >
                   <option>Semester Ganjil 2026/2027</option>
                   <option>Semester Genap 2025/2026</option>
@@ -406,7 +406,7 @@ export default function KelasDiampu({ onNavigate, onRoleChange }) {
                   id="search-kelas"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-surface-container-high text-on-surface placeholder:text-outline font-body-sm text-body-sm rounded-lg pl-9 pr-8 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3B82F6] focus-visible:ring-offset-2 focus:bg-surface-bright transition-colors"
+                  className="w-full bg-surface-container-high text-on-surface placeholder:text-outline font-body-sm text-body-sm rounded-lg pl-9 pr-8 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus:bg-surface-bright transition-colors"
                   placeholder="Cari kode kelas, mata kuliah, jadwal..."
                   type="text"
                 />
@@ -503,7 +503,7 @@ export default function KelasDiampu({ onNavigate, onRoleChange }) {
                     <button
                       type="button"
                       onClick={() => setModalProdiOpen(true)}
-                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-on-primary hover:bg-primary-fixed transition-colors font-label-md text-label-md cursor-pointer font-semibold"
+                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-on-primary hover:bg-primary-hover transition-colors font-label-md text-label-md cursor-pointer font-semibold"
                     >
                       <span className="material-symbols-outlined text-[18px]">contact_support</span>
                       <span>Hubungi Operator Prodi</span>
@@ -524,7 +524,7 @@ export default function KelasDiampu({ onNavigate, onRoleChange }) {
                   <span className="material-symbols-outlined text-[16px] text-secondary">
                     verified_user
                   </span>
-                  <span>NIDN: {LECTURER.nidn} • Dosen Tetap Informatika UPGRIS</span>
+                  <span>NIDN: {LECTURER.nidn} • Dosen Tetap Informatika</span>
                 </div>
               )}
             </div>
@@ -781,7 +781,7 @@ export default function KelasDiampu({ onNavigate, onRoleChange }) {
                       onClick={() => {
                         if (onNavigate) onNavigate(`kelola-kelas?course=${item.courseId}`);
                       }}
-                      className="flex-1 py-2.5 px-4 rounded-lg bg-primary text-on-primary hover:bg-primary-fixed transition-colors font-label-md text-label-md text-center inline-flex items-center justify-center gap-1.5 shadow-sm font-semibold cursor-pointer"
+                      className="flex-1 py-2.5 px-4 rounded-lg bg-primary text-on-primary hover:bg-primary-hover transition-colors font-label-md text-label-md text-center inline-flex items-center justify-center gap-1.5 shadow-sm font-semibold cursor-pointer"
                     >
                       <span>Kelola Ruang Kelas</span>
                       <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
@@ -823,7 +823,7 @@ export default function KelasDiampu({ onNavigate, onRoleChange }) {
         {/* ── MODAL: Agenda Mengajar Hari Ini ── */}
         {modalAgendaOpen && (
           <div
-            className="fixed inset-0 z-[100] bg-surface-dim/80 backdrop-blur-sm flex items-center justify-center p-4"
+            className="fixed inset-0 z-[100] bg-overlay backdrop-blur-sm flex items-center justify-center p-4"
             onClick={() => setModalAgendaOpen(false)}
           >
             <div
@@ -910,7 +910,7 @@ export default function KelasDiampu({ onNavigate, onRoleChange }) {
         {/* ── MODAL: Kelola Ruang Kelas ── */}
         {modalManageClass && (
           <div
-            className="fixed inset-0 z-[100] bg-surface-dim/80 backdrop-blur-sm flex items-center justify-center p-4"
+            className="fixed inset-0 z-[100] bg-overlay backdrop-blur-sm flex items-center justify-center p-4"
             onClick={() => setModalManageClass(null)}
           >
             <div
@@ -1072,7 +1072,7 @@ export default function KelasDiampu({ onNavigate, onRoleChange }) {
         {/* ── MODAL: Hubungi Operator Prodi ── */}
         {modalProdiOpen && (
           <div
-            className="fixed inset-0 z-[100] bg-surface-dim/80 backdrop-blur-sm flex items-center justify-center p-4"
+            className="fixed inset-0 z-[100] bg-overlay backdrop-blur-sm flex items-center justify-center p-4"
             onClick={() => setModalProdiOpen(false)}
           >
             <div
@@ -1103,15 +1103,15 @@ export default function KelasDiampu({ onNavigate, onRoleChange }) {
               </div>
               <div className="py-4 space-y-3 font-body-sm text-body-sm text-on-surface-variant">
                 <p>
-                  Jika penugasan kelas Anda belum muncul di SPADA LMS, silakan verifikasi SK
+                  Jika penugasan kelas Anda belum muncul di E-Learning Kampus, silakan verifikasi SK
                   Mengajar pada operator:
                 </p>
                 <div className="p-3 rounded-lg bg-surface-container space-y-1">
                   <div className="font-label-md text-on-surface font-semibold">
-                    BAAK Fakultas Teknik Informatika UPGRIS
+                    BAAK Fakultas Teknik Informatika
                   </div>
                   <div>Gedung B Lt. 2 • Telp: (024) 87654321 ext 204</div>
-                  <div className="text-secondary">Email: prodi-ti@upgris.ac.id</div>
+                  <div className="text-secondary">Email: prodi-ti@kampus.ac.id</div>
                 </div>
               </div>
               <div className="pt-2 flex justify-end">

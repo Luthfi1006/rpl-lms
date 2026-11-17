@@ -3,9 +3,9 @@ import AppShell from '../../components/AppShell';
 import { adminApi } from '../../services/api';
 
 /**
- * DasborAdmin â€” Feature Component
+ * DasborAdmin — Feature Component
  *
- * Implementasi React untuk Dasbor Administrator SPADA LMS UPGRIS.
+ * Implementasi React untuk Dashboard Administrator E-Learning Kampus.
  * Memanfaatkan AppShell tunggal terpadu dengan penegakan RBAC.
  * Pengelolaan terpusat Master Data, Direct Enrollment, Rekap Audit Trail,
  * dan Pemantauan Integritas Sistem (Storage, MIME Whitelist, Gatekeeping Presensi).
@@ -66,7 +66,7 @@ export default function DasborAdmin({ onRoleChange, activeNavPath, onNavChange }
       subtext: '100% Selesai Sinkronisasi',
       subIcon: 'check_circle',
       subColor: 'text-tertiary',
-      rightText: 'Otomatis PTIK',
+      rightText: 'Otomatis Sistem',
       icon: 'how_to_reg',
       iconBg: 'bg-tertiary-container/20 text-tertiary',
     },
@@ -76,7 +76,7 @@ export default function DasborAdmin({ onRoleChange, activeNavPath, onNavChange }
     {
       id: 'user',
       title: 'Tambah Pengguna Baru',
-      desc: 'Daftarkan Akun Mahasiswa, Dosen Pengampu, atau Staf Admin PTIK.',
+      desc: 'Daftarkan Akun Mahasiswa, Dosen Pengampu, atau Staf Admin Kampus.',
       icon: 'person_add',
       color: 'text-primary',
       action: 'Buka Formulir',
@@ -128,7 +128,7 @@ export default function DasborAdmin({ onRoleChange, activeNavPath, onNavChange }
     {
       id: 'log-1',
       timestamp: '2026-10-29 08:24:12',
-      actor: 'Admin PTIK (admin@upgris.ac.id)',
+      actor: 'Admin Kampus (admin@kampus.ac.id)',
       actorSub: 'NIP: 19880101 â€¢ Super Administrator',
       actionType: 'ENROLLMENT',
       actionBadgeClass: 'bg-tertiary-container/30 text-tertiary',
@@ -152,7 +152,7 @@ export default function DasborAdmin({ onRoleChange, activeNavPath, onNavChange }
     {
       id: 'log-3',
       timestamp: '2026-10-28 16:15:00',
-      actor: 'Admin PTIK (admin@upgris.ac.id)',
+      actor: 'Admin Kampus (admin@kampus.ac.id)',
       actorSub: 'NIP: 19880101 â€¢ Super Administrator',
       actionType: 'CONFIG_CHANGE',
       actionBadgeClass: 'bg-secondary-container/30 text-secondary',
@@ -176,7 +176,7 @@ export default function DasborAdmin({ onRoleChange, activeNavPath, onNavChange }
     {
       id: 'log-5',
       timestamp: '2026-10-28 11:20:44',
-      actor: 'Admin PTIK (admin@upgris.ac.id)',
+      actor: 'Admin Kampus (admin@kampus.ac.id)',
       actorSub: 'NIP: 19880101 â€¢ Super Administrator',
       actionType: 'ENROLLMENT',
       actionBadgeClass: 'bg-tertiary-container/30 text-tertiary',
@@ -218,7 +218,7 @@ export default function DasborAdmin({ onRoleChange, activeNavPath, onNavChange }
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-overlay backdrop-blur-sm"
           onClick={(e) => {
             if (e.target === e.currentTarget) setModalOpen(false);
           }}
@@ -274,7 +274,7 @@ export default function DasborAdmin({ onRoleChange, activeNavPath, onNavChange }
                       <select className="w-full mt-1 px-3 py-2 rounded-lg bg-surface-container-high border border-outline-variant/40 text-on-surface text-sm focus:outline-none focus:border-primary">
                         <option value="MAHASISWA">Mahasiswa</option>
                         <option value="DOSEN">Dosen Pengampu</option>
-                        <option value="ADMIN">Administrator PTIK</option>
+                        <option value="ADMIN">Administrator Kampus</option>
                       </select>
                     </div>
                     <div>
@@ -417,7 +417,7 @@ export default function DasborAdmin({ onRoleChange, activeNavPath, onNavChange }
                   setModalOpen(false);
                   showToast('Operasi master berhasil diproses dan dicatat di Jejak Audit!');
                 }}
-                className="px-4 py-2 rounded-lg bg-primary hover:bg-primary-fixed text-on-primary text-sm font-semibold transition-colors shadow-md"
+                className="px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-on-primary text-sm font-semibold transition-colors shadow-md"
               >
                 Simpan &amp; Terapkan
               </button>
@@ -437,7 +437,7 @@ export default function DasborAdmin({ onRoleChange, activeNavPath, onNavChange }
               <span className="relative inline-flex rounded-full h-2 w-2 bg-tertiary" />
             </span>
             <span className="font-caption text-caption font-bold tracking-wider text-tertiary uppercase">
-              Portal Administrator Utama &bull; Kontrol Tunggal SPADA LMS
+              Portal Administrator Utama &bull; Kontrol Tunggal E-Learning Kampus
             </span>
           </div>
         </div>
@@ -446,7 +446,7 @@ export default function DasborAdmin({ onRoleChange, activeNavPath, onNavChange }
         <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-space-lg">
           <div className="flex flex-col gap-1 max-w-3xl">
             <h1 className="font-headline-lg text-headline-lg text-on-surface tracking-tight font-bold">
-              Dasbor Administrator SPADA LMS
+              Dashboard Administrator E-Learning Kampus
             </h1>
             <p className="font-body-md text-body-md text-on-surface-variant leading-relaxed">
               Semester Ganjil 2026/2027 &bull; Pengelolaan Terpusat Master Data, Direct Enrollment, dan Jejak Keamanan Sistem
@@ -465,7 +465,7 @@ export default function DasborAdmin({ onRoleChange, activeNavPath, onNavChange }
                 setModalType('USER');
                 setModalOpen(true);
               }}
-              className="inline-flex items-center gap-space-xs px-4 py-2 rounded-lg bg-primary text-on-primary font-label-md text-label-md shadow-md hover:bg-primary-fixed hover:shadow-lg transition-all active:scale-[0.98]"
+              className="inline-flex items-center gap-space-xs px-4 py-2 rounded-lg bg-primary text-on-primary font-label-md text-label-md shadow-md hover:bg-primary-hover hover:shadow-lg transition-all active:scale-[0.98]"
               type="button"
             >
               <span className="material-symbols-outlined text-[18px]">add_circle</span>
@@ -597,7 +597,7 @@ export default function DasborAdmin({ onRoleChange, activeNavPath, onNavChange }
             </div>
 
             <a
-              className="font-label-sm text-label-sm text-primary hover:text-primary-fixed flex items-center gap-1"
+              className="font-label-sm text-label-sm text-primary hover:text-primary-hover flex items-center gap-1"
               href="#audit-all"
               onClick={(e) => { e.preventDefault(); if (onNavChange) onNavChange('jejak-audit'); else showToast('Membuka audit trail lengkap (2,840 entri)'); }}
             >

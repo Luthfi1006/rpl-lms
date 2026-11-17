@@ -25,12 +25,12 @@ const initialLogs = [
       initialBg: 'bg-primary-container text-on-primary-container',
     },
     actionType: 'ENROLL',
-    actionBadgeClass: 'bg-[#2563EB]/20 text-[#60A5FA]',
+    actionBadgeClass: 'bg-info-soft text-info-ink',
     entityType: 'Enrollment',
     entityTarget: 'Enrollment: ENR-2026-881',
     entitySubtitle: 'Class: TI-A • Rekayasa Perangkat Lunak',
     ip: '10.15.2.46',
-    networkType: 'VPN Internal UPGRIS',
+    networkType: 'VPN Internal Kampus',
     networkIcon: 'vpn_key',
     networkColor: 'text-tertiary',
     device: 'Chrome 132 • Windows 11',
@@ -38,7 +38,7 @@ const initialLogs = [
     diffData: {
       title: 'Inspeksi Perubahan Data: ENROLL pada Enrollment ENR-2026-881',
       badge: 'Enrollment Massal',
-      badgeBg: 'bg-blue-600',
+      badgeBg: 'bg-info-solid',
       entity: 'class_enrollments',
       targetId: 'ENR-2026-881',
       actorName: 'Admin Utama',
@@ -52,8 +52,8 @@ const initialLogs = [
         enrolled_by: '19820512',
         enrolled_at: '2026-10-13T08:24:12Z',
       },
-      ip: '10.15.2.46 (Kampus 4 UPGRIS)',
-      worker: 'spada-core-worker-01.upgris.ac.id',
+      ip: '10.15.2.46 (Kampus 4)',
+      worker: 'elearning-core-worker-01.kampus.ac.id',
       prevHash: '7c4d12...a901',
       sha256: 'f4a821e90bc34589d89012aefbc67190348710abc124ef98762341098dfbac78',
     },
@@ -72,7 +72,7 @@ const initialLogs = [
       initialBg: 'bg-secondary-container text-on-secondary-container',
     },
     actionType: 'GRADE_MUTATION',
-    actionBadgeClass: 'bg-[#D97706]/20 text-[#FBBF24]',
+    actionBadgeClass: 'bg-warning-soft text-warning-ink',
     entityType: 'Submission',
     entityTarget: 'Submission: SUB-9041',
     entitySubtitle: 'Tugas 01 DFD • NIM 24670001',
@@ -86,7 +86,7 @@ const initialLogs = [
     diffData: {
       title: 'Inspeksi Perubahan Data: GRADE_MUTATION pada Submission SUB-9041',
       badge: 'Mutasi Skor',
-      badgeBg: 'bg-[#D97706]',
+      badgeBg: 'bg-warning-solid',
       entity: 'assignments_submissions',
       targetId: '9041',
       actorName: 'Dr. Bayu Pratama, M.Kom.',
@@ -118,8 +118,8 @@ const initialLogs = [
         submission_file: 'Tugas01_24670001_Dimas_Rev.pdf',
         similarity_score: 12.4,
       },
-      ip: '10.15.4.12 (Kampus 4 UPGRIS)',
-      worker: 'spada-core-worker-02.upgris.ac.id',
+      ip: '10.15.4.12 (Kampus 4)',
+      worker: 'elearning-core-worker-02.kampus.ac.id',
       prevHash: '9a2c41...b730',
       sha256: 'e8b941a57e3f4c65e8a011cd098a5d3f9b23f81e84a29d5b78c93a02bb49c014',
     },
@@ -138,12 +138,12 @@ const initialLogs = [
       initialBg: 'bg-primary-container text-on-primary-container',
     },
     actionType: 'CONFIG_CHANGE',
-    actionBadgeClass: 'bg-[#0284C7]/20 text-[#38BDF8]',
+    actionBadgeClass: 'bg-info-soft text-info-ink',
     entityType: 'Config',
     entityTarget: 'Config: security.upload_policy',
     entitySubtitle: 'Scope: System-Wide Global',
     ip: '10.15.2.46',
-    networkType: 'VPN Internal UPGRIS',
+    networkType: 'VPN Internal Kampus',
     networkIcon: 'vpn_key',
     networkColor: 'text-tertiary',
     device: 'Firefox 130 • Linux Ubuntu',
@@ -151,7 +151,7 @@ const initialLogs = [
     diffData: {
       title: 'Inspeksi Perubahan Data: CONFIG_CHANGE pada security.upload_policy',
       badge: 'Konfigurasi Sistem',
-      badgeBg: 'bg-sky-600',
+      badgeBg: 'bg-info-solid',
       entity: 'system_configurations',
       targetId: 'security.upload_policy',
       actorName: 'Admin Utama',
@@ -172,8 +172,8 @@ const initialLogs = [
         virus_scan_enabled: true,
         updated_at: '2026-10-13T07:50:45Z',
       },
-      ip: '10.15.2.46 (Kampus 4 UPGRIS)',
-      worker: 'spada-core-worker-01.upgris.ac.id',
+      ip: '10.15.2.46 (Kampus 4)',
+      worker: 'elearning-core-worker-01.kampus.ac.id',
       prevHash: '6d12f4...e882',
       sha256: '99bf4321acb9876543210fedcba9876543210abcdef0123456789abcdef01234',
     },
@@ -192,12 +192,12 @@ const initialLogs = [
       initialBg: 'bg-primary-container text-on-primary-container',
     },
     actionType: 'UNENROLL',
-    actionBadgeClass: 'bg-[#E11D48]/20 text-[#FB7185]',
+    actionBadgeClass: 'bg-danger-soft text-danger-ink',
     entityType: 'Enrollment',
     entityTarget: 'Enrollment: ENR-2026-773',
     entitySubtitle: 'NIM: 23670019 (Cuti Akademik)',
     ip: '10.15.2.46',
-    networkType: 'VPN Internal UPGRIS',
+    networkType: 'VPN Internal Kampus',
     networkIcon: 'vpn_key',
     networkColor: 'text-tertiary',
     device: 'Chrome 132 • Windows 11',
@@ -218,16 +218,16 @@ const initialLogs = [
     },
     actionType: 'DELETE',
     actionBadgeLabel: 'DELETE / SUSPEND',
-    actionBadgeClass: 'bg-[#DC2626]/20 text-[#F87171]',
+    actionBadgeClass: 'bg-danger-soft text-danger-ink',
     entityType: 'User',
     entityTarget: 'User: Kevin Sanjaya',
     entitySubtitle: 'NIM: 23670019',
     ip: '10.15.2.46',
-    networkType: 'VPN Internal UPGRIS',
+    networkType: 'VPN Internal Kampus',
     networkIcon: 'vpn_key',
     networkColor: 'text-tertiary',
     device: 'Chrome 132 • Windows 11',
-    summary: 'Penonaktifan akun (Pelanggaran Presensi & Kode Etik Integritas Akademik Surat No 811/UPGRIS/2026).',
+    summary: 'Penonaktifan akun (Pelanggaran Presensi & Kode Etik Integritas Akademik Surat No 811/UNIV/2026).',
   },
   {
     id: 'aud-6',
@@ -247,13 +247,13 @@ const initialLogs = [
     actionBadgeClass: 'bg-surface-container-highest text-secondary',
     entityType: 'User',
     entityTarget: 'Auth: Session 9912',
-    entitySubtitle: 'Token: JWT-UPGRIS-OIDC',
+    entitySubtitle: 'Token: JWT-KAMPUS-OIDC',
     ip: '180.252.164.88',
     networkType: 'Telkomsel ISP Seluler',
     networkIcon: 'cell_tower',
     networkColor: 'text-on-surface-variant',
     device: 'Edge 131 • Android 15',
-    summary: 'Login berhasil via SSO Kampus UPGRIS Central Identity Server (OAuth 2.0 PKCE).',
+    summary: 'Login berhasil via SSO Kampus Central Identity Server (OAuth 2.0 PKCE).',
   },
   {
     id: 'aud-7',
@@ -269,12 +269,12 @@ const initialLogs = [
       initialBg: 'bg-primary-container text-on-primary-container',
     },
     actionType: 'CREATE',
-    actionBadgeClass: 'bg-[#059669]/20 text-[#34D399]',
+    actionBadgeClass: 'bg-success-soft text-success-ink',
     entityType: 'Class',
     entityTarget: 'Class: TIF-402 TI-A',
     entitySubtitle: 'Course: Arsitektur PL Enterprise',
     ip: '10.15.2.46',
-    networkType: 'VPN Internal UPGRIS',
+    networkType: 'VPN Internal Kampus',
     networkIcon: 'vpn_key',
     networkColor: 'text-tertiary',
     device: 'Chrome 132 • Windows 11',
@@ -344,7 +344,7 @@ export default function JejakAudit({ onNavigate }) {
             Beranda
           </a>
           <span className="material-symbols-outlined text-[14px] text-outline">chevron_right</span>
-          <span>Administrasi SPADA</span>
+          <span>Administrasi E-Learning Kampus</span>
           <span className="material-symbols-outlined text-[14px] text-outline">chevron_right</span>
           <span className="text-primary font-bold">Jejak Audit</span>
         </nav>
@@ -360,7 +360,7 @@ export default function JejakAudit({ onNavigate }) {
               </span>
             </div>
             <p className="font-body-md text-body-md text-on-surface-variant mt-1 max-w-4xl">
-              Pelacakan immutable log mutasi data, histori otentikasi, pergeseran nilai, dan aktivitas administratif terpusat SPADA LMS UPGRIS.
+              Pelacakan immutable log mutasi data, histori otentikasi, pergeseran nilai, dan aktivitas administratif terpusat E-Learning Kampus.
             </p>
           </div>
 
@@ -646,11 +646,11 @@ export default function JejakAudit({ onNavigate }) {
 
       {/* JSON Diff Inspector Modal */}
       {selectedLog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setSelectedLog(null)} role="dialog" aria-modal="true" aria-labelledby="modal-diff-inspector-heading">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-overlay backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setSelectedLog(null)} role="dialog" aria-modal="true" aria-labelledby="modal-diff-inspector-heading">
           <div className="relative w-full max-w-5xl bg-surface-container rounded-2xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden border border-outline-variant/30" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start justify-between px-space-lg py-space-md bg-surface-container-high border-b border-outline-variant/20">
               <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-[#D97706]/20 text-[#FBBF24]">
+                <div className="p-2 rounded-lg bg-warning-soft text-warning-ink">
                   <span className="material-symbols-outlined text-[24px]">difference</span>
                 </div>
                 <div>
@@ -678,22 +678,22 @@ export default function JejakAudit({ onNavigate }) {
 
             <div className="flex-1 overflow-y-auto p-space-md bg-surface-container-low">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-space-md">
-                <div className="flex flex-col rounded-xl overflow-hidden bg-[#93000a]/10 border border-[#93000a]/30">
-                  <div className="px-space-md py-2 bg-[#93000a]/20 text-[#ffb4ab] font-bold text-xs flex justify-between">
+                <div className="flex flex-col rounded-xl overflow-hidden bg-danger-soft border border-danger-border">
+                  <div className="px-space-md py-2 bg-danger-solid/15 text-danger-ink font-bold text-xs flex justify-between">
                     <span>Nilai Lama (Old Values)</span>
                     <span className="font-mono text-[10px]">Snapshot Sebelum Revisi</span>
                   </div>
-                  <pre className="p-space-md font-mono text-xs text-[#ffb4ab] bg-[#020f1e]/80 overflow-x-auto min-h-[160px]">
+                  <pre className="p-space-md font-mono text-xs text-danger-ink bg-surface-container-low overflow-x-auto min-h-[160px]">
                     <code>{selectedLog.diffData?.oldValues ? JSON.stringify(selectedLog.diffData.oldValues, null, 2) : 'null (Data Baru)'}</code>
                   </pre>
                 </div>
 
-                <div className="flex flex-col rounded-xl overflow-hidden bg-[#00a572]/10 border border-[#00a572]/30">
-                  <div className="px-space-md py-2 bg-[#00a572]/20 text-[#4edea3] font-bold text-xs flex justify-between">
+                <div className="flex flex-col rounded-xl overflow-hidden bg-success-soft border border-success-border">
+                  <div className="px-space-md py-2 bg-success-solid/15 text-success-ink font-bold text-xs flex justify-between">
                     <span>Nilai Baru (New Values)</span>
                     <span className="font-mono text-[10px]">Mutasi Terverifikasi</span>
                   </div>
-                  <pre className="p-space-md font-mono text-xs text-[#4edea3] bg-[#020f1e]/80 overflow-x-auto min-h-[160px]">
+                  <pre className="p-space-md font-mono text-xs text-success-ink bg-surface-container-low overflow-x-auto min-h-[160px]">
                     <code>{JSON.stringify(selectedLog.diffData?.newValues || selectedLog, null, 2)}</code>
                   </pre>
                 </div>

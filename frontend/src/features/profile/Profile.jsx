@@ -13,7 +13,7 @@ export default function Profile({ onRoleChange, onNavigate, activeRole = 'mahasi
   // Biodata form state
   const [fullName, setFullName] = useState(storeUser?.name || fixture.name);
   const [phone, setPhone] = useState('0812-3456-7890');
-  const [bio, setBio] = useState('Mahasiswa aktif Fakultas Pendidikan Teknologi Informasi dan Komunikasi (FPTIK) Universitas PGRI Semarang.');
+  const [bio, setBio] = useState('Mahasiswa aktif Fakultas Teknologi Informasi.');
   const [avatarUrl, setAvatarUrl] = useState(null);
 
   // Security form state
@@ -58,7 +58,7 @@ export default function Profile({ onRoleChange, onNavigate, activeRole = 'mahasi
     if (/[^A-Za-z0-9]/.test(pass)) score += 1;
 
     if (score <= 1) return { score: 25, label: 'Lemah', color: 'bg-error' };
-    if (score === 2) return { score: 50, label: 'Cukup', color: 'bg-amber-500' };
+    if (score === 2) return { score: 50, label: 'Cukup', color: 'bg-warning-solid' };
     if (score === 3) return { score: 75, label: 'Kuat', color: 'bg-secondary' };
     return { score: 100, label: 'Sangat Kuat', color: 'bg-tertiary' };
   };
@@ -147,7 +147,7 @@ export default function Profile({ onRoleChange, onNavigate, activeRole = 'mahasi
             </div>
             <label
               htmlFor="avatar-upload-input"
-              className="absolute inset-0 rounded-full bg-black/40 text-white flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-center p-1"
+              className="absolute inset-0 rounded-full bg-overlay text-white flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-center p-1"
             >
               <span className="material-symbols-outlined text-[24px]">photo_camera</span>
               <span className="text-[10px] font-semibold mt-0.5">Ubah Foto</span>
@@ -182,7 +182,7 @@ export default function Profile({ onRoleChange, onNavigate, activeRole = 'mahasi
               <span>&bull;</span>
               <span className="flex items-center gap-1">
                 <span className="material-symbols-outlined text-[16px]">school</span>
-                FPTIK UPGRIS
+                Fakultas Teknologi Informasi
               </span>
             </div>
           </div>
@@ -256,7 +256,7 @@ export default function Profile({ onRoleChange, onNavigate, activeRole = 'mahasi
                 value={fixture.identifier}
                 className="w-full px-3 py-2.5 rounded-lg bg-surface-container-high border border-outline-variant/20 text-on-surface-variant font-mono text-body-md cursor-not-allowed"
               />
-              <span className="text-[11px] text-outline mt-1 block">Dikelola langsung oleh Pusat PTIK UPGRIS (Read-only).</span>
+              <span className="text-[11px] text-outline mt-1 block">Dikelola langsung oleh Pusat Kampus (Read-only).</span>
             </div>
 
             <div>
