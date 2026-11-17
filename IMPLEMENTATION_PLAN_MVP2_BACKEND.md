@@ -265,11 +265,11 @@ Tiga komponen berikut dipakai berulang oleh Fase 2–5 namun **belum ada di MVP 
 
 ---
 
-### Fase 2: Service & API 16 Pertemuan Terstruktur (Hari 2–3)
+### Fase 2: Service & API 16 Pertemuan Terstruktur (Hari 2–3) ✅ **SELESAI**
 
-- [ ] Implementasi hook auto-generate 16 pertemuan saat kelas dibuat di service kelas MVP 1 (di `ClassesService.createClass`).
-- [ ] Implementasi endpoint `GET /api/classes/:classId/meetings` dan `GET /api/meetings/:id`.
-- [ ] Implementasi endpoint pembaruan topik oleh dosen `PUT /api/meetings/:id` dengan verifikasi kepemilikan kelas (memakai helper Fase 0).
+- [x] Implementasi hook auto-generate 16 pertemuan saat kelas dibuat di service kelas MVP 1 (di `ClassesService.createClass`).
+- [x] Implementasi endpoint `GET /api/classes/:classId/meetings` dan `GET /api/meetings/:id`.
+- [x] Implementasi endpoint pembaruan topik oleh dosen `PUT /api/meetings/:id` dengan verifikasi kepemilikan kelas (memakai helper Fase 0).
 
 > **Hindari duplikasi generator:** butir "implementasi generator 16 pertemuan" **tidak lagi dicantumkan di sini** karena hook auto-generate sudah dikerjakan pada Fase 1. Sumber kebenaran tunggal struktur 16 pertemuan sudah tersedia di MVP 1 pada `src/constants/academic.js` (`TOTAL_MEETINGS: 16` dan `EXAM_MEETINGS { 8: 'UTS', 16: 'UAS' }`). Fase 2 hanya **membaca** hasil generate tersebut dari tabel `meetings`, tidak membuat generator kedua.
 

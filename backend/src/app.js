@@ -1,4 +1,4 @@
-﻿import express from 'express';
+import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -18,6 +18,10 @@ import {
   meetingAttendanceRoutes,
   attendanceRoutes,
 } from './modules/attendance/attendance.routes.js';
+import {
+  classMeetingsRoutes,
+  meetingRoutes,
+} from './modules/meetings/meeting.routes.js';
 import { errorHandler } from './middlewares/error.middleware.js';
 import { attachAuditHelper } from './middlewares/audit.middleware.js';
 import { generalLimiter, authLimiter } from './middlewares/rateLimit.middleware.js';
@@ -104,6 +108,7 @@ app.use('/api/auth/forgot-password', authLimiter);
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/classes', classMeetingsRoutes);
 app.use('/api/classes', userClassesRoutes);
 app.use('/api/admin/users', usersRoutes);
 app.use('/api/admin/courses', coursesRoutes);
@@ -113,6 +118,7 @@ app.use('/api/admin/audit-logs', auditLogRoutes);
 app.use('/api/audit-logs', auditLogRoutes); // Alias kemudahan akses
 
 // === Presensi Digital MVP 2 (Fase 4) ===
+app.use('/api/meetings', meetingRoutes);
 app.use('/api/meetings', meetingAttendanceRoutes);
 app.use('/api/attendance', attendanceRoutes);
 

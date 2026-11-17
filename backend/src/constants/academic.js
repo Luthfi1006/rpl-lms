@@ -23,7 +23,7 @@ export const ACADEMIC = {
         meeting_number: i,
         title: `Pertemuan ${i}`,
         is_exam: !!this.EXAM_MEETINGS[i],
-        exam_type: this.EXAM_MEETINGS[i] || null,
+        exam_type: this.EXAM_MEETINGS[i] || 'NONE',
       };
       meetings.push(meeting);
     }

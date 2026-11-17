@@ -1,3 +1,4 @@
+import { ACADEMIC } from '../../constants/academic.js';
 import prisma from '../../config/prisma.js';
 import { AppError } from '../../utils/errors.js';
 import { AuditLogService } from '../audit-log/audit-log.service.js';
@@ -124,7 +125,17 @@ export class ClassesService {
   static async createClass({ adminId, classData, ipAddress, userAgent }) {
     await this.validateReferences(classData);
     const classRecord = await prisma.class.create({
-      data: classData,
+      data: {
+        ...classData,
+        meetings: {
+          create: ACADEMIC.generate16Meetings().map((m) => ({
+            meeting_number: m.meeting_number,
+            title: m.title,
+            is_exam: m.is_exam,
+            exam_type: m.exam_type || "NONE",
+          })),
+        },
+      },
       include: classRelations,
     });
 
