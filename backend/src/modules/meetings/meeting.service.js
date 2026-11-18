@@ -3,6 +3,7 @@ import { AppError } from "../../utils/errors.js";
 import { AuditLogService } from "../audit-log/audit-log.service.js";
 import { AUDIT_ENTITIES } from "../../constants/auditEntities.js";
 import {
+  canManageClass,
   ensureCanReadClass,
   ensureCanManageClass,
 } from "../../utils/ownership.js";
@@ -66,7 +67,7 @@ export class MeetingService {
     // Otorisasi: hanya yang berhak membaca kelas
     await ensureCanReadClass({ user, classRecord, classId });
 
-    const isManager = user.role === "admin" || (user.role === "dosen" && classRecord.lecturer.user_id === user.id);
+    const isManager = canManageClass(classRecord, user);
 
     const where = { class_id: classId };
     // Mahasiswa hanya melihat pertemuan yang sudah dipublikasikan
@@ -126,7 +127,7 @@ export class MeetingService {
       classId: meeting.class_id,
     });
 
-    const isManager = user.role === "admin" || (user.role === "dosen" && meeting.class.lecturer.user_id === user.id);
+    const isManager = canManageClass(meeting.class, user);
 
     // Mahasiswa tidak boleh melihat pertemuan yang belum dipublikasikan
     if (!isManager && !meeting.is_published) {

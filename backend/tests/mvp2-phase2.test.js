@@ -297,5 +297,61 @@ describe('Fase 2 MVP 2: Service & API 16 Pertemuan Terstruktur', () => {
       body: { is_exam: true },
     });
     assert.equal(resUnknownField.status, 400);
+
+    // Body kosong -> ditolak 400 (tidak boleh menulis audit tanpa perubahan)
+    const resEmptyBody = await request(`/api/meetings/${meeting1.id}`, {
+      method: 'PUT',
+      token: dosenToken,
+      body: {},
+    });
+    assert.equal(resEmptyBody.status, 400);
+    const jsonEmptyBody = await resEmptyBody.json();
+    assert.equal(jsonEmptyBody.success, false);
+  });
+
+  test('9. Publikasi pertemuan menyembunyikan pertemuan dari mahasiswa (BR-004)', async () => {
+    const meeting2 = meetings[1];
+
+    // Dosen menarik publikasi Pertemuan 2
+    const resUnpublish = await request(`/api/meetings/${meeting2.id}`, {
+      method: 'PUT',
+      token: dosenToken,
+      body: { is_published: false },
+    });
+    assert.equal(resUnpublish.status, 200);
+    assert.equal((await resUnpublish.json()).data.is_published, false);
+
+    // Mahasiswa enrolled tidak lagi melihat Pertemuan 2 pada daftar
+    const resMhsList = await request(`/api/classes/${testClass.id}/meetings`, {
+      token: mahasiswaEnrolledToken,
+    });
+    assert.equal(resMhsList.status, 200);
+    const mhsMeetings = (await resMhsList.json()).data;
+    assert.equal(mhsMeetings.length, 15);
+    assert.equal(
+      mhsMeetings.some((m) => m.meeting_number === 2),
+      false,
+      'Pertemuan belum dipublikasikan tidak boleh muncul bagi mahasiswa'
+    );
+
+    // Detail pertemuan yang belum dipublikasikan -> 404 bagi mahasiswa
+    const resMhsDetail = await request(`/api/meetings/${meeting2.id}`, {
+      token: mahasiswaEnrolledToken,
+    });
+    assert.equal(resMhsDetail.status, 404);
+
+    // Dosen pengampu tetap melihat seluruh 16 pertemuan
+    const resDosenList = await request(`/api/classes/${testClass.id}/meetings`, {
+      token: dosenToken,
+    });
+    assert.equal((await resDosenList.json()).data.length, 16);
+
+    // Kembalikan publikasi agar tidak mengganggu pengujian berikutnya
+    const resRepublish = await request(`/api/meetings/${meeting2.id}`, {
+      method: 'PUT',
+      token: dosenToken,
+      body: { is_published: true },
+    });
+    assert.equal(resRepublish.status, 200);
   });
 });

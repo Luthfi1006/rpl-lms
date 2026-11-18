@@ -321,6 +321,58 @@ components:
             format: uuid
           description: Digunakan untuk pendaftaran batch
 
+    UpdateMeetingRequest:
+      type: object
+      description: |
+        Minimal satu properti wajib diisi; body kosong ditolak dengan 400.
+        Kolom di luar daftar ini ditolak (skema strict).
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 150
+          description: Judul/topik pertemuan
+        description:
+          type: string
+          nullable: true
+          maxLength: 2000
+          description: Deskripsi pertemuan
+        is_published:
+          type: boolean
+          description: Status publikasi pertemuan bagi mahasiswa
+
+    Meeting:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        class_id:
+          type: string
+          format: uuid
+        meeting_number:
+          type: integer
+          minimum: 1
+          maximum: 16
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        is_exam:
+          type: boolean
+        exam_type:
+          type: string
+          enum: [NONE, UTS, UAS]
+        is_published:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
 paths:
   /auth/login:
     post:
@@ -885,3 +937,75 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiResponse'
+
+  /classes/{classId}/meetings:
+    get:
+      tags: [Meetings]
+      summary: Daftar 16 pertemuan terstruktur kelas (BR-004)
+      description: |
+        Mahasiswa hanya menerima pertemuan yang sudah dipublikasikan; Dosen
+        pengampu dan Admin menerima seluruh 16 pertemuan.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: classId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Daftar pertemuan kelas terurut berdasarkan nomor pertemuan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '403':
+          description: Pengguna tidak berhak membaca kelas (BR-003)
+        '404':
+          description: Kelas perkuliahan tidak ditemukan
+
+  /meetings/{id}:
+    get:
+      tags: [Meetings]
+      summary: Detail pertemuan beserta materi dan info sesi presensi
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/EntityId'
+      responses:
+        '200':
+          description: Detail pertemuan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '403':
+          description: Pengguna tidak berhak membaca kelas (BR-003)
+        '404':
+          description: Pertemuan tidak ditemukan (atau belum dipublikasikan bagi mahasiswa)
+    put:
+      tags: [Meetings]
+      summary: Dosen pengampu/Admin memperbarui topik, deskripsi, atau publikasi pertemuan
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/EntityId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMeetingRequest'
+      responses:
+        '200':
+          description: Pertemuan berhasil diperbarui dan tercatat pada audit_logs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '400':
+          description: Payload tidak valid atau tidak ada data yang diperbarui
+        '403':
+          description: Hanya dosen pengampu atau Admin yang berwenang
+        '404':
+          description: Pertemuan tidak ditemukan

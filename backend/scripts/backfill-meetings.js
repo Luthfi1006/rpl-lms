@@ -29,11 +29,11 @@ async function main() {
       title: m.title,
       description: m.description,
       is_exam: m.is_exam,
-      exam_type: m.exam_type,
+      exam_type: m.exam_type || 'NONE',
       is_published: m.is_published ?? true,
     }));
 
-    await prisma.meeting.createMany({ data: meetings });
+    await prisma.meeting.createMany({ data: meetings, skipDuplicates: true });
     console.log('  ' + cls.name + ': ' + meetings.length + ' pertemuan dibuat');
   }
 

@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import { ACADEMIC } from '../src/constants/academic.js';
 
 const prisma = new PrismaClient();
 
@@ -228,6 +229,23 @@ async function main() {
     });
 
     if (existing) {
+      // Kelas sudah ada: pastikan tetap memiliki 16 pertemuan (BR-004).
+      // Kelas lama hasil seed sebelum hook auto-generate ada dapat kosong,
+      // jadi idempoten tanpa menimpa topik yang sudah disunting dosen.
+      const meetingCount = await prisma.meeting.count({ where: { class_id: existing.id } });
+      if (meetingCount === 0) {
+        await prisma.meeting.createMany({
+          data: ACADEMIC.generate16Meetings().map((m) => ({
+            class_id: existing.id,
+            meeting_number: m.meeting_number,
+            title: m.title,
+            description: m.description,
+            is_exam: m.is_exam,
+            exam_type: m.exam_type || 'NONE',
+            is_published: m.is_published ?? true,
+          })),
+        });
+      }
       classes.push(existing);
       continue;
     }
@@ -244,8 +262,10 @@ async function main() {
           create: ACADEMIC.generate16Meetings().map((m) => ({
             meeting_number: m.meeting_number,
             title: m.title,
+            description: m.description,
             is_exam: m.is_exam,
             exam_type: m.exam_type || 'NONE',
+            is_published: m.is_published ?? true,
           })),
         },
       },

@@ -2,7 +2,26 @@ import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import app from '../src/app.js';
 import prisma from '../src/config/prisma.js';
+import { ACADEMIC } from '../src/constants/academic.js';
 import { cleanupTestArtifacts } from './setup.js';
+
+/**
+ * Fixture 16 pertemuan untuk kelas uji Fase 5.
+ *
+ * Sejak Fase 2 MVP 2, `GET /api/classes/:id` membaca pertemuan dari tabel
+ * `meetings`; kelas uji yang dibuat langsung lewat Prisma harus ikut mengisi
+ * tabel tersebut agar kontrak BR-004 tetap terverifikasi.
+ */
+function buildMeetingFixtures() {
+  return ACADEMIC.generate16Meetings().map((meeting) => ({
+    meeting_number: meeting.meeting_number,
+    title: meeting.title,
+    description: meeting.description,
+    is_exam: meeting.is_exam,
+    exam_type: meeting.exam_type || 'NONE',
+    is_published: meeting.is_published ?? true,
+  }));
+}
 
 describe('Fase 5: Modul Direct Enrollment (BR-002), Dasbor Kontekstual & Ruang Kelas', () => {
   let server;
@@ -88,6 +107,8 @@ describe('Fase 5: Modul Direct Enrollment (BR-002), Dasbor Kontekstual & Ruang K
     testCourse = await prisma.course.findFirst({ where: { code: 'TIF101' } });
 
     // 3. Buat kelas uji khusus Fase 5 (satu kelas kuota 2 untuk tes kapasitas, satu kelas utama)
+    //    Keduanya ikut membuat 16 pertemuan: sejak Fase 2 MVP 2, GET /api/classes/:id
+    //    membaca pertemuan dari tabel `meetings`, bukan lagi membangkitkannya di memori.
     const suffix = `${Date.now()}`.slice(-6);
     testClassSmall = await prisma.class.create({
       data: {
@@ -97,6 +118,7 @@ describe('Fase 5: Modul Direct Enrollment (BR-002), Dasbor Kontekstual & Ruang K
         semester: 'ganjil',
         name: `TEST-KUOTA-${suffix}`,
         capacity: 2,
+        meetings: { create: buildMeetingFixtures() },
       },
     });
 
@@ -108,6 +130,7 @@ describe('Fase 5: Modul Direct Enrollment (BR-002), Dasbor Kontekstual & Ruang K
         semester: 'ganjil',
         name: `TEST-MAIN-${suffix}`,
         capacity: 40,
+        meetings: { create: buildMeetingFixtures() },
       },
     });
   });

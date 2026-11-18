@@ -111,6 +111,10 @@ describe('Fase 6: Kepatuhan MVP 1 & Handoff API', () => {
         ['/dashboard', 'get'],
         ['/classes', 'get'],
         ['/admin/audit-logs', 'get'],
+        // Modul MVP 2 (Fase 2 — 16 pertemuan terstruktur)
+        ['/classes/{classId}/meetings', 'get'],
+        ['/meetings/{id}', 'get'],
+        ['/meetings/{id}', 'put'],
       ];
 
       for (const [path, method] of required) {

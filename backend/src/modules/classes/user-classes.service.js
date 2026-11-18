@@ -5,44 +5,42 @@ import { ACADEMIC } from '../../constants/academic.js';
 import { formatLecturerName } from '../../utils/format.js';
 import {
   authorizeClassAccess,
+  canManageClass,
   getLecturerRecordOrThrow,
   getStudentRecordOrThrow,
 } from '../../utils/ownership.js';
 
-export class UserClassesService {
-  /**
-   * Menghasilkan struktur 16 pertemuan terstruktur secara sistematis (BR-004)
-   * Menggunakan konstanta tunggal ACADEMIC (FR-050)
-   */
-  static generate16Meetings(classRecord) {
-    const meetings = [];
-    for (let i = 1; i <= ACADEMIC.TOTAL_MEETINGS; i++) {
-      const isExam = !!ACADEMIC.EXAM_MEETINGS[i];
-      const examType = ACADEMIC.EXAM_MEETINGS[i] || null;
+/**
+ * Memetakan satu baris tabel `meetings` ke bentuk respons kontrak MVP 1
+ * (BR-004). Endpoint lama menyajikan `type` dan
+ * `attendance_required_percentage`; keduanya diturunkan dari kolom model
+ * `Meeting` agar tidak ada generator kedua dan sumber kebenaran tetap tabel
+ * `meetings` (lihat IMPLEMENTATION_PLAN_MVP2_BACKEND.md — "tidak membuat
+ * generator kedua").
+ *
+ * @param {object} meeting baris tabel `meetings` (termasuk `_count` dan `attendance_session`)
+ * @returns {object} pertemuan dalam bentuk kontrak lama
+ */
+function toLegacyMeetingShape(meeting) {
+  return {
+    id: meeting.id,
+    meeting_number: meeting.meeting_number,
+    title: meeting.title,
+    description: meeting.description,
+    type: meeting.is_exam ? meeting.exam_type : 'REGULAR',
+    is_exam: meeting.is_exam,
+    exam_type: meeting.exam_type,
+    is_published: meeting.is_published,
+    // Prasyarat kehadiran (BR-012, FR-050) — ambang tunggal dari ACADEMIC
+    attendance_required_percentage: meeting.is_exam
+      ? ACADEMIC.DEFAULT_ATTENDANCE_THRESHOLD
+      : null,
+    material_count: meeting._count?.materials ?? 0,
+    has_attendance_session: Boolean(meeting.attendance_session),
+  };
+}
 
-      if (isExam) {
-        const examName = examType === 'UTS' ? 'Evaluasi Tengah Semester (UTS)' : 'Evaluasi Akhir Semester (UAS)';
-        meetings.push({
-          meeting_number: i,
-          title: `Pertemuan ${i}: ${examName}`,
-          description: `Ujian ${examType === 'UTS' ? 'Tengah' : 'Akhir'} Semester untuk mata kuliah ${classRecord.course.name}`,
-          type: examType,
-          is_exam: true,
-          attendance_required_percentage: ACADEMIC.DEFAULT_ATTENDANCE_THRESHOLD, // Prasyarat kehadiran (BR-012, FR-050)
-        });
-      } else {
-        meetings.push({
-          meeting_number: i,
-          title: `Pertemuan ${i}`,
-          description: `Sesi pembelajaran perkuliahan pertemuan ke-${i}`,
-          type: 'REGULAR',
-          is_exam: false,
-          attendance_required_percentage: null,
-        });
-      }
-    }
-    return meetings;
-  }
+export class UserClassesService {
 
   /**
    * Mengambil daftar kelas sesuai kontekstual peran pengguna (Mahasiswa: enrolled, Dosen: diampu)
@@ -245,7 +243,24 @@ export class UserClassesService {
     // Otoritas Akses Kelas (Aturan Bisnis BR-003) — helper terpusat Fase 0 MVP 2
     await authorizeClassAccess({ user, classRecord, classId });
 
-    const meetings = this.generate16Meetings(classRecord);
+    // Sumber kebenaran tunggal: baca dari tabel `meetings` (bukan generator
+    // kedua di memori), sehingga topik yang disunting dosen lewat
+    // PUT /api/meetings/:id langsung terlihat di endpoint lama ini.
+    const isManager = canManageClass(classRecord, user);
+    const meetingRows = await prisma.meeting.findMany({
+      where: {
+        class_id: classRecord.id,
+        // Mahasiswa hanya melihat pertemuan yang sudah dipublikasikan
+        ...(isManager ? {} : { is_published: true }),
+      },
+      orderBy: { meeting_number: 'asc' },
+      include: {
+        _count: { select: { materials: true } },
+        attendance_session: { select: { id: true } },
+      },
+    });
+
+    const meetings = meetingRows.map((meeting) => toLegacyMeetingShape(meeting));
 
     return {
       id: classRecord.id,
