@@ -88,6 +88,43 @@ function serializeRecord(record, student) {
 }
 
 export class AttendanceService {
+
+  static async #autoCloseExpiredSession(session) {
+    if (session.status !== 'OPEN' || !session.opened_at) return session;
+
+    const now = new Date();
+    const expiryDate = new Date(session.opened_at.getTime() + session.tolerance_minutes * 60000);
+
+    if (now > expiryDate) {
+      return await prisma.$transaction(async (tx) => {
+        const updated = await tx.attendanceSession.update({
+          where: { id: session.id },
+          data: { status: 'CLOSED', closed_at: now },
+        });
+
+        const enrollments = await tx.enrollment.findMany({
+          where: { class_id: session.meeting.class_id },
+          select: { student_id: true },
+        });
+
+        if (enrollments.length > 0) {
+          await tx.attendanceRecord.createMany({
+            data: enrollments.map((e) => ({
+              session_id: session.id,
+              student_id: e.student_id,
+              status: 'ALPA',
+              recorded_at: now,
+              notes: AUTO_ABSENCE_NOTE,
+              is_auto_generated: true,
+            })),
+            skipDuplicates: true,
+          });
+        }
+        return updated;
+      });
+    }
+    return session;
+  }
   static async #findMeetingOrThrow(meetingId) {
     const meeting = await prisma.meeting.findUnique({
       where: { id: meetingId },
@@ -239,13 +276,14 @@ export class AttendanceService {
    * Mahasiswa terdaftar melakukan check-in mandiri (hanya saat sesi OPEN).
    */
   static async checkIn({ user, sessionId }) {
-    const session = await prisma.attendanceSession.findUnique({
+    let session = await prisma.attendanceSession.findUnique({
       where: { id: sessionId },
       include: { meeting: { select: { id: true, class_id: true } } },
     });
 
     if (!session) {
       throw new AppError('Sesi presensi tidak ditemukan', 404);
+    session = await this.#autoCloseExpiredSession(session);
     }
 
     // Kepesertaan diperiksa lebih dulu agar mahasiswa luar kelas tidak bisa
@@ -291,7 +329,7 @@ export class AttendanceService {
    * Daftar kehadiran satu sesi, lengkap dengan mahasiswa yang belum mencatat.
    */
   static async getSessionRecords({ user, sessionId }) {
-    const session = await prisma.attendanceSession.findUnique({
+    let session = await prisma.attendanceSession.findUnique({
       where: { id: sessionId },
       include: {
         ...sessionMeetingInclude,
@@ -300,6 +338,7 @@ export class AttendanceService {
         },
       },
     });
+    session = await this.#autoCloseExpiredSession(session);
 
     if (!session) {
       throw new AppError('Sesi presensi tidak ditemukan', 404);
