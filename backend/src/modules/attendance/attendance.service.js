@@ -1,9 +1,11 @@
 import prisma from '../../config/prisma.js';
 import { AppError } from '../../utils/errors.js';
+import { ROLES } from '../../constants/roles.js';
 import { AUDIT_ENTITIES } from '../../constants/auditEntities.js';
 import { AuditLogService } from '../audit-log/audit-log.service.js';
 import {
   ensureCanManageClass,
+  ensureCanReadClass,
   ensureEnrolledInClass,
   getStudentRecordOrThrow,
 } from '../../utils/ownership.js';
@@ -388,5 +390,89 @@ export class AttendanceService {
     });
 
     return serializeRecord(record, record.student);
+  }
+
+  static async getAttendanceRecap({ user, classId }) {
+    const classRecord = await prisma.class.findUnique({
+      where: { id: classId },
+      include: {
+        lecturer: { select: { id: true, user_id: true } },
+        enrollments: {
+          orderBy: { student: { nim: 'asc' } },
+          include: { student: studentSummarySelect },
+        },
+      },
+    });
+
+    if (!classRecord) throw new AppError('Kelas tidak ditemukan', 404);
+    await ensureCanReadClass({ user, classRecord, classId });
+
+    const sessions = await prisma.attendanceSession.findMany({
+      where: { meeting: { class_id: classId } },
+      orderBy: { meeting: { meeting_number: 'asc' } },
+      include: {
+        meeting: { select: { id: true, meeting_number: true } },
+        records: { include: { student: { select: { id: true } } } },
+      },
+    });
+
+    const totalSessions = sessions.length;
+
+    // Mahasiswa hanya melihat data pribadinya (BR-003)
+    if (user?.role === ROLES.MAHASISWA) {
+      const student = await getStudentRecordOrThrow(user.id);
+      const enrollment = classRecord.enrollments.find((e) => e.student_id === student.id);
+      if (!enrollment) {
+        throw new AppError('Akses ditolak: Anda tidak terdaftar pada kelas perkuliahan ini', 403);
+      }
+
+      const records = sessions.map((s) =>
+        s.records.find((r) => r.student_id === student.id)
+      );
+      const hadirCount = records.filter((r) => r?.status === 'HADIR').length;
+      const percentage = totalSessions > 0 ? (hadirCount / totalSessions) * 100 : 0;
+
+      return {
+        total_sessions: totalSessions,
+        recap: [
+          {
+            student_id: student.id,
+            nim: student.nim,
+            full_name: student.user?.profile?.full_name ?? null,
+            total_hadir: hadirCount,
+            percentage: Number(percentage.toFixed(2)),
+            matrix: sessions.map((s, index) => ({
+              meeting_number: s.meeting.meeting_number,
+              status: records[index]?.status ?? null,
+            })),
+          },
+        ],
+      };
+    }
+
+    // Dosen & Admin melihat seluruh kelas
+    const recap = classRecord.enrollments.map((enrollment) => {
+      const student = enrollment.student;
+      const records = sessions.map((s) => s.records.find((r) => r.student_id === student.id));
+      const hadirCount = records.filter((r) => r?.status === 'HADIR').length;
+      const percentage = totalSessions > 0 ? (hadirCount / totalSessions) * 100 : 0;
+
+      return {
+        student_id: student.id,
+        nim: student.nim,
+        full_name: student.user?.profile?.full_name ?? null,
+        total_hadir: hadirCount,
+        percentage: Number(percentage.toFixed(2)),
+        matrix: sessions.map((s, index) => ({
+          meeting_number: s.meeting.meeting_number,
+          status: records[index]?.status ?? null,
+        })),
+      };
+    });
+
+    return {
+      total_sessions: totalSessions,
+      recap,
+    };
   }
 }
