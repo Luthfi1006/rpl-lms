@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import AppShell from '../../components/AppShell';
+import { useToast } from '@features/hooks/useToast';
+import Toast from '@features/components/Toast';
 
 /**
  * DasborAdmin — Feature Component
@@ -10,15 +12,10 @@ import AppShell from '../../components/AppShell';
  * dan Pemantauan Integritas Sistem (Storage, MIME Whitelist, Gatekeeping Presensi).
  */
 export default function DasborAdmin({ onRoleChange, activeNavPath, onNavChange }) {
-  const [toastMessage, setToastMessage] = useState(null);
+  const [toastMessage, showToast] = useToast();
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState(null);
   const [filterAction, setFilterAction] = useState('ALL');
-
-  const showToast = (msg) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3000);
-  };
 
   const metricCards = [
     {
@@ -201,16 +198,7 @@ export default function DasborAdmin({ onRoleChange, activeNavPath, onNavChange }
       }}
     >
       {/* Toast Notification Lokal */}
-      {toastMessage && (
-        <div
-          role="status"
-          aria-live="polite"
-          className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-surface-container-highest text-on-surface px-4 py-3 rounded-xl shadow-2xl border border-primary/30 animate-bounce"
-        >
-          <span className="material-symbols-outlined text-primary text-[20px]">info</span>
-          <span className="font-label-md text-sm">{toastMessage}</span>
-        </div>
-      )}
+      <Toast message={toastMessage} onClose={() => showToast(null)} />
 
       {/* ── MODAL OPERASIONAL ADMINISTRATOR ── */}
       {modalOpen && (

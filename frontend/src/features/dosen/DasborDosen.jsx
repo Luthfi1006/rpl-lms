@@ -1,6 +1,8 @@
 ﻿import React, { useState, useEffect, useCallback } from 'react';
 import AppShell from '../../components/AppShell';
 import { dosenApi } from '../../services/api';
+import { useToast } from '@features/hooks/useToast';
+import Toast from '@features/components/Toast';
 
 /**
  * DasborDosen — Feature Component
@@ -11,17 +13,12 @@ import { dosenApi } from '../../services/api';
  */
 export default function DasborDosen({ onRoleChange, onNavigate }) {
   const [activeMenu, setActiveMenu] = useState('dasbor-dosen');
-  const [toastMessage, setToastMessage] = useState(null);
+  const [toastMessage, showToast] = useToast();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [teachingMetrics, setTeachingMetrics] = useState([]);
   const [classList, setClassList] = useState([]);
   const [pendingGrading, setPendingGrading] = useState([]);
-
-  const showToast = (msg) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3000);
-  };
 
   const fetchDashboardData = useCallback(async () => {
     setLoading(true);
@@ -165,16 +162,7 @@ export default function DasborDosen({ onRoleChange, onNavigate }) {
       }}
     >
       {/* Toast Notification Lokal */}
-      {toastMessage && (
-        <div
-          role="status"
-          aria-live="polite"
-          className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-surface-container-highest text-on-surface px-4 py-3 rounded-xl shadow-2xl border border-primary/30 animate-bounce"
-        >
-          <span className="material-symbols-outlined text-primary text-[20px]">info</span>
-          <span className="font-label-md text-sm">{toastMessage}</span>
-        </div>
-      )}
+      <Toast message={toastMessage} onClose={() => showToast(null)} />
 
       {/* Top Breadcrumb & Metadata Path */}
       <div className="flex flex-wrap items-center justify-between gap-space-sm text-on-surface-variant font-caption text-caption mb-space-sm">

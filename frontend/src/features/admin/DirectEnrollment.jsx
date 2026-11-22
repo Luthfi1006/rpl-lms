@@ -1,4 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { useToast } from '@features/hooks/useToast';
+import Toast from '@features/components/Toast';
 
 // Data Rombel Kelas Awal
 const INITIAL_CLASSES = [
@@ -137,14 +139,9 @@ export default function DirectEnrollment({ onRoleChange }) {
   const [showCsvModal, setShowCsvModal] = useState(false);
   const [showLogModal, setShowLogModal] = useState(false);
   const [csvFile, setCsvFile] = useState(null);
-  const [toastMessage, setToastMessage] = useState(null);
+  const [toastMessage, showToast] = useToast(3500);
 
   const classDropdownRef = useRef(null);
-
-  const showToast = (msg) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3500);
-  };
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -325,22 +322,7 @@ export default function DirectEnrollment({ onRoleChange }) {
   return (
     <>
       {/* Toast Notifikasi Lokal */}
-      {toastMessage && (
-        <div
-          role="status"
-          className="fixed bottom-6 right-6 z-50 flex items-center gap-space-sm bg-surface-container-highest text-on-surface px-space-md py-space-sm rounded-xl shadow-2xl border border-primary/40 animate-bounce"
-        >
-          <span className="material-symbols-outlined text-primary text-[20px]">verified</span>
-          <span className="font-label-md text-sm">{toastMessage}</span>
-          <button
-            type="button"
-            onClick={() => setToastMessage(null)}
-            className="ml-2 text-on-surface-variant hover:text-on-surface p-0.5 rounded"
-          >
-            <span className="material-symbols-outlined text-[16px]">close</span>
-          </button>
-        </div>
-      )}
+      <Toast message={toastMessage} onClose={() => showToast(null)} />
 
       {/* Top Ambient Glow Decorator */}
       <div className="relative w-full">

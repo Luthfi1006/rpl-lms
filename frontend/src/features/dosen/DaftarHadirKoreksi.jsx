@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import AppShell from '../../components/AppShell';
+import { useToast } from '@features/hooks/useToast';
+import Toast from '@features/components/Toast';
 
 /**
  * DaftarHadirKoreksi — Feature Component
@@ -14,12 +16,7 @@ export default function DaftarHadirKoreksi({ onNavigate, onRoleChange }) {
   const [correctionModal, setCorrectionModal] = useState(null);
   const [selectedStatus, setSelectedStatus] = useState('HADIR');
   const [correctionNote, setCorrectionNote] = useState('');
-  const [toastMessage, setToastMessage] = useState(null);
-
-  const showToast = (msg) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3500);
-  };
+  const [toastMessage, showToast] = useToast(3500);
 
   const [students, setStudents] = useState([
     { id: 1, nim: '2024001001', name: 'Dimas Arya Pratama', time: '09:18 WIB', status: 'HADIR', note: 'Check-in mandiri mahasiswa via mobile web' },
@@ -80,12 +77,7 @@ export default function DaftarHadirKoreksi({ onNavigate, onRoleChange }) {
       onNavChange={onNavigate}
     >
       {/* Toast */}
-      {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-surface-container-highest text-on-surface px-4 py-3 rounded-xl shadow-2xl border border-primary/30">
-          <span className="material-symbols-outlined text-primary text-[20px]">check_circle</span>
-          <span className="font-label-md text-sm">{toastMessage}</span>
-        </div>
-      )}
+      <Toast message={toastMessage} onClose={() => showToast(null)} />
 
       {/* Correction Modal */}
       {correctionModal && (

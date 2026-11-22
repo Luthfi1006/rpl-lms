@@ -1,5 +1,7 @@
 import React, { useState, useRef } from 'react';
 import AppShell from '../../components/AppShell';
+import { useToast } from '@features/hooks/useToast';
+import Toast from '@features/components/Toast';
 
 /**
  * UnggahMateri — Feature Component
@@ -18,13 +20,8 @@ export default function UnggahMateri({ onNavigate, onRoleChange, activeRole = 'd
     description: '',
     visibility: 'published',
   });
-  const [toastMessage, setToastMessage] = useState(null);
+  const [toastMessage, showToast] = useToast();
   const fileInputRef = useRef(null);
-
-  const showToast = (msg) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3000);
-  };
 
   // Whitelist sesuai SRS 7.5 / BR-007 dan kebijakan backend (STORAGE.DOC_*):
   // .pdf/.docx/.xlsx/.zip dengan batas 10MB per berkas.
@@ -118,16 +115,7 @@ export default function UnggahMateri({ onNavigate, onRoleChange, activeRole = 'd
       onNavChange={onNavigate}
     >
       {/* Toast */}
-      {toastMessage && (
-        <div
-          role="status"
-          aria-live="polite"
-          className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-surface-container-highest text-on-surface px-4 py-3 rounded-xl shadow-2xl border border-primary/30 animate-fade-in"
-        >
-          <span className="material-symbols-outlined text-primary text-[20px]">check_circle</span>
-          <span className="font-label-md text-sm">{toastMessage}</span>
-        </div>
-      )}
+      <Toast message={toastMessage} onClose={() => showToast(null)} />
 
       <div className="flex flex-col w-full space-y-space-md max-w-4xl mx-auto">
         {/* Breadcrumb */}

@@ -2,13 +2,15 @@
 import AppShell from '../../components/AppShell';
 import { useAuthStore } from '../../stores/authStore';
 import { userFixtures } from '../shell/fixtures';
+import { useToast } from '@features/hooks/useToast';
+import Toast from '@features/components/Toast';
 
 export default function Profile({ onRoleChange, onNavigate, activeRole = 'mahasiswa' }) {
   const storeUser = useAuthStore((s) => s.user);
   const fixture = userFixtures[activeRole] || userFixtures.mahasiswa;
 
   const [activeTab, setActiveTab] = useState('biodata'); // 'biodata' | 'keamanan'
-  const [toastMessage, setToastMessage] = useState(null);
+  const [toastMessage, showToast] = useToast(3500);
 
   // Biodata form state
   const [fullName, setFullName] = useState(storeUser?.name || fixture.name);
@@ -23,11 +25,6 @@ export default function Profile({ onRoleChange, onNavigate, activeRole = 'mahasi
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-  const showToast = (msg) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3500);
-  };
 
   const handleAvatarChange = (e) => {
     const file = e.target.files?.[0];
@@ -105,16 +102,7 @@ export default function Profile({ onRoleChange, onNavigate, activeRole = 'mahasi
       onNavChange={onNavigate}
     >
       {/* Toast Alert */}
-      {toastMessage && (
-        <div
-          role="status"
-          aria-live="polite"
-          className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-surface-container-highest text-on-surface px-4 py-3 rounded-xl shadow-2xl border border-primary/30 animate-bounce"
-        >
-          <span className="material-symbols-outlined text-primary text-[20px]">info</span>
-          <span className="font-label-md text-sm">{toastMessage}</span>
-        </div>
-      )}
+      <Toast message={toastMessage} onClose={() => showToast(null)} />
 
       {/* Breadcrumb Navigation */}
       <nav aria-label="Breadcrumb" className="flex items-center gap-space-xs text-on-surface-variant font-label-sm text-label-sm mb-space-md">

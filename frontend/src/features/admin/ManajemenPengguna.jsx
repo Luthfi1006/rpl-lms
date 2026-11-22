@@ -1,4 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { useToast } from '@features/hooks/useToast';
+import Toast from '@features/components/Toast';
 
 // --- MOCK INITIAL USER DATA ---
 const INITIAL_USERS = [
@@ -168,7 +170,7 @@ export default function ManajemenPengguna({ onRoleChange }) {
   // State Pengguna & Pilihan
   const [users, setUsers] = useState(INITIAL_USERS);
   const [selectedUserIds, setSelectedUserIds] = useState([]);
-  const [toastMessage, setToastMessage] = useState(null);
+  const [toastMessage, showToast] = useToast(3500);
 
   // Search & Filter
   const [searchQuery, setSearchQuery] = useState('');
@@ -204,11 +206,6 @@ export default function ManajemenPengguna({ onRoleChange }) {
   const [isExporting, setIsExporting] = useState(false);
 
   const searchInputRef = useRef(null);
-
-  const showToast = (msg) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3500);
-  };
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -464,22 +461,7 @@ export default function ManajemenPengguna({ onRoleChange }) {
   return (
     <div className="flex flex-col w-full pb-margin">
       {/* Toast Alert Lokal */}
-      {toastMessage && (
-        <div
-          role="status"
-          className="fixed bottom-6 right-6 z-50 flex items-center gap-space-sm bg-surface-container-highest text-on-surface px-space-md py-space-sm rounded-xl shadow-2xl border border-primary/40 animate-bounce"
-        >
-          <span className="material-symbols-outlined text-primary text-[20px]">verified</span>
-          <span className="font-label-md text-sm">{toastMessage}</span>
-          <button
-            type="button"
-            onClick={() => setToastMessage(null)}
-            className="ml-2 text-on-surface-variant hover:text-on-surface p-0.5 rounded"
-          >
-            <span className="material-symbols-outlined text-[16px]">close</span>
-          </button>
-        </div>
-      )}
+      <Toast message={toastMessage} onClose={() => showToast(null)} />
 
       {/* Ambient Glow */}
       <div className="relative w-full">

@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import AppShell from '../../components/AppShell';
+import { useToast } from '@features/hooks/useToast';
+import Toast from '@features/components/Toast';
 
 /**
  * RekapKehadiran — Feature Component
@@ -9,12 +11,7 @@ import AppShell from '../../components/AppShell';
 export default function RekapKehadiran({ onNavigate, onRoleChange, activeRole = 'dosen' }) {
   const [filterType, setFilterType] = useState('all'); // 'all' | 'safe' | 'risk'
   const [searchQuery, setSearchQuery] = useState('');
-  const [toastMessage, setToastMessage] = useState(null);
-
-  const showToast = (msg) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3000);
-  };
+  const [toastMessage, showToast] = useToast();
 
   const matrixData = [
     {
@@ -142,12 +139,7 @@ export default function RekapKehadiran({ onNavigate, onRoleChange, activeRole = 
       onNavChange={onNavigate}
     >
       {/* Toast */}
-      {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-surface-container-highest text-on-surface px-4 py-3 rounded-xl shadow-2xl border border-primary/30">
-          <span className="material-symbols-outlined text-primary text-[20px]">info</span>
-          <span className="font-label-md text-sm">{toastMessage}</span>
-        </div>
-      )}
+      <Toast message={toastMessage} onClose={() => showToast(null)} />
 
       <div className="flex flex-col w-full space-y-space-md">
         {/* Breadcrumb */}

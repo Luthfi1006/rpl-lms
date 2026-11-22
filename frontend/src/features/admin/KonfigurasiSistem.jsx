@@ -1,8 +1,10 @@
 ﻿import React, { useState } from 'react';
 import AppShell from '../../components/AppShell';
+import { useToast } from '@features/hooks/useToast';
+import Toast from '@features/components/Toast';
 
 export default function KonfigurasiSistem({ onRoleChange, onNavigate }) {
-  const [toastMessage, setToastMessage] = useState(null);
+  const [toastMessage, showToast] = useToast(3500);
 
   // Settings state
   const [academicYear, setAcademicYear] = useState('2026/2027 Ganjil');
@@ -14,11 +16,6 @@ export default function KonfigurasiSistem({ onRoleChange, onNavigate }) {
   const [allowedExtensions, setAllowedExtensions] = useState('pdf, docx, pptx, zip, jpg, png');
   const [antiMalwareScan, setAntiMalwareScan] = useState(true);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
-
-  const showToast = (msg) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3500);
-  };
 
   const handleSaveConfig = (e) => {
     e.preventDefault();
@@ -45,16 +42,7 @@ export default function KonfigurasiSistem({ onRoleChange, onNavigate }) {
       onNavChange={onNavigate}
     >
       {/* Toast Alert */}
-      {toastMessage && (
-        <div
-          role="status"
-          aria-live="polite"
-          className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-surface-container-highest text-on-surface px-4 py-3 rounded-xl shadow-2xl border border-primary/30 animate-bounce"
-        >
-          <span className="material-symbols-outlined text-primary text-[20px]">info</span>
-          <span className="font-label-md text-sm">{toastMessage}</span>
-        </div>
-      )}
+      <Toast message={toastMessage} onClose={() => showToast(null)} />
 
       {/* Breadcrumb Navigation */}
       <nav aria-label="Breadcrumb" className="flex items-center gap-space-xs text-on-surface-variant font-label-sm text-label-sm mb-space-md">
