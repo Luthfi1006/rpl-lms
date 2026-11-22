@@ -22,6 +22,10 @@ import {
   classMeetingsRoutes,
   meetingRoutes,
 } from './modules/meetings/meeting.routes.js';
+import {
+  meetingMaterialRoutes,
+  materialRoutes,
+} from './modules/materials/material.routes.js';
 import { errorHandler } from './middlewares/error.middleware.js';
 import { attachAuditHelper } from './middlewares/audit.middleware.js';
 import { generalLimiter, authLimiter } from './middlewares/rateLimit.middleware.js';
@@ -95,6 +99,7 @@ app.get('/api', (req, res) => {
         admin_classes: '/api/admin/classes',
         admin_enrollments: '/api/admin/enrollments',
         admin_audit_logs: '/api/admin/audit-logs',
+        materials: '/api/materials',
       },
     },
   });
@@ -120,6 +125,8 @@ app.use('/api/audit-logs', auditLogRoutes); // Alias kemudahan akses
 // === Presensi Digital MVP 2 (Fase 4) ===
 app.use('/api/meetings', meetingRoutes);
 app.use('/api/meetings', meetingAttendanceRoutes);
+app.use('/api/meetings', meetingMaterialRoutes);
+app.use('/api/materials', materialRoutes);
 app.use('/api/attendance', attendanceRoutes);
 
 // 404 Handler untuk rute tak terdefinisi
