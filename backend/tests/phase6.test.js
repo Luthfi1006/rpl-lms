@@ -7,6 +7,7 @@ import prisma from '../src/config/prisma.js';
 import { formatLecturerName } from '../src/utils/format.js';
 import {
   BODYLESS_MUTATIONS,
+  BINARY_SUCCESS_RESPONSES,
   MULTIPART_MUTATIONS,
   MUTATING_METHODS,
   OPENAPI_PATH,
@@ -115,6 +116,10 @@ describe('Fase 6: Kepatuhan MVP 1 & Handoff API', () => {
         ['/classes/{classId}/meetings', 'get'],
         ['/meetings/{id}', 'get'],
         ['/meetings/{id}', 'put'],
+        // Modul MVP 2 (Fase 3 — distribusi materi terproteksi)
+        ['/meetings/{meetingId}/materials', 'post'],
+        ['/materials/{id}', 'delete'],
+        ['/materials/{id}/download', 'get'],
       ];
 
       for (const [path, method] of required) {
@@ -177,11 +182,23 @@ describe('Fase 6: Kepatuhan MVP 1 & Handoff API', () => {
           `${entry.method.toUpperCase()} ${entry.path}: wajib mendefinisikan minimal satu respons 2xx`
         );
 
-        const successSchema = resolveContentSchema(specification, responses[successStatus]);
+        const key = `${entry.method} ${entry.path}`;
+        const successMediaType =
+          BINARY_SUCCESS_RESPONSES.get(key) ?? 'application/json';
+        const successSchema = resolveContentSchema(
+          specification,
+          responses[successStatus],
+          successMediaType
+        );
         assert.ok(
           successSchema,
-          `${entry.method.toUpperCase()} ${entry.path}: respons ${successStatus} wajib memiliki skema application/json`
+          `${entry.method.toUpperCase()} ${entry.path}: respons ${successStatus} wajib memiliki skema ${successMediaType}`
         );
+        if (BINARY_SUCCESS_RESPONSES.has(key)) {
+          assert.equal(successSchema.type, 'string');
+          assert.equal(successSchema.format, 'binary');
+          continue;
+        }
         assert.ok(
           successSchema.properties?.success,
           `${entry.method.toUpperCase()} ${entry.path}: skema respons wajib memuat properti "success"`
@@ -252,6 +269,7 @@ describe('Fase 6: Kepatuhan MVP 1 & Handoff API', () => {
         'CreateCourseRequest',
         'CreateClassRequest',
         'CreateEnrollmentRequest',
+        'CreateMaterialRequest',
       ]) {
         assert.ok(
           specification.components?.schemas?.[schemaName],

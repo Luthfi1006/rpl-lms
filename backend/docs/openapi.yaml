@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: E-Learning Kampus Backend API
   version: 1.0.0
-  description: Dokumentasi resmi API MVP 1 untuk sistem pembelajaran daring E-Learning Kampus.
+  description: Dokumentasi resmi API MVP 1 dan MVP 2 untuk sistem pembelajaran daring E-Learning Kampus.
 servers:
   - url: http://localhost:5000/api
     description: Server Lokal Pengembangan
@@ -23,6 +23,10 @@ tags:
     description: Dasbor kontekstual mahasiswa, dosen, dan admin
   - name: Audit Logs
     description: Peninjau jejak audit mutasi sistem (Admin)
+  - name: Meetings
+    description: Pertemuan terstruktur MVP 2
+  - name: Materials
+    description: Distribusi materi pembelajaran terproteksi
 
 components:
   securitySchemes:
@@ -340,6 +344,21 @@ components:
         is_published:
           type: boolean
           description: Status publikasi pertemuan bagi mahasiswa
+
+    CreateMaterialRequest:
+      type: object
+      required: [title, file]
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 150
+        description:
+          type: string
+          maxLength: 5000
+        file:
+          type: string
+          format: binary
 
     Meeting:
       type: object
@@ -1009,3 +1028,81 @@ paths:
           description: Hanya dosen pengampu atau Admin yang berwenang
         '404':
           description: Pertemuan tidak ditemukan
+
+  /meetings/{meetingId}/materials:
+    post:
+      tags: [Materials]
+      summary: Unggah materi pada pertemuan
+      description: Dosen pengampu atau Admin dapat mengunggah PDF, DOCX, XLSX, atau ZIP hingga 10 MB.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: meetingId
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreateMaterialRequest'
+      responses:
+        '201':
+          description: Materi berhasil diunggah dan dicatat pada audit log
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '400':
+          description: Data materi atau berkas tidak valid
+        '403':
+          description: Hanya dosen pengampu atau Admin yang boleh mengunggah
+        '404':
+          description: Pertemuan tidak ditemukan
+
+  /materials/{id}:
+    delete:
+      tags: [Materials]
+      summary: Hapus materi dan berkas privat terkait
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/EntityId'
+      responses:
+        '200':
+          description: Materi berhasil dihapus dan dicatat pada audit log
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '403':
+          description: Hanya dosen pengampu atau Admin yang boleh menghapus
+        '404':
+          description: Materi tidak ditemukan
+
+  /materials/{id}/download:
+    get:
+      tags: [Materials]
+      summary: Unduh materi secara aman
+      description: Akses hanya diberikan kepada mahasiswa terdaftar, dosen pengampu, atau Admin. Materi tidak dipublikasikan tidak tersedia bagi mahasiswa.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/EntityId'
+      responses:
+        '200':
+          description: Berkas materi dialirkan dengan Content-Disposition attachment
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '403':
+          description: Pengguna tidak terdaftar atau bukan dosen pengampu
+        '404':
+          description: Materi, berkas, atau pertemuan tidak tersedia

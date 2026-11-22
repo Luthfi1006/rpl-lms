@@ -277,12 +277,13 @@ Tiga komponen berikut dipakai berulang oleh Fase 2–5 namun **belum ada di MVP 
 
 ### Fase 3: Modul Unggah & Distribusi Materi Terproteksi (Hari 4–5)
 
-- [ ] Konfigurasi middleware upload file materi (penyimpanan direktori lokal terproteksi).
-- [ ] Implementasi endpoint `POST /api/meetings/:meetingId/materials` dan `DELETE /api/materials/:id`.
-- [ ] Implementasi endpoint aman `GET /api/materials/:id/download` dengan validasi:
+- [x] Gunakan middleware upload materi dengan penyimpanan di direktori lokal privat `storage/private/materials/`.
+- [x] Implementasi endpoint `POST /api/meetings/:meetingId/materials` dan `DELETE /api/materials/:id`.
+- [x] Implementasi endpoint aman `GET /api/materials/:id/download` dengan validasi:
   - Tolak (403) jika user bukan dosen pengampu atau bukan mahasiswa yang dienroll pada kelas tersebut.
   - Pipe streaming berkas dengan header `Content-Disposition`.
-- [ ] Pencatatan mutasi materi ke `audit_logs`.
+- [x] Pencatatan mutasi materi ke `audit_logs` dengan entity kanonik `materials`.
+- [x] Pengujian integrasi upload, streaming download, otorisasi enrolled/owner, audit, dan penghapusan berkas privat.
 
 ---
 

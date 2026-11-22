@@ -21,7 +21,15 @@ export const BODYLESS_MUTATIONS = new Set(['post /auth/refresh', 'post /auth/log
  * Operasi unggah berkas yang body-nya sah menggunakan `multipart/form-data`
  * alih-alih `application/json`.
  */
-export const MULTIPART_MUTATIONS = new Map([['post /profile/avatar', 'multipart/form-data']]);
+export const MULTIPART_MUTATIONS = new Map([
+  ['post /profile/avatar', 'multipart/form-data'],
+  ['post /meetings/{meetingId}/materials', 'multipart/form-data'],
+]);
+
+/** Successful operations that return a streamed file instead of ApiResponse JSON. */
+export const BINARY_SUCCESS_RESPONSES = new Map([
+  ['get /materials/{id}/download', 'application/octet-stream'],
+]);
 
 /**
  * Membaca dan mem-parse `docs/openapi.yaml` menjadi objek JavaScript.
