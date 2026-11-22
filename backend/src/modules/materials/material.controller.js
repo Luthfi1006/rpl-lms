@@ -46,6 +46,26 @@ export class MaterialController {
     }
   }
 
+  static async updateMaterial(req, res, next) {
+    try {
+      const { ipAddress, userAgent } = extractClientInfo(req);
+      const material = await MaterialService.updateMaterial({
+        materialId: req.params.id,
+        updateData: req.body,
+        user: req.user,
+        ipAddress,
+        userAgent,
+      });
+
+      return apiResponse.success(res, {
+        message: 'Materi perkuliahan berhasil diperbarui',
+        data: material,
+      });
+    } catch (error) {
+      return next(error);
+    }
+  }
+
   static async downloadMaterial(req, res, next) {
     try {
       const download = await MaterialService.getMaterialForDownload({

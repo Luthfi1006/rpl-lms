@@ -360,6 +360,19 @@ components:
           type: string
           format: binary
 
+    UpdateMaterialRequest:
+      type: object
+      minProperties: 1
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 150
+        description:
+          type: string
+          nullable: true
+          maxLength: 5000
+
     Meeting:
       type: object
       properties:
@@ -1062,6 +1075,33 @@ paths:
           description: Pertemuan tidak ditemukan
 
   /materials/{id}:
+    put:
+      tags: [Materials]
+      summary: Perbarui informasi materi perkuliahan
+      description: Dosen pengampu atau Admin dapat memperbarui judul dan/atau deskripsi materi. Berkas lampiran tidak dapat diganti melalui endpoint ini — unggah ulang materi baru bila berkas perlu diganti.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/EntityId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMaterialRequest'
+      responses:
+        '200':
+          description: Materi berhasil diperbarui dan dicatat pada audit log
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '400':
+          description: Data materi tidak valid atau tidak ada data yang diperbarui
+        '403':
+          description: Hanya dosen pengampu atau Admin yang boleh memperbarui
+        '404':
+          description: Materi tidak ditemukan
     delete:
       tags: [Materials]
       summary: Hapus materi dan berkas privat terkait

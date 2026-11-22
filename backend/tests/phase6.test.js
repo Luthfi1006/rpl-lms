@@ -118,6 +118,7 @@ describe('Fase 6: Kepatuhan MVP 1 & Handoff API', () => {
         ['/meetings/{id}', 'put'],
         // Modul MVP 2 (Fase 3 — distribusi materi terproteksi)
         ['/meetings/{meetingId}/materials', 'post'],
+        ['/materials/{id}', 'put'],
         ['/materials/{id}', 'delete'],
         ['/materials/{id}/download', 'get'],
       ];

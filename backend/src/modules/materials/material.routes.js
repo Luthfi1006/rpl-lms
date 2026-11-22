@@ -9,6 +9,7 @@ import {
   createMaterialSchema,
   materialIdParamSchema,
   meetingIdParamSchema,
+  updateMaterialSchema,
 } from './material.dto.js';
 
 export const meetingMaterialRoutes = Router();
@@ -25,6 +26,13 @@ meetingMaterialRoutes.post(
 
 export const materialRoutes = Router();
 materialRoutes.use(authenticateToken);
+
+materialRoutes.put(
+  '/:id',
+  requireRole(ROLES.DOSEN, ROLES.ADMIN),
+  validate(updateMaterialSchema),
+  MaterialController.updateMaterial
+);
 
 materialRoutes.delete(
   '/:id',

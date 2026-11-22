@@ -238,6 +238,49 @@ export class MaterialService {
     return { id: materialId };
   }
 
+  static async updateMaterial({ materialId, updateData, user, ipAddress, userAgent }) {
+    const material = await prisma.material.findUnique({
+      where: { id: materialId },
+      include: {
+        file: { select: MATERIAL_FILE_SELECT },
+        meeting: { include: meetingInclude },
+      },
+    });
+    if (!material) {
+      throw new AppError('Materi perkuliahan tidak ditemukan', 404);
+    }
+    ensureCanManageClass(material.meeting.class, user);
+
+    const updated = await prisma.material.update({
+      where: { id: materialId },
+      data: updateData,
+      include: {
+        file: {
+          select: {
+            id: true,
+            original_name: true,
+            mime_type: true,
+            size_bytes: true,
+            created_at: true,
+          },
+        },
+      },
+    });
+
+    await AuditLogService.record({
+      userId: user.id,
+      action: 'UPDATE_MATERIAL',
+      entity: AUDIT_ENTITIES.MATERIALS,
+      entityId: materialId,
+      oldValues: auditValues(material, material.file),
+      newValues: auditValues(updated, updated.file),
+      ipAddress,
+      userAgent,
+    });
+
+    return updated;
+  }
+
   static async getMaterialForDownload({ materialId, user }) {
     const material = await prisma.material.findUnique({
       where: { id: materialId },

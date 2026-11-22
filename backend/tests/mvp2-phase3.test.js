@@ -189,6 +189,92 @@ describe('Fase 3 MVP 2: Unggah & Distribusi Materi Terproteksi', () => {
       { method: 'POST', headers: { Authorization: `Bearer ${lecturerToken}` }, body: missingFile }
     );
     assert.equal(missingFileResponse.status, 400);
+
+    const disallowed = new FormData();
+    disallowed.append('title', 'Ekstensi tidak sah');
+    disallowed.append(
+      'file',
+      new Blob([TEST_FILE], { type: 'application/octet-stream' }),
+      'berkas-berbahaya.exe'
+    );
+    const disallowedResponse = await fetch(
+      `${baseUrl}/api/meetings/${meeting.id}/materials`,
+      { method: 'POST', headers: { Authorization: `Bearer ${lecturerToken}` }, body: disallowed }
+    );
+    assert.equal(disallowedResponse.status, 400);
+
+    const oversize = new FormData();
+    oversize.append('title', 'Ukuran melebihi batas');
+    oversize.append(
+      'file',
+      new Blob([Buffer.alloc(10 * 1024 * 1024 + 1)], { type: 'application/pdf' }),
+      'terlalu-besar.pdf'
+    );
+    const oversizeResponse = await fetch(
+      `${baseUrl}/api/meetings/${meeting.id}/materials`,
+      { method: 'POST', headers: { Authorization: `Bearer ${lecturerToken}` }, body: oversize }
+    );
+    assert.equal(oversizeResponse.status, 400);
+  });
+
+  test('Pembaruan informasi materi hanya oleh dosen pengampu atau Admin dan ter-audit', async () => {
+    const uploadResponse = await upload({ token: lecturerToken, title: 'Judul Awal Materi' });
+    assert.equal(uploadResponse.status, 201);
+    const uploaded = (await uploadResponse.json()).data;
+    createdMaterialIds.push(uploaded.id);
+    createdFileIds.push(uploaded.file.id);
+
+    const deniedStudent = await request(`/api/materials/${uploaded.id}`, {
+      method: 'PUT',
+      token: enrolledStudentToken,
+      body: { title: 'Judul Ilegal' },
+    });
+    assert.equal(deniedStudent.status, 403);
+
+    const deniedOtherLecturer = await request(`/api/materials/${uploaded.id}`, {
+      method: 'PUT',
+      token: otherLecturerToken,
+      body: { title: 'Judul Ilegal' },
+    });
+    assert.equal(deniedOtherLecturer.status, 403);
+
+    const emptyBody = await request(`/api/materials/${uploaded.id}`, {
+      method: 'PUT',
+      token: lecturerToken,
+      body: {},
+    });
+    assert.equal(emptyBody.status, 400);
+
+    const updated = await request(`/api/materials/${uploaded.id}`, {
+      method: 'PUT',
+      token: lecturerToken,
+      body: { title: 'Judul Materi Revisi', description: 'Deskripsi hasil koreksi dosen.' },
+    });
+    assert.equal(updated.status, 200);
+    const updatedPayload = await updated.json();
+    assert.equal(updatedPayload.success, true);
+    assert.equal(updatedPayload.data.title, 'Judul Materi Revisi');
+    assert.equal(updatedPayload.data.description, 'Deskripsi hasil koreksi dosen.');
+    assert.equal(updatedPayload.data.file.original_name, 'materi-uji.pdf');
+
+    const clearedDescription = await request(`/api/materials/${uploaded.id}`, {
+      method: 'PUT',
+      token: adminToken,
+      body: { description: null },
+    });
+    assert.equal(clearedDescription.status, 200);
+    assert.equal((await clearedDescription.json()).data.description, null);
+
+    const audit = await prisma.auditLog.findFirst({
+      where: {
+        action: 'UPDATE_MATERIAL',
+        entity: 'materials',
+        entity_id: uploaded.id,
+      },
+      orderBy: { created_at: 'desc' },
+    });
+    assert.ok(audit, 'Pembaruan materi harus tercatat pada audit log');
+    assert.equal(audit.new_values.title, 'Judul Materi Revisi');
   });
 
   test('Unduh streaming hanya diizinkan untuk mahasiswa enrolled, dosen pengampu, dan Admin', async () => {
