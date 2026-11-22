@@ -1,12 +1,14 @@
 ﻿import React, { useState, useMemo } from 'react';
 import AppShell from '../../components/AppShell';
+import { useToast } from '@features/hooks/useToast';
+import Toast from '@features/components/Toast';
 
 export default function PemeriksaanTugas({ onRoleChange, onNavigate }) {
   const [selectedCourse, setSelectedCourse] = useState('rpl-ti-a');
   const [selectedTask, setSelectedTask] = useState('tugas-1');
   const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'pending' | 'graded' | 'late'
   const [searchQuery, setSearchQuery] = useState('');
-  const [toastMessage, setToastMessage] = useState(null);
+  const [toastMessage, showToast] = useToast(3500);
 
   // Modal grading state
   const [gradingModalOpen, setGradingModalOpen] = useState(false);
@@ -15,11 +17,6 @@ export default function PemeriksaanTugas({ onRoleChange, onNavigate }) {
   const [cpmk2Score, setCpmk2Score] = useState(80);
   const [cpmk3Score, setCpmk3Score] = useState(90);
   const [feedbackNote, setFeedbackNote] = useState('');
-
-  const showToast = (msg) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3500);
-  };
 
   const courses = [
     { id: 'rpl-ti-a', name: 'TI-A • Rekayasa Perangkat Lunak (3 SKS)' },
@@ -177,16 +174,7 @@ export default function PemeriksaanTugas({ onRoleChange, onNavigate }) {
       onNavChange={onNavigate}
     >
       {/* Toast Alert */}
-      {toastMessage && (
-        <div
-          role="status"
-          aria-live="polite"
-          className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-surface-container-highest text-on-surface px-4 py-3 rounded-xl shadow-2xl border border-primary/30 animate-bounce"
-        >
-          <span className="material-symbols-outlined text-primary text-[20px]">info</span>
-          <span className="font-label-md text-sm">{toastMessage}</span>
-        </div>
-      )}
+      <Toast message={toastMessage} onClose={() => showToast(null)} />
 
       {/* Breadcrumb Navigation */}
       <nav aria-label="Breadcrumb" className="flex items-center gap-space-xs text-on-surface-variant font-label-sm text-label-sm mb-space-md">

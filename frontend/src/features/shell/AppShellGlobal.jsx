@@ -2,6 +2,8 @@
 import AppShell from '../../components/AppShell';
 import { statCards, timelineItems, courseList } from './fixtures';
 import { useAuthStore } from '../../stores/authStore';
+import { useToast } from '@features/hooks/useToast';
+import Toast from '@features/components/Toast';
 
 /**
  * AppShellGlobal â€” Feature Component
@@ -20,12 +22,7 @@ export default function AppShellGlobal({ currentRole = 'mahasiswa', onRoleChange
       ? 'manajemen-pengguna'
       : 'dasbor-mahasiswa'
   );
-  const [toastMessage, setToastMessage] = useState(null);
-
-  const showToast = (msg) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3000);
-  };
+  const [toastMessage, showToast] = useToast();
 
   // Sync external role change
   useEffect(() => {
@@ -60,16 +57,7 @@ export default function AppShellGlobal({ currentRole = 'mahasiswa', onRoleChange
       onNavChange={(path) => { setActiveNavPath(path); if (onNavigate) onNavigate(path); }}
     >
       {/* Toast Notification Lokal */}
-      {toastMessage && (
-        <div
-          role="status"
-          aria-live="polite"
-          className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-surface-container-highest text-on-surface px-4 py-3 rounded-xl shadow-2xl border border-primary/30 animate-bounce"
-        >
-          <span className="material-symbols-outlined text-primary text-[20px]">info</span>
-          <span className="font-label-md text-sm">{toastMessage}</span>
-        </div>
-      )}
+      <Toast message={toastMessage} onClose={() => showToast(null)} />
 
       {/* Breadcrumb & Greeting Banner */}
       <section className="relative w-full rounded-2xl bg-surface-container-low p-gutter overflow-hidden shadow-sm mb-space-lg border border-outline-variant/20">
