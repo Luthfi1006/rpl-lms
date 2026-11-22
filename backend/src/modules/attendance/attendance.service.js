@@ -120,6 +120,13 @@ export class AttendanceService {
             skipDuplicates: true,
           });
         }
+        await AuditLogService.record({
+          userId: null,
+          action: 'AUTO_CLOSE_ATTENDANCE_SESSION',
+          entity: AUDIT_ENTITIES.ATTENDANCE_SESSIONS,
+          entityId: session.id,
+          newValues: { status: 'CLOSED', closed_at: now },
+        });
         return updated;
       });
     }
@@ -446,16 +453,21 @@ export class AttendanceService {
     if (!classRecord) throw new AppError('Kelas tidak ditemukan', 404);
     await ensureCanReadClass({ user, classRecord, classId });
 
+    const meetings = await prisma.meeting.findMany({
+      where: { class_id: classId },
+      orderBy: { meeting_number: 'asc' },
+    });
     const sessions = await prisma.attendanceSession.findMany({
       where: { meeting: { class_id: classId } },
-      orderBy: { meeting: { meeting_number: 'asc' } },
       include: {
         meeting: { select: { id: true, meeting_number: true } },
         records: { include: { student: { select: { id: true } } } },
       },
     });
+    
+    const sessionMap = new Map(sessions.map(s => [s.meeting.meeting_number, s]));
 
-    const totalSessions = sessions.length;
+    const totalSessions = meetings.length; // 16
 
     // Mahasiswa hanya melihat data pribadinya (BR-003)
     if (user?.role === ROLES.MAHASISWA) {
@@ -465,10 +477,12 @@ export class AttendanceService {
         throw new AppError('Akses ditolak: Anda tidak terdaftar pada kelas perkuliahan ini', 403);
       }
 
-      const records = sessions.map((s) =>
-        s.records.find((r) => r.student_id === student.id)
-      );
-      const hadirCount = records.filter((r) => r?.status === 'HADIR').length;
+      const matrix = meetings.map((m) => {
+        const session = sessionMap.get(m.meeting_number);
+        const record = session?.records.find((r) => r.student_id === student.id);
+        return { meeting_number: m.meeting_number, status: record?.status ?? null };
+      });
+      const hadirCount = matrix.filter((r) => r.status === 'HADIR').length;
       const percentage = totalSessions > 0 ? (hadirCount / totalSessions) * 100 : 0;
 
       return {
@@ -480,10 +494,7 @@ export class AttendanceService {
             full_name: student.user?.profile?.full_name ?? null,
             total_hadir: hadirCount,
             percentage: Number(percentage.toFixed(2)),
-            matrix: sessions.map((s, index) => ({
-              meeting_number: s.meeting.meeting_number,
-              status: records[index]?.status ?? null,
-            })),
+            matrix: matrix,
           },
         ],
       };

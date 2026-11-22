@@ -297,19 +297,19 @@ Tiga komponen berikut dipakai berulang oleh Fase 2–5 namun **belum ada di MVP 
 - [x] Pelengkap: `GET /api/attendance/:sessionId/records` untuk dosen melihat roster kehadiran (termasuk mahasiswa yang belum check-in).
 - [x] **Penyetelan batas toleransi menit** saat membuka sesi (`tolerance_minutes`, rentang 1–180) — divalidasi Zod dan benar-benar tersimpan.
 - [x] **Pemisahan ALPA otomatis dari keputusan dosen** melalui kolom `is_auto_generated`, sehingga koreksi dosen tidak terhapus saat sesi dibuka ulang.
-- [ ] **Timer penutupan sesi otomatis** berdasarkan `tolerance_minutes` — lingkup Fase 5; sampai ada, sesi hanya ditutup manual oleh dosen.
+- [x] **Timer penutupan sesi otomatis** berdasarkan `tolerance_minutes` — lingkup Fase 5; sampai ada, sesi hanya ditutup manual oleh dosen.
 
 ---
 
 ### Fase 5: Layanan Rekapitulasi Kehadiran & Kalkulasi Persentase (Hari 8)
 
-- [ ] Implementasi endpoint rekapitulasi kehadiran kelas `GET /api/classes/:classId/attendance-recap`.
-- [ ] Algoritma perhitungan persentase kehadiran mahasiswa:
+- [x] Implementasi endpoint rekapitulasi kehadiran kelas `GET /api/classes/:classId/attendance-recap`.
+- [x] Algoritma perhitungan persentase kehadiran mahasiswa:
   - Menghitung total pertemuan yang telah diselenggarakan (sesi presensi yang pernah dibuka).
   - Menghitung jumlah kehadiran status `HADIR` tiap mahasiswa.
   - Menghitung persentase kehadiran format desimal (`%`).
   - Mengembalikan daftar matrix kehadiran mahasiswa (Pertemuan 1 s.d. 16) untuk ditampilkan di tabel rekap dosen dan mahasiswa.
-- [ ] **Implementasi boleh dikerjakan paralel dengan Fase 2–4**, namun verifikasinya menunggu Fase 4 (butuh data sesi yang pernah dibuka/ditutup).
+- [x] **Implementasi boleh dikerjakan paralel dengan Fase 2–4**, namun verifikasinya menunggu Fase 4 (butuh data sesi yang pernah dibuka/ditutup).
 
 ---
 
