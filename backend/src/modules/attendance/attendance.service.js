@@ -1,9 +1,11 @@
 import prisma from '../../config/prisma.js';
 import { AppError } from '../../utils/errors.js';
+import { ROLES } from '../../constants/roles.js';
 import { AUDIT_ENTITIES } from '../../constants/auditEntities.js';
 import { AuditLogService } from '../audit-log/audit-log.service.js';
 import {
   ensureCanManageClass,
+  ensureCanReadClass,
   ensureEnrolledInClass,
   getStudentRecordOrThrow,
 } from '../../utils/ownership.js';
@@ -19,7 +21,7 @@ export const ATTENDANCE_CLOSED_MESSAGE =
 /**
  * Catatan keterangan yang disematkan pada ALPA otomatis saat dosen menutup sesi.
  *
- * Nilai ini **hanya** teks keterangan untuk dibaca manusia — bukan penanda baris.
+ * Nilai ini **hanya** teks keterangan untuk dibaca manusia â€” bukan penanda baris.
  * Penanda strukturalnya adalah kolom `is_auto_generated` (lihat `openSession`
  * dan `updateRecord`), sebab `notes` juga diisi dosen saat mengoreksi sehingga
  * tidak dapat dipakai membedakan baris sistem dari keputusan dosen.
@@ -86,6 +88,67 @@ function serializeRecord(record, student) {
 }
 
 export class AttendanceService {
+
+  static async #autoCloseExpiredSession(session) {
+    if (!session || session.status !== 'OPEN' || !session.opened_at) return session;
+
+    const now = new Date();
+    const expiryDate = new Date(session.opened_at.getTime() + session.tolerance_minutes * 60000);
+
+    if (now > expiryDate) {
+      return await prisma.$transaction(async (tx) => {
+        // Guard kondisional: hanya tutup bila sesi masih OPEN agar dua request
+        // konkuren tidak menghasilkan entri audit ganda maupun penimpaan closed_at.
+        const closed = await tx.attendanceSession.updateMany({
+          where: { id: session.id, status: 'OPEN' },
+          data: { status: 'CLOSED', closed_at: now },
+        });
+
+        if (closed.count === 0) {
+          // Sesi sudah ditutup oleh request konkuren lain; kembalikan kondisi
+          // terkini tanpa menulis ALPA/audit duplikat.
+          return await tx.attendanceSession.findUnique({
+            where: { id: session.id },
+            include: sessionMeetingInclude,
+          });
+        }
+
+        const enrollments = await tx.enrollment.findMany({
+          where: { class_id: session.meeting.class_id },
+          select: { student_id: true },
+        });
+
+        if (enrollments.length > 0) {
+          await tx.attendanceRecord.createMany({
+            data: enrollments.map((e) => ({
+              session_id: session.id,
+              student_id: e.student_id,
+              status: 'ALPA',
+              recorded_at: now,
+              notes: AUTO_ABSENCE_NOTE,
+              is_auto_generated: true,
+            })),
+            skipDuplicates: true,
+          });
+        }
+
+        await AuditLogService.record({
+          userId: null,
+          action: 'AUTO_CLOSE_ATTENDANCE_SESSION',
+          entity: AUDIT_ENTITIES.ATTENDANCE_SESSIONS,
+          entityId: session.id,
+          newValues: { status: 'CLOSED', closed_at: now },
+          dbClient: tx,
+        });
+
+        return await tx.attendanceSession.findUnique({
+          where: { id: session.id },
+          include: sessionMeetingInclude,
+        });
+      });
+    }
+    return session;
+  }
   static async #findMeetingOrThrow(meetingId) {
     const meeting = await prisma.meeting.findUnique({
       where: { id: meetingId },
@@ -109,7 +172,7 @@ export class AttendanceService {
   }
 
   /**
-   * Dosen membuka sesi presensi pertemuan (state machine CLOSED → OPEN).
+   * Dosen membuka sesi presensi pertemuan (state machine CLOSED â†’ OPEN).
    *
    * `payload.tolerance_minutes` (opsional) menyetel batas toleransi sesi. Sebelum
    * perbaikan ini field tersebut dibuang diam-diam sementara respons tetap
@@ -129,7 +192,7 @@ export class AttendanceService {
     const session = await prisma.$transaction(async (tx) => {
       if (previous?.status === 'CLOSED') {
         // Sesi dibuka ulang: hapus HANYA ALPA yang dibuat sistem agar mahasiswa
-        // bisa check-in lagi. Penanda `is_auto_generated` — bukan teks catatan —
+        // bisa check-in lagi. Penanda `is_auto_generated` â€” bukan teks catatan â€”
         // yang membedakannya, sebab `notes` juga diisi dosen saat mengoreksi.
         // Dengan begitu ALPA yang sengaja ditetapkan dosen tetap utuh.
         await tx.attendanceRecord.deleteMany({
@@ -172,7 +235,7 @@ export class AttendanceService {
   }
 
   /**
-   * Dosen menutup sesi presensi (OPEN → CLOSED). Mahasiswa terdaftar yang belum
+   * Dosen menutup sesi presensi (OPEN â†’ CLOSED). Mahasiswa terdaftar yang belum
    * check-in ditandai ALPA agar dapat dikoreksi lewat PUT /attendance/records/:id.
    */
   static async closeSession({ user, meetingId, ipAddress, userAgent }) {
@@ -237,7 +300,7 @@ export class AttendanceService {
    * Mahasiswa terdaftar melakukan check-in mandiri (hanya saat sesi OPEN).
    */
   static async checkIn({ user, sessionId }) {
-    const session = await prisma.attendanceSession.findUnique({
+    let session = await prisma.attendanceSession.findUnique({
       where: { id: sessionId },
       include: { meeting: { select: { id: true, class_id: true } } },
     });
@@ -247,9 +310,11 @@ export class AttendanceService {
     }
 
     // Kepesertaan diperiksa lebih dulu agar mahasiswa luar kelas tidak bisa
-    // memakai endpoint ini untuk menebak status sesi.
+    // memakai endpoint ini untuk memicu auto-close ataupun menebak status sesi.
     const student = await getStudentRecordOrThrow(user.id);
     await ensureEnrolledInClass({ userId: user.id, classId: session.meeting.class_id });
+
+    session = await this.#autoCloseExpiredSession(session);
 
     if (session.status !== 'OPEN') {
       throw new AppError(ATTENDANCE_CLOSED_MESSAGE, 400);
@@ -289,7 +354,7 @@ export class AttendanceService {
    * Daftar kehadiran satu sesi, lengkap dengan mahasiswa yang belum mencatat.
    */
   static async getSessionRecords({ user, sessionId }) {
-    const session = await prisma.attendanceSession.findUnique({
+    let session = await prisma.attendanceSession.findUnique({
       where: { id: sessionId },
       include: {
         ...sessionMeetingInclude,
@@ -304,6 +369,23 @@ export class AttendanceService {
     }
 
     ensureCanManageClass(session.meeting.class, user);
+
+    const statusBefore = session.status;
+    session = await this.#autoCloseExpiredSession(session);
+
+    // Ambil ulang records HANYA bila sesi baru saja di-auto-close agar data ALPA
+    // terangkut, tanpa query ekstra pada jalur normal (sesi sudah CLOSED/OPEN).
+    if (statusBefore === 'OPEN' && session.status === 'CLOSED') {
+      session = await prisma.attendanceSession.findUnique({
+        where: { id: sessionId },
+        include: {
+          ...sessionMeetingInclude,
+          records: {
+            include: { student: studentSummarySelect },
+          },
+        },
+      });
+    }
 
     const enrollments = await prisma.enrollment.findMany({
       where: { class_id: session.meeting.class_id },
@@ -353,7 +435,7 @@ export class AttendanceService {
 
     const data = {
       status: payload.status,
-      // Begitu dosen menyentuh baris ini, ia bukan lagi catatan sistem —
+      // Begitu dosen menyentuh baris ini, ia bukan lagi catatan sistem â€”
       // sehingga pembukaan ulang sesi tidak akan menghapusnya.
       is_auto_generated: false,
     };
@@ -363,7 +445,7 @@ export class AttendanceService {
     } else if (existing.is_auto_generated) {
       // Catatan penanda ALPA otomatis dibersihkan bila dosen tidak mengirim
       // catatan sendiri. Tanpa ini, baris berstatus IZIN/SAKIT/HADIR tetap
-      // membawa teks "Tidak melakukan check-in ..." — keterangan yang salah.
+      // membawa teks "Tidak melakukan check-in ..." â€” keterangan yang salah.
       data.notes = null;
     }
 
@@ -388,5 +470,102 @@ export class AttendanceService {
     });
 
     return serializeRecord(record, record.student);
+  }
+
+  static async getAttendanceRecap({ user, classId }) {
+    const classRecord = await prisma.class.findUnique({
+      where: { id: classId },
+      include: {
+        lecturer: { select: { id: true, user_id: true } },
+        enrollments: {
+          orderBy: { student: { nim: 'asc' } },
+          include: { student: studentSummarySelect },
+        },
+      },
+    });
+
+    if (!classRecord) throw new AppError('Kelas tidak ditemukan', 404);
+    await ensureCanReadClass({ user, classRecord, classId });
+
+    const meetings = await prisma.meeting.findMany({
+      where: { class_id: classId },
+      orderBy: { meeting_number: 'asc' },
+    });
+    const sessions = await prisma.attendanceSession.findMany({
+      where: { meeting: { class_id: classId } },
+      include: {
+        meeting: { select: { id: true, meeting_number: true } },
+        records: { include: { student: { select: { id: true } } } },
+      },
+    });
+    
+    const sessionMap = new Map(sessions.map(s => [s.meeting.meeting_number, s]));
+
+    const totalSessions = sessions.length; // Sesi yang pernah dibuka (SRS & Plan)
+
+    // Mahasiswa hanya melihat data pribadinya (BR-003)
+    if (user?.role === ROLES.MAHASISWA) {
+      const student = await prisma.mahasiswa.findUnique({
+        where: { user_id: user.id },
+        include: { user: { select: { profile: { select: { full_name: true } } } } },
+      });
+      if (!student) {
+        throw new AppError('Data mahasiswa tidak ditemukan', 404);
+      }
+      const enrollment = classRecord.enrollments.find((e) => e.student_id === student.id);
+      if (!enrollment) {
+        throw new AppError('Akses ditolak: Anda tidak terdaftar pada kelas perkuliahan ini', 403);
+      }
+
+      const matrix = meetings.map((m) => {
+        const session = sessionMap.get(m.meeting_number);
+        const record = session?.records.find((r) => r.student_id === student.id);
+        return { meeting_number: m.meeting_number, status: record?.status ?? null };
+      });
+      const hadirCount = matrix.filter((r) => r.status === 'HADIR').length;
+      const percentage = totalSessions > 0 ? (hadirCount / totalSessions) * 100 : 0;
+
+      return {
+        total_sessions: totalSessions,
+        total_meetings: meetings.length,
+        recap: [
+          {
+            student_id: student.id,
+            nim: student.nim,
+            full_name: student.user?.profile?.full_name ?? null,
+            total_hadir: hadirCount,
+            percentage: Number(percentage.toFixed(2)),
+            matrix: matrix,
+          },
+        ],
+      };
+    }
+
+    // Dosen & Admin melihat seluruh kelas
+    const recap = classRecord.enrollments.map((enrollment) => {
+      const student = enrollment.student;
+      const matrix = meetings.map((m) => {
+        const session = sessionMap.get(m.meeting_number);
+        const record = session?.records.find((r) => r.student_id === student.id);
+        return { meeting_number: m.meeting_number, status: record?.status ?? null };
+      });
+      const hadirCount = matrix.filter((r) => r.status === 'HADIR').length;
+      const percentage = totalSessions > 0 ? (hadirCount / totalSessions) * 100 : 0;
+
+      return {
+        student_id: student.id,
+        nim: student.nim,
+        full_name: student.user?.profile?.full_name ?? null,
+        total_hadir: hadirCount,
+        percentage: Number(percentage.toFixed(2)),
+        matrix: matrix,
+      };
+    });
+
+    return {
+      total_sessions: totalSessions,
+      total_meetings: meetings.length,
+      recap,
+    };
   }
 }
