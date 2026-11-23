@@ -1,4 +1,4 @@
-﻿import prisma from '../../config/prisma.js';
+import prisma from '../../config/prisma.js';
 import { AppError } from '../../utils/errors.js';
 import { ROLES } from '../../constants/roles.js';
 import { AUDIT_ENTITIES } from '../../constants/auditEntities.js';
@@ -97,10 +97,21 @@ export class AttendanceService {
 
     if (now > expiryDate) {
       return await prisma.$transaction(async (tx) => {
-        await tx.attendanceSession.update({
-          where: { id: session.id },
+        // Guard kondisional: hanya tutup bila sesi masih OPEN agar dua request
+        // konkuren tidak menghasilkan entri audit ganda maupun penimpaan closed_at.
+        const closed = await tx.attendanceSession.updateMany({
+          where: { id: session.id, status: 'OPEN' },
           data: { status: 'CLOSED', closed_at: now },
         });
+
+        if (closed.count === 0) {
+          // Sesi sudah ditutup oleh request konkuren lain; kembalikan kondisi
+          // terkini tanpa menulis ALPA/audit duplikat.
+          return await tx.attendanceSession.findUnique({
+            where: { id: session.id },
+            include: sessionMeetingInclude,
+          });
+        }
 
         const enrollments = await tx.enrollment.findMany({
           where: { class_id: session.meeting.class_id },
@@ -132,23 +143,7 @@ export class AttendanceService {
 
         return await tx.attendanceSession.findUnique({
           where: { id: session.id },
-          include: {
-            meeting: {
-              select: {
-                id: true,
-                class_id: true,
-                meeting_number: true,
-                title: true,
-                class: {
-                  select: {
-                    id: true,
-                    name: true,
-                    lecturer: { select: { id: true, user_id: true } },
-                  },
-                },
-              },
-            },
-          },
+          include: sessionMeetingInclude,
         });
       });
     }
@@ -375,18 +370,22 @@ export class AttendanceService {
 
     ensureCanManageClass(session.meeting.class, user);
 
+    const statusBefore = session.status;
     session = await this.#autoCloseExpiredSession(session);
 
-    // Ambil ulang records bila sesi baru saja di-auto-close agar data ALPA terangkut
-    session = await prisma.attendanceSession.findUnique({
-      where: { id: sessionId },
-      include: {
-        ...sessionMeetingInclude,
-        records: {
-          include: { student: studentSummarySelect },
+    // Ambil ulang records HANYA bila sesi baru saja di-auto-close agar data ALPA
+    // terangkut, tanpa query ekstra pada jalur normal (sesi sudah CLOSED/OPEN).
+    if (statusBefore === 'OPEN' && session.status === 'CLOSED') {
+      session = await prisma.attendanceSession.findUnique({
+        where: { id: sessionId },
+        include: {
+          ...sessionMeetingInclude,
+          records: {
+            include: { student: studentSummarySelect },
+          },
         },
-      },
-    });
+      });
+    }
 
     const enrollments = await prisma.enrollment.findMany({
       where: { class_id: session.meeting.class_id },
@@ -529,7 +528,6 @@ export class AttendanceService {
       return {
         total_sessions: totalSessions,
         total_meetings: meetings.length,
-        held_sessions: totalSessions,
         recap: [
           {
             student_id: student.id,
@@ -567,10 +565,7 @@ export class AttendanceService {
     return {
       total_sessions: totalSessions,
       total_meetings: meetings.length,
-      held_sessions: totalSessions,
       recap,
     };
   }
 }
-
-

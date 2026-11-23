@@ -1,4 +1,4 @@
-﻿import { test, describe, before, after } from 'node:test';
+import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import app from '../src/app.js';
 import prisma from '../src/config/prisma.js';
@@ -18,6 +18,11 @@ describe('Fase 5 MVP 2: Rekapitulasi & Auto-close Sesi (B1-B8 Verification)', ()
   let testClass;
   let meeting1;
   let suffix;
+
+  // Jejak data uji untuk pembersihan di after() (REG-05: tanpa residu)
+  let sessionId;
+  let mhsUserId;
+  let mhsLuarUserId;
 
   const request = (path, { method = 'GET', token, body } = {}) =>
     fetch(`${baseUrl}${path}`, {
@@ -57,15 +62,16 @@ describe('Fase 5 MVP 2: Rekapitulasi & Auto-close Sesi (B1-B8 Verification)', ()
     suffix = Date.now().toString().slice(-6);
     const mhsUser = await prisma.user.create({
       data: {
-        username: 'mhs-test-' + suffix,
-        email: 'mhs-test-' + suffix + '@kampus.ac.id',
+        username: 'testuser_fase5_' + suffix,
+        email: 'testuser_fase5_' + suffix + '@kampus.ac.id',
         password_hash: await import('bcryptjs').then(b => b.default.hash('password123', 10)),
         role: 'mahasiswa',
         profile: { create: { full_name: 'Mhs Test ' + suffix } },
         mahasiswa: { create: { nim: '20249' + suffix, prodi: 'TI', angkatan: 2024 } }
       }
     });
-    mahasiswaToken = await login('mhs-test-' + suffix);
+    mhsUserId = mhsUser.id;
+    mahasiswaToken = await login('testuser_fase5_' + suffix);
     student1 = await prisma.mahasiswa.findUnique({ where: { user_id: mhsUser.id } });
 
     // Dosen pengampu
@@ -94,6 +100,20 @@ describe('Fase 5 MVP 2: Rekapitulasi & Auto-close Sesi (B1-B8 Verification)', ()
   });
 
   after(async () => {
+    // Bersihkan seluruh data uji agar tidak meninggalkan residu (REG-05).
+    // Urutan: audit log → kelas (cascade meeting/sesi/records/enrollment) →
+    // course → user uji (cascade profile/mahasiswa).
+    if (sessionId) {
+      await prisma.auditLog.deleteMany({ where: { entity_id: sessionId } });
+    }
+    if (testClass) {
+      await prisma.class.delete({ where: { id: testClass.id } });
+      await prisma.course.delete({ where: { id: testClass.course_id } });
+    }
+    const userIds = [mhsUserId, mhsLuarUserId].filter(Boolean);
+    if (userIds.length > 0) {
+      await prisma.user.deleteMany({ where: { id: { in: userIds } } });
+    }
     await new Promise((resolve) => server.close(resolve));
   });
 
@@ -112,6 +132,7 @@ describe('Fase 5 MVP 2: Rekapitulasi & Auto-close Sesi (B1-B8 Verification)', ()
     });
     assert.strictEqual(openRes.status, 200);
     const session = (await openRes.json()).data;
+    sessionId = session.id;
 
     // Mundurkan waktu opened_at secara langsung di DB untuk simulasi expired
     const pastDate = new Date(Date.now() - 5 * 60 * 1000);
@@ -199,15 +220,16 @@ describe('Fase 5 MVP 2: Rekapitulasi & Auto-close Sesi (B1-B8 Verification)', ()
     // Buat mahasiswa baru yang tidak ter-enroll ke kelas ini
     const mhsLuarUser = await prisma.user.create({
       data: {
-        username: 'mhs-luar-' + suffix,
-        email: 'mhs-luar-' + suffix + '@kampus.ac.id',
+        username: 'testuser_fase5_luar_' + suffix,
+        email: 'testuser_fase5_luar_' + suffix + '@kampus.ac.id',
         password_hash: await import('bcryptjs').then(b => b.default.hash('password123', 10)),
         role: 'mahasiswa',
         profile: { create: { full_name: 'Mhs Luar ' + suffix } },
         mahasiswa: { create: { nim: '20250' + suffix, prodi: 'TI', angkatan: 2024 } }
       }
     });
-    const mhsLuarToken = await login('mhs-luar-' + suffix);
+    mhsLuarUserId = mhsLuarUser.id;
+    const mhsLuarToken = await login('testuser_fase5_luar_' + suffix);
 
     const res = await request('/api/classes/' + testClass.id + '/attendance-recap', {
       token: mhsLuarToken,
