@@ -138,7 +138,9 @@ npm test                # Menjalankan seluruh pengujian otomatis (Fase 2–6)
 
 Dokumentasi OpenAPI 3.0 untuk endpoint MVP 1 dan MVP 2 tersedia di [docs/openapi.yaml](docs/openapi.yaml). Dokumen tersebut mencakup autentikasi, manajemen pengguna, mata kuliah, kelas, enrollment, dashboard, pertemuan, materi, presensi, rekap kehadiran, dan audit log.
 
-Suite `mvp2-phase2.test.js` sampai `mvp2-phase5.test.js` memvalidasi tiap modul. `mvp2-phase6.test.js` menambahkan satu alur integrasi lintas fase: pembukaan kelas dan 16 pertemuan, unduh materi bagi mahasiswa terdaftar vs penolakan mahasiswa luar, check-in saat OPEN vs penolakan setelah CLOSED, serta persentase rekap yang dihitung dari sesi aktual.
+Suite `mvp2-phase2.test.js` sampai `mvp2-phase5.test.js` memvalidasi tiap modul. `mvp2-phase6.test.js` menambahkan satu alur integrasi lintas fase: pembukaan kelas dan 16 pertemuan, unduh materi bagi mahasiswa terdaftar vs penolakan mahasiswa luar, respons `401` untuk permintaan tanpa autentikasi, penolakan `403` bagi dosen non-pengampu, check-in saat OPEN vs penolakan setelah CLOSED, privasi rekap mahasiswa, serta akurasi persentase (1 dari 2 sesi = 50%).
+
+Auto-close presensi menggunakan `tolerance_minutes` secara *lazy*: batas waktu diperiksa saat check-in atau saat `GET /api/attendance/:sessionId/records` berikutnya, bukan oleh timer latar yang berjalan tepat waktu.
 
 Dokumen tersebut **diparse sebagai YAML** oleh `tests/openapi.js` dan divalidasi secara struktural pada `tests/phase6.test.js`: seluruh operasi HTTP MVP 1/2, `requestBody` multipart/JSON, respons JSON maupun streaming binary, parameter path, dan integritas `$ref`. Endpoint presensi dan rekapitulasi kini termasuk di dalam kontrak frontend.
 

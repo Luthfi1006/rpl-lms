@@ -280,6 +280,9 @@ describe('Fase 6: Kepatuhan MVP 1 & Handoff API', () => {
         'CreateMaterialRequest',
         'OpenAttendanceSessionRequest',
         'UpdateAttendanceRecordRequest',
+        'AttendanceSessionData',
+        'AttendanceSessionRecordsData',
+        'AttendanceRecapData',
       ]) {
         assert.ok(
           specification.components?.schemas?.[schemaName],
@@ -298,6 +301,34 @@ describe('Fase 6: Kepatuhan MVP 1 & Handoff API', () => {
         enrollment.required?.includes('class_id'),
         'class_id wajib menjadi field required pada CreateEnrollmentRequest'
       );
+    });
+
+    test('Endpoint presensi dan rekap memakai skema data respons yang spesifik', () => {
+      const responseSchemas = [
+        ['/meetings/{meetingId}/attendance/open', 'post', 'AttendanceSessionResponse'],
+        ['/meetings/{meetingId}/attendance/close', 'post', 'AttendanceSessionResponse'],
+        ['/attendance/{sessionId}/check-in', 'post', 'AttendanceRecordResponse'],
+        ['/attendance/{sessionId}/records', 'get', 'AttendanceSessionRecordsResponse'],
+        ['/attendance/records/{id}', 'put', 'AttendanceRecordResponse'],
+        ['/classes/{classId}/attendance-recap', 'get', 'AttendanceRecapResponse'],
+      ];
+
+      for (const [path, method, schemaName] of responseSchemas) {
+        const response = specification.paths[path][method].responses[
+          method === 'post' && path.includes('/check-in') ? '201' : '200'
+        ];
+        assert.equal(
+          response.content['application/json'].schema.$ref,
+          `#/components/schemas/${schemaName}`,
+          `${method.toUpperCase()} ${path} harus memakai ${schemaName}`
+        );
+      }
+
+      const recap = specification.components.schemas.AttendanceRecapData;
+      assert.deepEqual(recap.required, ['total_sessions', 'total_meetings', 'recap']);
+      const recapStudent = specification.components.schemas.AttendanceRecapStudent;
+      assert.ok(recapStudent.required.includes('percentage'));
+      assert.ok(recapStudent.required.includes('matrix'));
     });
   });
 

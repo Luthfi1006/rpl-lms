@@ -6,6 +6,7 @@ import app from '../src/app.js';
 import prisma from '../src/config/prisma.js';
 import { STORAGE } from '../src/config/env.js';
 import { ATTENDANCE_CLOSED_MESSAGE } from '../src/modules/attendance/attendance.service.js';
+import { cleanupTestArtifacts } from './setup.js';
 
 const MATERIAL_CONTENT = Buffer.from('%PDF-1.4\nFase 6 end-to-end handoff test\n');
 
@@ -14,6 +15,7 @@ describe('Fase 6 MVP 2: Integrasi lintas-modul & handoff frontend', () => {
   let baseUrl;
   let adminToken;
   let lecturerToken;
+  let otherLecturerToken;
   let enrolledStudentToken;
   let secondStudentToken;
   let outsideStudentToken;
@@ -46,6 +48,8 @@ describe('Fase 6 MVP 2: Integrasi lintas-modul & handoff frontend', () => {
   }
 
   before(async () => {
+    await cleanupTestArtifacts(prisma);
+
     await new Promise((resolve) => {
       server = app.listen(0, '127.0.0.1', () => {
         baseUrl = `http://127.0.0.1:${server.address().port}`;
@@ -53,10 +57,18 @@ describe('Fase 6 MVP 2: Integrasi lintas-modul & handoff frontend', () => {
       });
     });
 
-    [adminToken, lecturerToken, enrolledStudentToken, secondStudentToken, outsideStudentToken] =
+    [
+      adminToken,
+      lecturerToken,
+      otherLecturerToken,
+      enrolledStudentToken,
+      secondStudentToken,
+      outsideStudentToken,
+    ] =
       await Promise.all([
         login('admin'),
         login('198501152010121002'),
+        login('199003202015042001'),
         login('2024001001'),
         login('2024001002'),
         login('2024001003'),
@@ -193,6 +205,23 @@ describe('Fase 6 MVP 2: Integrasi lintas-modul & handoff frontend', () => {
     });
     assert.equal(outsideDownload.status, 403);
 
+    const unauthenticatedDownload = await request(`/api/materials/${material.id}/download`, {
+      token: null,
+    });
+    assert.equal(unauthenticatedDownload.status, 401);
+
+    const unauthenticatedOpen = await request(
+      `/api/meetings/${meeting.id}/attendance/open`,
+      { method: 'POST', token: null, body: {} }
+    );
+    assert.equal(unauthenticatedOpen.status, 401);
+
+    const otherLecturerOpen = await request(
+      `/api/meetings/${meeting.id}/attendance/open`,
+      { method: 'POST', token: otherLecturerToken, body: {} }
+    );
+    assert.equal(otherLecturerOpen.status, 403);
+
     const openResponse = await request(`/api/meetings/${meeting.id}/attendance/open`, {
       method: 'POST',
       token: lecturerToken,
@@ -223,24 +252,46 @@ describe('Fase 6 MVP 2: Integrasi lintas-modul & handoff frontend', () => {
     assert.equal(rejectedCheckIn.status, 400);
     assert.equal((await rejectedCheckIn.json()).message, ATTENDANCE_CLOSED_MESSAGE);
 
+    const secondMeeting = meetings[1];
+    const secondOpenResponse = await request(
+      `/api/meetings/${secondMeeting.id}/attendance/open`,
+      {
+        method: 'POST',
+        token: lecturerToken,
+        body: { tolerance_minutes: 60 },
+      }
+    );
+    assert.equal(secondOpenResponse.status, 200);
+    const secondSession = (await secondOpenResponse.json()).data;
+    assert.equal(secondSession.status, 'OPEN');
+
+    const secondCloseResponse = await request(
+      `/api/meetings/${secondMeeting.id}/attendance/close`,
+      { method: 'POST', token: lecturerToken }
+    );
+    assert.equal(secondCloseResponse.status, 200);
+    assert.equal((await secondCloseResponse.json()).data.status, 'CLOSED');
+
     const recapResponse = await request(
       `/api/classes/${testClass.id}/attendance-recap`,
       { token: lecturerToken }
     );
     assert.equal(recapResponse.status, 200);
     const recap = (await recapResponse.json()).data;
-    assert.equal(recap.total_sessions, 1);
+    assert.equal(recap.total_sessions, 2);
     assert.equal(recap.total_meetings, 16);
     assert.equal(recap.recap.length, 2);
 
     const firstStudentRecap = recap.recap.find(({ student_id }) => student_id === student1.id);
     const secondStudentRecap = recap.recap.find(({ student_id }) => student_id === student2.id);
     assert.equal(firstStudentRecap.total_hadir, 1);
-    assert.equal(firstStudentRecap.percentage, 100);
+    assert.equal(firstStudentRecap.percentage, 50);
     assert.equal(firstStudentRecap.matrix[0].status, 'HADIR');
+    assert.equal(firstStudentRecap.matrix[1].status, 'ALPA');
     assert.equal(secondStudentRecap.total_hadir, 0);
     assert.equal(secondStudentRecap.percentage, 0);
     assert.equal(secondStudentRecap.matrix[0].status, 'ALPA');
+    assert.equal(secondStudentRecap.matrix[1].status, 'ALPA');
 
     const studentRecapResponse = await request(
       `/api/classes/${testClass.id}/attendance-recap`,
