@@ -317,12 +317,15 @@ Tiga komponen berikut dipakai berulang oleh Fase 2–5 namun **belum ada di MVP 
 
 ### Fase 6: Pengujian Unit/Integration, Validasi Keamanan & Handoff (Hari 9–10)
 
-- [ ] Pengujian otomatis:
-  - Verifikasi auto-generate 16 pertemuan saat pembukaan kelas baru.
-  - Verifikasi unduh materi: Mahasiswa terdaftar sukses mengunduh, mahasiswa luar kelas ditolak (403).
-  - Verifikasi presensi: Check-in berhasil saat status `OPEN`, gagal saat status `CLOSED`.
-  - Verifikasi akurasi persentase kehadiran pada rekapitulasi.
-- [ ] Dokumentasi API untuk frontend tim.
+- [x] Pengujian otomatis terpisah untuk Fase 2–5 (`tests/mvp2-phase2.test.js` sampai `tests/mvp2-phase5.test.js`).
+- [x] Pengujian integrasi lintas-modul (`tests/mvp2-phase6.test.js`):
+  - Verifikasi kelas baru menghasilkan 16 pertemuan, termasuk UTS pada pertemuan 8 dan UAS pada pertemuan 16.
+  - Verifikasi mahasiswa terdaftar dapat mengunduh materi dan mahasiswa di luar kelas ditolak `403`.
+  - Verifikasi check-in berhasil saat sesi `OPEN`; check-in setelah sesi `CLOSED` ditolak dengan status `400`.
+  - Verifikasi rekap presensi (jumlah sesi, matrix 16 pertemuan, total `HADIR`, dan persentase) terhadap data sesi aktual.
+- [x] Validasi keamanan lintas peran: autentikasi, kepemilikan dosen, enrollment mahasiswa, dan privasi rekap personal.
+- [x] Dokumentasi API OpenAPI 3.0 di `backend/docs/openapi.yaml` mencakup endpoint MVP 1 dan MVP 2, termasuk materi, presensi, serta rekap.
+- [x] Kontrak OpenAPI diparse dan divalidasi otomatis; semua operasi, request body, respons JSON/binary, parameter, dan `$ref` diperiksa pada `tests/phase6.test.js`.
 
 ---
 

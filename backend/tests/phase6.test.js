@@ -114,6 +114,7 @@ describe('Fase 6: Kepatuhan MVP 1 & Handoff API', () => {
         ['/admin/audit-logs', 'get'],
         // Modul MVP 2 (Fase 2 — 16 pertemuan terstruktur)
         ['/classes/{classId}/meetings', 'get'],
+        ['/classes/{classId}/attendance-recap', 'get'],
         ['/meetings/{id}', 'get'],
         ['/meetings/{id}', 'put'],
         // Modul MVP 2 (Fase 3 — distribusi materi terproteksi)
@@ -121,6 +122,12 @@ describe('Fase 6: Kepatuhan MVP 1 & Handoff API', () => {
         ['/materials/{id}', 'put'],
         ['/materials/{id}', 'delete'],
         ['/materials/{id}/download', 'get'],
+        // Modul MVP 2 (Fase 4 — presensi digital)
+        ['/meetings/{meetingId}/attendance/open', 'post'],
+        ['/meetings/{meetingId}/attendance/close', 'post'],
+        ['/attendance/{sessionId}/check-in', 'post'],
+        ['/attendance/{sessionId}/records', 'get'],
+        ['/attendance/records/{id}', 'put'],
       ];
 
       for (const [path, method] of required) {
@@ -271,6 +278,8 @@ describe('Fase 6: Kepatuhan MVP 1 & Handoff API', () => {
         'CreateClassRequest',
         'CreateEnrollmentRequest',
         'CreateMaterialRequest',
+        'OpenAttendanceSessionRequest',
+        'UpdateAttendanceRecordRequest',
       ]) {
         assert.ok(
           specification.components?.schemas?.[schemaName],
