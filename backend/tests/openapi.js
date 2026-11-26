@@ -15,7 +15,12 @@ export const OPENAPI_PATH = new URL('../docs/openapi.yaml', import.meta.url);
 export const MUTATING_METHODS = ['post', 'put', 'patch'];
 
 /** Operasi mutasi yang memang tidak menerima body (mis. refresh/logout berbasis token). */
-export const BODYLESS_MUTATIONS = new Set(['post /auth/refresh', 'post /auth/logout']);
+export const BODYLESS_MUTATIONS = new Set([
+  'post /auth/refresh',
+  'post /auth/logout',
+  'post /meetings/{meetingId}/attendance/close',
+  'post /attendance/{sessionId}/check-in',
+]);
 
 /**
  * Operasi unggah berkas yang body-nya sah menggunakan `multipart/form-data`

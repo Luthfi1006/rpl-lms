@@ -27,6 +27,8 @@ tags:
     description: Pertemuan terstruktur MVP 2
   - name: Materials
     description: Distribusi materi pembelajaran terproteksi
+  - name: Attendance
+    description: Sesi presensi, check-in, dan rekapitulasi MVP 2
 
 components:
   securitySchemes:
@@ -372,6 +374,30 @@ components:
           type: string
           nullable: true
           maxLength: 5000
+
+    OpenAttendanceSessionRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        tolerance_minutes:
+          type: integer
+          minimum: 1
+          maximum: 180
+          default: 15
+          description: Durasi sesi sebelum auto-close; default 15 menit.
+
+    UpdateAttendanceRecordRequest:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [HADIR, SAKIT, IZIN, ALPA]
+        notes:
+          type: string
+          nullable: true
+          maxLength: 1000
 
     Meeting:
       type: object
@@ -996,6 +1022,30 @@ paths:
         '404':
           description: Kelas perkuliahan tidak ditemukan
 
+  /classes/{classId}/attendance-recap:
+    get:
+      tags: [Attendance]
+      summary: Rekap presensi kelas untuk mahasiswa, dosen pengampu, atau Admin
+      description: Mengembalikan persentase berdasarkan sesi yang pernah dibuka dan matrix 16 pertemuan. Mahasiswa hanya menerima rekap dirinya.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: classId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Rekap presensi kelas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '403':
+          description: Mahasiswa tidak terdaftar atau dosen bukan pengampu
+        '404':
+          description: Kelas tidak ditemukan
+
   /meetings/{id}:
     get:
       tags: [Meetings]
@@ -1073,6 +1123,142 @@ paths:
           description: Hanya dosen pengampu atau Admin yang boleh mengunggah
         '404':
           description: Pertemuan tidak ditemukan
+
+  /meetings/{meetingId}/attendance/open:
+    post:
+      tags: [Attendance]
+      summary: Buka atau buka ulang sesi presensi
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: meetingId
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpenAttendanceSessionRequest'
+      responses:
+        '200':
+          description: Sesi presensi berhasil dibuka dan dicatat pada audit log
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '400':
+          description: Toleransi menit di luar rentang 1–180
+        '403':
+          description: Hanya dosen pengampu atau Admin yang boleh membuka sesi
+        '404':
+          description: Pertemuan tidak ditemukan
+        '409':
+          description: Sesi sudah terbuka
+
+  /meetings/{meetingId}/attendance/close:
+    post:
+      tags: [Attendance]
+      summary: Tutup sesi presensi secara manual
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: meetingId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Sesi ditutup dan mahasiswa yang belum check-in ditandai ALPA
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '403':
+          description: Hanya dosen pengampu atau Admin yang boleh menutup sesi
+        '404':
+          description: Pertemuan atau sesi presensi tidak ditemukan
+        '409':
+          description: Sesi sudah tertutup
+
+  /attendance/{sessionId}/check-in:
+    post:
+      tags: [Attendance]
+      summary: Check-in mandiri mahasiswa pada sesi terbuka
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: sessionId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '201':
+          description: Kehadiran berhasil dicatat sebagai HADIR
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '400':
+          description: Sesi belum dibuka, sudah ditutup, atau sudah melewati batas waktu
+        '403':
+          description: Mahasiswa tidak terdaftar pada kelas
+        '404':
+          description: Sesi presensi tidak ditemukan
+        '409':
+          description: Mahasiswa sudah check-in pada sesi ini
+
+  /attendance/{sessionId}/records:
+    get:
+      tags: [Attendance]
+      summary: Daftar kehadiran dan roster mahasiswa untuk dosen pengampu/Admin
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: sessionId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Rekaman presensi beserta mahasiswa yang belum mencatat kehadiran
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '403':
+          description: Hanya dosen pengampu atau Admin yang boleh melihat roster
+        '404':
+          description: Sesi presensi tidak ditemukan
+
+  /attendance/records/{id}:
+    put:
+      tags: [Attendance]
+      summary: Koreksi status kehadiran oleh dosen pengampu/Admin
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/EntityId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAttendanceRecordRequest'
+      responses:
+        '200':
+          description: Status kehadiran diperbarui dan dicatat pada audit log
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '400':
+          description: Status atau catatan tidak valid
+        '403':
+          description: Hanya dosen pengampu atau Admin yang boleh mengoreksi
+        '404':
+          description: Rekaman kehadiran tidak ditemukan
 
   /materials/{id}:
     put:
