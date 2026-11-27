@@ -373,30 +373,30 @@ Fase 0 ∥ Fase 1  ──▶  Fase 2 ∥ Fase 3 ∥ (kode) Fase 4  ──▶  Fa
 
 ---
 
-### Fase 0: Prasyarat Bersama Sebelum Paralelisasi (Hari 1, bersama Fase 1) — ⬜ **BELUM**
+### Fase 0: Prasyarat Bersama Sebelum Paralelisasi (Hari 1, bersama Fase 1) — ✅ **SELESAI**
 
 Komponen berikut dipakai berulang oleh Fase 2–4 dan harus selesai lebih dulu:
 
-- [ ] **Konstanta entitas audit baru** di `src/constants/auditEntities.js`:
+- [x] **Konstanta entitas audit baru** di `src/constants/auditEntities.js`:
   - `ASSIGNMENTS: 'assignments'`
   - `SUBMISSIONS: 'submissions'`
   - Pastikan `AUDIT_ENTITY_VALUES` ikut bertambah sehingga filter `GET /api/admin/audit-logs?entity=` mengenali entitas baru.
-- [ ] **Konfigurasi ukuran submission** di `src/config/env.js`:
+- [x] **Konfigurasi ukuran submission** di `src/config/env.js`:
   - `STORAGE.SUBMISSION_MAX_SIZE` dibaca dari `MAX_SUBMISSION_SIZE_MB`.
   - Default `10 * 1024 * 1024`; nilai di luar 5–10MB ditolak saat startup dengan pesan konfigurasi yang jelas (FR-019, BR-008).
-- [ ] **Helper signature berkas** `src/utils/fileSignature.js`:
+- [x] **Helper signature berkas** `src/utils/fileSignature.js`:
   - `assertDocumentSignature(buffer, extension)` → melempar `AppError 400` bila magic-byte tidak cocok.
   - PDF: `%PDF-`; ZIP/DOCX/XLSX: `PK\x03\x04`.
   - Buffer kosong/terlalu pendek dianggap tidak valid.
-- [ ] **Middleware upload** di `src/middlewares/upload.middleware.js`:
+- [x] **Middleware upload** di `src/middlewares/upload.middleware.js`:
   - Ekstrak factory `createDocumentUploader({ field, maxSize, label })` dengan whitelist `STORAGE.DOC_ALLOWED_EXTENSIONS`.
   - Pertahankan `uploadMaterial` **persis** seperti sekarang (regresi MVP 2 tidak boleh berubah).
   - Tambah `uploadAssignmentFile` (field `file`, batas 10MB) dan `uploadSubmission` (field `file`, batas `SUBMISSION_MAX_SIZE`).
   - Validasi `mimetype` yang dideklarasikan terhadap peta ekstensi→MIME yang sudah dipakai `MaterialService`.
-- [ ] **Kategori storage** di `src/utils/storage.js`:
+- [x] **Kategori storage** di `src/utils/storage.js`:
   - `case 'assignment': path.resolve(STORAGE.UPLOAD_DIR, 'assignments')`
   - `case 'submission'` sudah ada; pastikan direktori `submissions/` dipakai konsisten.
-- [ ] **Verifikasi baseline** `npm test` tetap **190/190 lulus** setelah refactor middleware.
+- [x] **Verifikasi baseline** `npm test` tetap **190/190 lulus** setelah refactor middleware (hasil: 220/220 — 190 baseline + 30 tes baru Fase 0).
 
 ---
 
@@ -560,7 +560,7 @@ Komponen berikut dipakai berulang oleh Fase 2–4 dan harus selesai lebih dulu:
 
 | Fase | Status | Tanggal mulai | Tanggal selesai | Tes terakhir | Catatan / commit |
 |---|---|---|---|---|---|
-| 0 — Prasyarat bersama | ⬜ | — | — | — | — |
+| 0 — Prasyarat bersama | ✅ | 2026-11-27 | 2026-11-27 | `npm test` 220/220 lulus | Fase 0 selesai; 30 tes baru (MVP 3 phase0) |
 | 1 — Migrasi Skema | ⬜ | — | — | — | — |
 | 2 — Penerbitan Tugas | ⬜ | — | — | — | — |
 | 3 — Submission & Validasi Berkas | ⬜ | — | — | — | — |
@@ -572,6 +572,7 @@ Komponen berikut dipakai berulang oleh Fase 2–4 dan harus selesai lebih dulu:
 | Tanggal | Fase | Ringkasan | File utama tersentuh | Hasil tes | Commit |
 |---|---|---|---|---|---|
 | 2026-11-27 | — | Dokumen plan MVP 3 dibuat (belum ada implementasi) | `IMPLEMENTATION_PLAN_MVP3_BACKEND.md` | — | — |
+| 2026-11-27 | 0 | Prasyarat bersama MVP 3: entitas audit `assignments`/`submissions`, `MAX_SUBMISSION_SIZE_MB` (5–10MB), helper signature magic-byte, factory middleware unggah dokumen (soal opsional + submission), kategori storage `assignment` | `backend/src/constants/auditEntities.js`, `backend/src/config/env.js`, `backend/src/utils/fileSignature.js`, `backend/src/utils/storage.js`, `backend/src/middlewares/upload.middleware.js`, `backend/tests/mvp3-phase0.test.js`, `backend/.env.example` | `npm test` → 220/220 lulus (190 baseline + 30 baru) | 8c3874c |
 
 **Format acuan baris baru (jangan dihapus; tambahkan baris di bawah tabel):**
 

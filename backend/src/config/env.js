@@ -21,6 +21,53 @@ export const ENV = {
 };
 
 /**
+ * Batas konfigurasi ukuran berkas jawaban tugas (FR-019, BR-008).
+ *
+ * SRS menetapkan rentang yang sah 5MB–10MB. Nilai di luar rentang tidak boleh
+ * diterima diam-diam, karena konfigurasi yang menyimpang akan melanggar
+ * kebijakan keamanan berkas yang sudah disepakati.
+ */
+export const SUBMISSION_SIZE_LIMITS = Object.freeze({
+  MIN_MB: 5,
+  MAX_MB: 10,
+  DEFAULT_MB: 10,
+});
+
+const MEGABYTE = 1024 * 1024;
+
+/**
+ * Mengubah nilai env `MAX_SUBMISSION_SIZE_MB` menjadi ukuran byte.
+ *
+ * Nilai kosong menghasilkan default 10MB. Nilai non-angka atau di luar rentang
+ * 5–10MB melempar `Error` saat modul dimuat (startup), sehingga kesalahan
+ * konfigurasi terlihat segera alih-alih menghasilkan batas yang tidak sah.
+ *
+ * @param {string|number|undefined|null} rawValue nilai mentah env
+ * @returns {number} ukuran maksimum dalam byte
+ */
+export function parseSubmissionMaxSize(rawValue = process.env.MAX_SUBMISSION_SIZE_MB) {
+  const raw = rawValue === undefined || rawValue === null ? '' : String(rawValue).trim();
+  if (raw === '') {
+    return SUBMISSION_SIZE_LIMITS.DEFAULT_MB * MEGABYTE;
+  }
+
+  const megabytes = Number(raw);
+  if (
+    !Number.isFinite(megabytes) ||
+    megabytes < SUBMISSION_SIZE_LIMITS.MIN_MB ||
+    megabytes > SUBMISSION_SIZE_LIMITS.MAX_MB
+  ) {
+    throw new Error(
+      `[config] MAX_SUBMISSION_SIZE_MB tidak valid: "${raw}". ` +
+        `Nilai harus berupa angka pada rentang ${SUBMISSION_SIZE_LIMITS.MIN_MB}–` +
+        `${SUBMISSION_SIZE_LIMITS.MAX_MB} MB (FR-019, BR-008).`
+    );
+  }
+
+  return Math.round(megabytes * MEGABYTE);
+}
+
+/**
  * Konfigurasi penyimpanan berkas terproteksi (BR-009, NFR-005)
  */
 export const STORAGE = {
@@ -37,4 +84,7 @@ export const STORAGE = {
   // Kebijakan dokumen umum (BR-007)
   DOC_MAX_SIZE: 10 * 1024 * 1024, // 10MB
   DOC_ALLOWED_EXTENSIONS: ['.pdf', '.docx', '.xlsx', '.zip'],
+
+  // Kebijakan berkas jawaban tugas (FR-019, BR-008) — 5MB–10MB
+  SUBMISSION_MAX_SIZE: parseSubmissionMaxSize(),
 };

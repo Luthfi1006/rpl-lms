@@ -82,6 +82,20 @@ export function generateStorageName(originalname) {
 }
 
 /**
+ * Peta ekstensi dokumen → daftar MIME yang dianggap sah.
+ *
+ * Dipakai bersama oleh middleware unggah (validasi MIME yang dideklarasikan)
+ * dan service penyimpanan berkas. `.zip` menerima dua varian MIME karena
+ * sebagian klien mengirim `application/x-zip-compressed`.
+ */
+export const DOCUMENT_MIME_TYPES = Object.freeze({
+  '.pdf': ['application/pdf'],
+  '.docx': ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+  '.xlsx': ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+  '.zip': ['application/zip', 'application/x-zip-compressed'],
+});
+
+/**
  * Tentukan subdirektori penyimpanan berdasarkan kategori berkas
  */
 export function resolveStorageSubdir(category) {
@@ -90,6 +104,8 @@ export function resolveStorageSubdir(category) {
       return STORAGE.AVATAR_DIR;
     case 'material':
       return path.resolve(STORAGE.UPLOAD_DIR, 'materials');
+    case 'assignment':
+      return path.resolve(STORAGE.UPLOAD_DIR, 'assignments');
     case 'submission':
       return path.resolve(STORAGE.UPLOAD_DIR, 'submissions');
     default:

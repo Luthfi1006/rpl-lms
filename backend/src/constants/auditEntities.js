@@ -33,6 +33,10 @@ export const AUDIT_ENTITIES = {
   MATERIALS: 'materials',
   ATTENDANCE_SESSIONS: 'attendance_sessions',
   ATTENDANCE_RECORDS: 'attendance_records',
+
+  // MVP 3 (Fase 2–5): penerbitan tugas & pengumpulan/penilaian submission
+  ASSIGNMENTS: 'assignments',
+  SUBMISSIONS: 'submissions',
 };
 
 /**
