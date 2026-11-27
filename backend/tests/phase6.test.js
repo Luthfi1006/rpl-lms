@@ -305,20 +305,31 @@ describe('Fase 6: Kepatuhan MVP 1 & Handoff API', () => {
 
     test('Endpoint presensi dan rekap memakai skema data respons yang spesifik', () => {
       const responseSchemas = [
-        ['/meetings/{meetingId}/attendance/open', 'post', 'AttendanceSessionResponse'],
-        ['/meetings/{meetingId}/attendance/close', 'post', 'AttendanceSessionResponse'],
-        ['/attendance/{sessionId}/check-in', 'post', 'AttendanceRecordResponse'],
-        ['/attendance/{sessionId}/records', 'get', 'AttendanceSessionRecordsResponse'],
-        ['/attendance/records/{id}', 'put', 'AttendanceRecordResponse'],
-        ['/classes/{classId}/attendance-recap', 'get', 'AttendanceRecapResponse'],
+        ['/meetings/{meetingId}/attendance/open', 'post', '200', 'AttendanceSessionResponse'],
+        ['/meetings/{meetingId}/attendance/close', 'post', '200', 'AttendanceSessionResponse'],
+        ['/attendance/{sessionId}/check-in', 'post', '201', 'AttendanceRecordResponse'],
+        ['/attendance/{sessionId}/records', 'get', '200', 'AttendanceSessionRecordsResponse'],
+        ['/attendance/records/{id}', 'put', '200', 'AttendanceRecordResponse'],
+        ['/classes/{classId}/attendance-recap', 'get', '200', 'AttendanceRecapResponse'],
       ];
 
-      for (const [path, method, schemaName] of responseSchemas) {
-        const response = specification.paths[path][method].responses[
-          method === 'post' && path.includes('/check-in') ? '201' : '200'
-        ];
+      for (const [path, method, status, schemaName] of responseSchemas) {
+        const operation = specification.paths[path]?.[method];
+        assert.ok(operation, `Operasi ${method.toUpperCase()} ${path} wajib didefinisikan`);
+
+        const response = operation.responses?.[status];
+        assert.ok(
+          response,
+          `${method.toUpperCase()} ${path} wajib mendefinisikan respons ${status}`
+        );
+
+        const schema = response.content?.['application/json']?.schema;
+        assert.ok(
+          schema?.$ref,
+          `${method.toUpperCase()} ${path} respons ${status} wajib memakai $ref skema data`
+        );
         assert.equal(
-          response.content['application/json'].schema.$ref,
+          schema.$ref,
           `#/components/schemas/${schemaName}`,
           `${method.toUpperCase()} ${path} harus memakai ${schemaName}`
         );
@@ -329,6 +340,31 @@ describe('Fase 6: Kepatuhan MVP 1 & Handoff API', () => {
       const recapStudent = specification.components.schemas.AttendanceRecapStudent;
       assert.ok(recapStudent.required.includes('percentage'));
       assert.ok(recapStudent.required.includes('matrix'));
+    });
+
+    test('resolveContentSchema menggabungkan allOf sehingga envelope ApiResponse tetap terdeteksi', () => {
+      const flattened = resolveContentSchema(specification, {
+        content: {
+          'application/json': {
+            schema: { $ref: '#/components/schemas/AttendanceRecapResponse' },
+          },
+        },
+      });
+
+      assert.equal(flattened.type, 'object');
+      assert.ok(
+        flattened.properties?.success,
+        'properti success dari ApiResponse harus terbawa setelah allOf diratakan'
+      );
+      assert.ok(
+        flattened.properties?.message,
+        'properti message dari ApiResponse harus terbawa setelah allOf diratakan'
+      );
+      assert.equal(
+        flattened.properties?.data?.$ref,
+        '#/components/schemas/AttendanceRecapData'
+      );
+      assert.deepEqual(flattened.required, ['success', 'message']);
     });
   });
 

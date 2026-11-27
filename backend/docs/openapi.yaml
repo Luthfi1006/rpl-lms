@@ -448,6 +448,9 @@ components:
           type: string
           format: uuid
           nullable: true
+          description: |
+            `null` pada daftar roster berarti mahasiswa belum mencatat kehadiran;
+            respons check-in dan koreksi selalu mengembalikan UUID.
         student_id:
           type: string
           format: uuid
