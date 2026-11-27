@@ -572,7 +572,7 @@ Komponen berikut dipakai berulang oleh Fase 2–4 dan harus selesai lebih dulu:
 | Tanggal | Fase | Ringkasan | File utama tersentuh | Hasil tes | Commit |
 |---|---|---|---|---|---|
 | 2026-11-27 | — | Dokumen plan MVP 3 dibuat (belum ada implementasi) | `IMPLEMENTATION_PLAN_MVP3_BACKEND.md` | — | — |
-| 2026-11-27 | 0 | Prasyarat bersama MVP 3: entitas audit `assignments`/`submissions`, `MAX_SUBMISSION_SIZE_MB` (5–10MB), helper signature magic-byte, factory middleware unggah dokumen (soal opsional + submission), kategori storage `assignment` | `backend/src/constants/auditEntities.js`, `backend/src/config/env.js`, `backend/src/utils/fileSignature.js`, `backend/src/utils/storage.js`, `backend/src/middlewares/upload.middleware.js`, `backend/tests/mvp3-phase0.test.js`, `backend/.env.example` | `npm test` → 220/220 lulus (190 baseline + 30 baru) | 8c3874c |
+| 2026-11-27 | 0 | Prasyarat bersama MVP 3: entitas audit `assignments`/`submissions`, `MAX_SUBMISSION_SIZE_MB` (5–10MB), helper signature magic-byte, factory middleware unggah dokumen (soal opsional + submission), kategori storage `assignment` | `backend/src/constants/auditEntities.js`, `backend/src/config/env.js`, `backend/src/utils/fileSignature.js`, `backend/src/utils/storage.js`, `backend/src/middlewares/upload.middleware.js`, `backend/tests/mvp3-phase0.test.js`, `backend/.env.example` | `npm test` → 220/220 lulus (190 baseline + 30 baru) | 6a52fec |
 
 **Format acuan baris baru (jangan dihapus; tambahkan baris di bawah tabel):**
 
