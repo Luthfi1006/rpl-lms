@@ -54,7 +54,7 @@ Rencana ini adalah **kelanjutan langsung** dari [IMPLEMENTATION_PLAN_MVP1_BACKEN
 2. **Penyimpanan Berkas Terproteksi:** File materi tidak diletakkan di public assets, melainkan di direktori privat terisolasi server (`storage/materials/`). Pengunduhan dilakukan melalui endpoint perantara yang memverifikasi JWT dan kepesertaan (*enrollment check*) sebelum melakukan pipe streaming (*res.download / res.sendFile*).
 3. **State Machine Sesi Presensi:** Sesi presensi berstatus `CLOSED` secara default. Transisi status dikendalikan oleh dosen: `CLOSED → OPEN → CLOSED`. Check-in mahasiswa hanya valid saat `status == 'OPEN'`.
 4. **Idempotensi & Pencegahan Konkurensi:** Pengecekan check-in ganda ditegakkan oleh unique composite constraint database `@@unique([session_id, student_id])` untuk menjamin tidak ada duplikasi data kehadiran.
-5. **Penutupan Sesi Manual, Bukan Otomatis:** Sesi hanya berpindah ke `CLOSED` melalui aksi eksplisit dosen (`POST /api/meetings/:id/attendance/close`). `tolerance_minutes` tersimpan sebagai konfigurasi sesi dan ditampilkan di antarmuka sebagai konteks bagi mahasiswa, tetapi **belum** memicu penutupan otomatis — timer auto-close adalah lingkup Fase 5. Sampai itu ada, sesi `OPEN` bertahan hingga dosen menutupnya.
+5. **Penutupan Sesi Manual dan Auto-close Lazy:** Dosen dapat menutup sesi secara eksplisit (`POST /api/meetings/:id/attendance/close`). `tolerance_minutes` juga memicu auto-close secara *lazy* saat check-in atau permintaan `GET /api/attendance/:sessionId/records` berikutnya setelah batas waktu terlewati; tidak ada timer latar yang menutup sesi tepat pada waktunya.
 6. **Penanda ALPA Otomatis Terpisah dari Keputusan Dosen:** ALPA yang dibuat sistem saat penutupan sesi ditandai kolom `is_auto_generated = true`; setiap koreksi dosen menurunkannya menjadi `false`. Pembukaan ulang sesi hanya menghapus baris bertanda `true`, sehingga ALPA yang sengaja ditetapkan dosen tidak pernah ikut terhapus. Kolom `notes` **tidak** dipakai sebagai penanda karena ia juga diisi manusia.
 
 ---
@@ -299,7 +299,7 @@ Tiga komponen berikut dipakai berulang oleh Fase 2–5 namun **belum ada di MVP 
 - [x] Pelengkap: `GET /api/attendance/:sessionId/records` untuk dosen melihat roster kehadiran (termasuk mahasiswa yang belum check-in).
 - [x] **Penyetelan batas toleransi menit** saat membuka sesi (`tolerance_minutes`, rentang 1–180) — divalidasi Zod dan benar-benar tersimpan.
 - [x] **Pemisahan ALPA otomatis dari keputusan dosen** melalui kolom `is_auto_generated`, sehingga koreksi dosen tidak terhapus saat sesi dibuka ulang.
-- [x] **Timer penutupan sesi otomatis** berdasarkan `tolerance_minutes` — lingkup Fase 5; sampai ada, sesi hanya ditutup manual oleh dosen.
+- [x] **Auto-close lazy** berdasarkan `tolerance_minutes`, dipicu oleh check-in atau permintaan daftar presensi setelah batas waktu; bukan timer latar. Sesi juga dapat ditutup manual oleh dosen.
 
 ---
 
@@ -323,7 +323,8 @@ Tiga komponen berikut dipakai berulang oleh Fase 2–5 namun **belum ada di MVP 
   - Verifikasi mahasiswa terdaftar dapat mengunduh materi dan mahasiswa di luar kelas ditolak `403`.
   - Verifikasi check-in berhasil saat sesi `OPEN`; check-in setelah sesi `CLOSED` ditolak dengan status `400`.
   - Verifikasi rekap presensi (jumlah sesi, matrix 16 pertemuan, total `HADIR`, dan persentase) terhadap data sesi aktual.
-- [x] Validasi keamanan lintas peran: autentikasi, kepemilikan dosen, enrollment mahasiswa, dan privasi rekap personal.
+- [x] Validasi keamanan lintas peran dalam suite integrasi: unduh materi tanpa token ditolak `401`, mahasiswa luar kelas ditolak `403`, dosen non-pengampu ditolak saat membuka sesi `403`, dan mahasiswa hanya menerima rekap pribadinya. Cakupan autentikasi/otorisasi modul lainnya juga diuji di suite Fase 2–5.
+- [x] Verifikasi akurasi persentase dengan dua sesi: mahasiswa dengan satu kehadiran memperoleh `50%`; mahasiswa tanpa kehadiran memperoleh `0%`.
 - [x] Dokumentasi API OpenAPI 3.0 di `backend/docs/openapi.yaml` mencakup endpoint MVP 1 dan MVP 2, termasuk materi, presensi, serta rekap.
 - [x] Kontrak OpenAPI diparse dan divalidasi otomatis; semua operasi, request body, respons JSON/binary, parameter, dan `$ref` diperiksa pada `tests/phase6.test.js`.
 

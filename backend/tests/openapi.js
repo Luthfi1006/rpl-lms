@@ -118,7 +118,62 @@ export function resolveOperationParameters(document, entry) {
 }
 
 /**
- * Mencari skema JSON di dalam sebuah blok `content`, mengikuti `$ref` satu level.
+ * Me-resolve `$ref` lalu menggabungkan seluruh cabang `allOf` menjadi satu
+ * skema datar (`properties` dan `required`). Tanpa ini, respons berbentuk
+ * `allOf: [ApiResponse, { data }]` tidak memperlihatkan properti envelope
+ * `success`/`message` kepada pemeriksa kontrak.
+ *
+ * @param {object} document dokumen OpenAPI
+ * @param {object} schema skema masukan (boleh `$ref` maupun `allOf`)
+ * @param {Set<string>} visited pointer `$ref` yang sedang ditelusuri (guard siklus)
+ * @returns {object|undefined} skema yang sudah digabung
+ */
+export function flattenSchema(document, schema, visited = new Set()) {
+  if (!schema || typeof schema !== 'object') return schema;
+
+  let resolved = schema;
+  if (typeof schema.$ref === 'string') {
+    if (visited.has(schema.$ref)) return schema;
+    resolved = resolveJsonPointer(document, schema.$ref);
+    if (!resolved) return schema;
+    visited = new Set([...visited, schema.$ref]);
+  }
+
+  if (!Array.isArray(resolved.allOf)) {
+    return resolved;
+  }
+
+  const { allOf, ...base } = resolved;
+  const merged = {
+    ...base,
+    properties: { ...(base.properties ?? {}) },
+    required: [...(base.required ?? [])],
+  };
+
+  for (const branch of allOf) {
+    // Set baru per cabang: guard siklus tetap aktif tanpa saling memblokir
+    // bila dua cabang merujuk komponen yang sama.
+    const flattened = flattenSchema(document, branch, new Set(visited));
+    if (!flattened || typeof flattened !== 'object') continue;
+
+    for (const [key, value] of Object.entries(flattened)) {
+      if (key === 'properties' || key === 'required') continue;
+      if (merged[key] === undefined) merged[key] = value;
+    }
+    Object.assign(merged.properties, flattened.properties ?? {});
+    for (const field of flattened.required ?? []) {
+      if (!merged.required.includes(field)) merged.required.push(field);
+    }
+  }
+
+  if (merged.required.length === 0) delete merged.required;
+  if (Object.keys(merged.properties).length === 0) delete merged.properties;
+  return merged;
+}
+
+/**
+ * Mencari skema JSON di dalam sebuah blok `content`, mengikuti `$ref`, lalu
+ * meratakan `allOf` agar seluruh properti envelope dan data terlihat.
  *
  * @param {object} document dokumen OpenAPI
  * @param {object} container objek yang memiliki properti `content`
@@ -128,5 +183,5 @@ export function resolveOperationParameters(document, entry) {
 export function resolveContentSchema(document, container, mediaType = 'application/json') {
   const schema = container?.content?.[mediaType]?.schema;
   if (!schema) return undefined;
-  return schema.$ref ? resolveJsonPointer(document, schema.$ref) : schema;
+  return flattenSchema(document, schema);
 }

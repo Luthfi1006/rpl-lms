@@ -280,6 +280,9 @@ describe('Fase 6: Kepatuhan MVP 1 & Handoff API', () => {
         'CreateMaterialRequest',
         'OpenAttendanceSessionRequest',
         'UpdateAttendanceRecordRequest',
+        'AttendanceSessionData',
+        'AttendanceSessionRecordsData',
+        'AttendanceRecapData',
       ]) {
         assert.ok(
           specification.components?.schemas?.[schemaName],
@@ -298,6 +301,70 @@ describe('Fase 6: Kepatuhan MVP 1 & Handoff API', () => {
         enrollment.required?.includes('class_id'),
         'class_id wajib menjadi field required pada CreateEnrollmentRequest'
       );
+    });
+
+    test('Endpoint presensi dan rekap memakai skema data respons yang spesifik', () => {
+      const responseSchemas = [
+        ['/meetings/{meetingId}/attendance/open', 'post', '200', 'AttendanceSessionResponse'],
+        ['/meetings/{meetingId}/attendance/close', 'post', '200', 'AttendanceSessionResponse'],
+        ['/attendance/{sessionId}/check-in', 'post', '201', 'AttendanceRecordResponse'],
+        ['/attendance/{sessionId}/records', 'get', '200', 'AttendanceSessionRecordsResponse'],
+        ['/attendance/records/{id}', 'put', '200', 'AttendanceRecordResponse'],
+        ['/classes/{classId}/attendance-recap', 'get', '200', 'AttendanceRecapResponse'],
+      ];
+
+      for (const [path, method, status, schemaName] of responseSchemas) {
+        const operation = specification.paths[path]?.[method];
+        assert.ok(operation, `Operasi ${method.toUpperCase()} ${path} wajib didefinisikan`);
+
+        const response = operation.responses?.[status];
+        assert.ok(
+          response,
+          `${method.toUpperCase()} ${path} wajib mendefinisikan respons ${status}`
+        );
+
+        const schema = response.content?.['application/json']?.schema;
+        assert.ok(
+          schema?.$ref,
+          `${method.toUpperCase()} ${path} respons ${status} wajib memakai $ref skema data`
+        );
+        assert.equal(
+          schema.$ref,
+          `#/components/schemas/${schemaName}`,
+          `${method.toUpperCase()} ${path} harus memakai ${schemaName}`
+        );
+      }
+
+      const recap = specification.components.schemas.AttendanceRecapData;
+      assert.deepEqual(recap.required, ['total_sessions', 'total_meetings', 'recap']);
+      const recapStudent = specification.components.schemas.AttendanceRecapStudent;
+      assert.ok(recapStudent.required.includes('percentage'));
+      assert.ok(recapStudent.required.includes('matrix'));
+    });
+
+    test('resolveContentSchema menggabungkan allOf sehingga envelope ApiResponse tetap terdeteksi', () => {
+      const flattened = resolveContentSchema(specification, {
+        content: {
+          'application/json': {
+            schema: { $ref: '#/components/schemas/AttendanceRecapResponse' },
+          },
+        },
+      });
+
+      assert.equal(flattened.type, 'object');
+      assert.ok(
+        flattened.properties?.success,
+        'properti success dari ApiResponse harus terbawa setelah allOf diratakan'
+      );
+      assert.ok(
+        flattened.properties?.message,
+        'properti message dari ApiResponse harus terbawa setelah allOf diratakan'
+      );
+      assert.equal(
+        flattened.properties?.data?.$ref,
+        '#/components/schemas/AttendanceRecapData'
+      );
+      assert.deepEqual(flattened.required, ['success', 'message']);
     });
   });
 

@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: E-Learning Kampus Backend API
-  version: 1.0.0
+  version: 1.1.0
   description: Dokumentasi resmi API MVP 1 dan MVP 2 untuk sistem pembelajaran daring E-Learning Kampus.
 servers:
   - url: http://localhost:5000/api
@@ -384,7 +384,10 @@ components:
           minimum: 1
           maximum: 180
           default: 15
-          description: Durasi sesi sebelum auto-close; default 15 menit.
+          description: |
+            Batas durasi sesi (default 15 menit). Auto-close bersifat lazy, bukan
+            timer latar: sesi ditutup saat ada check-in atau permintaan daftar
+            kehadiran setelah batas ini terlewati.
 
     UpdateAttendanceRecordRequest:
       type: object
@@ -398,6 +401,205 @@ components:
           type: string
           nullable: true
           maxLength: 1000
+
+    AttendanceSessionData:
+      type: object
+      required: [id, meeting_id, status, opened_at, closed_at, tolerance_minutes]
+      properties:
+        id:
+          type: string
+          format: uuid
+        meeting_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [OPEN, CLOSED]
+        opened_at:
+          type: string
+          format: date-time
+          nullable: true
+        closed_at:
+          type: string
+          format: date-time
+          nullable: true
+        tolerance_minutes:
+          type: integer
+          minimum: 1
+          maximum: 180
+        meeting:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            meeting_number:
+              type: integer
+              minimum: 1
+              maximum: 16
+            title:
+              type: string
+
+    AttendanceRecordData:
+      type: object
+      required: [id, student_id, nim, full_name, status, recorded_at, notes]
+      properties:
+        id:
+          type: string
+          format: uuid
+          nullable: true
+          description: |
+            `null` pada daftar roster berarti mahasiswa belum mencatat kehadiran;
+            respons check-in dan koreksi selalu mengembalikan UUID.
+        student_id:
+          type: string
+          format: uuid
+        nim:
+          type: string
+        full_name:
+          type: string
+          nullable: true
+        status:
+          type: string
+          nullable: true
+          enum: [HADIR, SAKIT, IZIN, ALPA]
+        recorded_at:
+          type: string
+          format: date-time
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        session:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            meeting_id:
+              type: string
+              format: uuid
+            status:
+              type: string
+              enum: [OPEN, CLOSED]
+
+    AttendanceSessionRecordsData:
+      type: object
+      required: [session, summary, records]
+      properties:
+        session:
+          $ref: '#/components/schemas/AttendanceSessionData'
+        summary:
+          type: object
+          required: [total_students, recorded_count, hadir, sakit, izin, alpa, not_recorded]
+          properties:
+            total_students:
+              type: integer
+            recorded_count:
+              type: integer
+            hadir:
+              type: integer
+            sakit:
+              type: integer
+            izin:
+              type: integer
+            alpa:
+              type: integer
+            not_recorded:
+              type: integer
+        records:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttendanceRecordData'
+
+    AttendanceRecapMatrixEntry:
+      type: object
+      required: [meeting_number, status]
+      properties:
+        meeting_number:
+          type: integer
+          minimum: 1
+          maximum: 16
+        status:
+          type: string
+          nullable: true
+          enum: [HADIR, SAKIT, IZIN, ALPA]
+
+    AttendanceRecapStudent:
+      type: object
+      required: [student_id, nim, full_name, total_hadir, percentage, matrix]
+      properties:
+        student_id:
+          type: string
+          format: uuid
+        nim:
+          type: string
+        full_name:
+          type: string
+          nullable: true
+        total_hadir:
+          type: integer
+          minimum: 0
+        percentage:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Persentase kehadiran berdasarkan jumlah sesi presensi yang pernah dibuka.
+        matrix:
+          type: array
+          minItems: 16
+          maxItems: 16
+          items:
+            $ref: '#/components/schemas/AttendanceRecapMatrixEntry'
+
+    AttendanceRecapData:
+      type: object
+      required: [total_sessions, total_meetings, recap]
+      properties:
+        total_sessions:
+          type: integer
+          minimum: 0
+          description: Jumlah sesi presensi yang pernah dibuka pada kelas.
+        total_meetings:
+          type: integer
+          minimum: 0
+          maximum: 16
+        recap:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttendanceRecapStudent'
+
+    AttendanceSessionResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/AttendanceSessionData'
+
+    AttendanceRecordResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/AttendanceRecordData'
+
+    AttendanceSessionRecordsResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/AttendanceSessionRecordsData'
+
+    AttendanceRecapResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/AttendanceRecapData'
 
     Meeting:
       type: object
@@ -1040,7 +1242,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
+                $ref: '#/components/schemas/AttendanceRecapResponse'
         '403':
           description: Mahasiswa tidak terdaftar atau dosen bukan pengampu
         '404':
@@ -1147,7 +1349,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
+                $ref: '#/components/schemas/AttendanceSessionResponse'
         '400':
           description: Toleransi menit di luar rentang 1–180
         '403':
@@ -1174,7 +1376,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
+                $ref: '#/components/schemas/AttendanceSessionResponse'
         '403':
           description: Hanya dosen pengampu atau Admin yang boleh menutup sesi
         '404':
@@ -1199,7 +1401,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
+                $ref: '#/components/schemas/AttendanceRecordResponse'
         '400':
           description: Sesi belum dibuka, sudah ditutup, atau sudah melewati batas waktu
         '403':
@@ -1226,7 +1428,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
+                $ref: '#/components/schemas/AttendanceSessionRecordsResponse'
         '403':
           description: Hanya dosen pengampu atau Admin yang boleh melihat roster
         '404':
@@ -1252,7 +1454,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponse'
+                $ref: '#/components/schemas/AttendanceRecordResponse'
         '400':
           description: Status atau catatan tidak valid
         '403':
