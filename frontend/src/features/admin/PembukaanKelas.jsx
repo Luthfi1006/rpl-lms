@@ -352,7 +352,7 @@ export default function PembukaanKelas({ onNavigate }) {
       {/* Breadcrumbs & Live PDDikti Status */}
       <div className="flex flex-wrap items-center justify-between gap-space-sm mb-space-md">
         <nav aria-label="Breadcrumb" className="flex items-center gap-space-xs font-body-sm text-body-sm text-on-surface-variant">
-          <a className="hover:text-primary transition-colors flex items-center gap-1" href="#" onClick={(e) => { e.preventDefault(); onNavigate?.('dasbor-mahasiswa'); }}>
+          <a className="hover:text-primary transition-colors flex items-center gap-1" href="#" onClick={(e) => { e.preventDefault(); onNavigate?.('dasbor-admin'); }}>
             <span className="material-symbols-outlined text-[16px]">home</span>
             <span>Beranda</span>
           </a>

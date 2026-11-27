@@ -7,15 +7,16 @@
 import PembukaanKelas from '../features/admin/PembukaanKelas';
 import AppShell from '../components/AppShell';
 
-export default function PembukaanKelasPage({ onRoleChange, activeNavPath, onNavChange }) {
+export default function PembukaanKelasPage({ onRoleChange, activeNavPath, onNavChange, onNavigate }) {
+  const handleNav = onNavChange || onNavigate;
   return (
     <AppShell
       activeRole="admin"
       onRoleChange={onRoleChange}
       activeNavPath={activeNavPath || "pembukaan-kelas"}
-      onNavChange={onNavChange}
+      onNavChange={handleNav}
     >
-      <PembukaanKelas onRoleChange={onRoleChange} />
+      <PembukaanKelas onRoleChange={onRoleChange} onNavigate={handleNav} />
     </AppShell>
   );
 }

@@ -11,7 +11,11 @@ import Toast from '@features/components/Toast';
  * Pengelolaan terpusat Master Data, Direct Enrollment, Rekap Audit Trail,
  * dan Pemantauan Integritas Sistem (Storage, MIME Whitelist, Gatekeeping Presensi).
  */
-export default function DasborAdmin({ onRoleChange, activeNavPath, onNavChange }) {
+export default function DasborAdmin({ onRoleChange, activeNavPath, onNavChange, onNavigate }) {
+  const handleNav = (path) => {
+    if (onNavChange) onNavChange(path);
+    else if (onNavigate) onNavigate(path);
+  };
   const [toastMessage, showToast] = useToast();
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState(null);
@@ -20,6 +24,7 @@ export default function DasborAdmin({ onRoleChange, activeNavPath, onNavChange }
   const metricCards = [
     {
       id: 'users',
+      targetPath: 'manajemen-pengguna',
       title: 'Total Pengguna Terdaftar',
       value: '1,420',
       badge: '1,350 Mahasiswa • 70 Dosen',
@@ -32,6 +37,7 @@ export default function DasborAdmin({ onRoleChange, activeNavPath, onNavChange }
     },
     {
       id: 'courses',
+      targetPath: 'master-mata-kuliah',
       title: 'Total Mata Kuliah',
       value: '48 MK',
       badge: 'Kurikulum Terakreditasi (144 SKS)',
@@ -44,6 +50,7 @@ export default function DasborAdmin({ onRoleChange, activeNavPath, onNavChange }
     },
     {
       id: 'classes',
+      targetPath: 'pembukaan-kelas',
       title: 'Kelas Perkuliahan',
       value: '36 Kelas',
       badge: 'Semester Ganjil 2026/2027',
@@ -56,6 +63,7 @@ export default function DasborAdmin({ onRoleChange, activeNavPath, onNavChange }
     },
     {
       id: 'enrollment',
+      targetPath: 'direct-enrollment',
       title: 'Total Direct Enrollment',
       value: '1,280',
       badge: 'Bebas Rebutan Kuota Manual',
@@ -75,10 +83,10 @@ export default function DasborAdmin({ onRoleChange, activeNavPath, onNavChange }
       desc: 'Daftarkan Akun Mahasiswa, Dosen Pengampu, atau Staf Admin Kampus.',
       icon: 'person_add',
       color: 'text-primary',
-      action: 'Buka Formulir',
+      action: 'Buka Manajemen Pengguna',
+      targetPath: 'manajemen-pengguna',
       onClick: () => {
-        setModalType('USER');
-        setModalOpen(true);
+        handleNav('manajemen-pengguna');
       },
     },
     {
@@ -87,10 +95,10 @@ export default function DasborAdmin({ onRoleChange, activeNavPath, onNavChange }
       desc: 'Definisikan Kode MK, Nama, Bobot SKS, & Kurikulum Prodi.',
       icon: 'library_add',
       color: 'text-secondary',
-      action: 'Buat Master Data',
+      action: 'Buka Master Mata Kuliah',
+      targetPath: 'master-mata-kuliah',
       onClick: () => {
-        setModalType('COURSE');
-        setModalOpen(true);
+        handleNav('master-mata-kuliah');
       },
     },
     {
@@ -99,10 +107,10 @@ export default function DasborAdmin({ onRoleChange, activeNavPath, onNavChange }
       desc: 'Buka Kelas Semester, Tentukan Kuota, & Tugaskan Dosen Pengampu.',
       icon: 'post_add',
       color: 'text-tertiary',
-      action: 'Jadwalkan Kelas',
+      action: 'Buka Pembukaan Kelas',
+      targetPath: 'pembukaan-kelas',
       onClick: () => {
-        setModalType('CLASS');
-        setModalOpen(true);
+        handleNav('pembukaan-kelas');
       },
     },
     {
@@ -111,15 +119,14 @@ export default function DasborAdmin({ onRoleChange, activeNavPath, onNavChange }
       desc: 'Masukkan Mahasiswa ke Kelas secara Kolektif via Direct Enrollment.',
       icon: 'group_add',
       color: 'text-error',
-      action: 'Enroll Massal',
+      action: 'Buka Direct Enrollment',
       highlight: true,
+      targetPath: 'direct-enrollment',
       onClick: () => {
-        setModalType('ENROLL');
-        setModalOpen(true);
+        handleNav('direct-enrollment');
       },
     },
   ];
-
   const auditLogs = [
     {
       id: 'log-1',
@@ -191,11 +198,8 @@ export default function DasborAdmin({ onRoleChange, activeNavPath, onNavChange }
     <AppShell
       activeRole="admin"
       onRoleChange={onRoleChange}
-      activeNavPath={activeNavPath}
-      onNavChange={(path) => {
-        setActiveNavPath(path);
-        if (onNavChange) onNavChange(path);
-      }}
+      activeNavPath={activeNavPath || 'dasbor-admin'}
+      onNavChange={handleNav}
     >
       {/* Toast Notification Lokal */}
       <Toast message={toastMessage} onClose={() => showToast(null)} />
@@ -390,24 +394,45 @@ export default function DasborAdmin({ onRoleChange, activeNavPath, onNavChange }
               )}
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-4 border-t border-outline-variant/30">
-              <button
-                type="button"
-                onClick={() => setModalOpen(false)}
-                className="px-4 py-2 rounded-lg bg-surface-container hover:bg-surface-container-highest text-on-surface text-sm font-medium transition-colors"
-              >
-                Batal
-              </button>
+            <div className="flex items-center justify-between pt-4 border-t border-outline-variant/30 flex-wrap gap-2">
               <button
                 type="button"
                 onClick={() => {
                   setModalOpen(false);
-                  showToast('Operasi master berhasil diproses dan dicatat di Jejak Audit!');
+                  const targetPages = {
+                    USER: 'manajemen-pengguna',
+                    COURSE: 'master-mata-kuliah',
+                    CLASS: 'pembukaan-kelas',
+                    ENROLL: 'direct-enrollment',
+                  };
+                  if (modalType && targetPages[modalType]) {
+                    handleNav(targetPages[modalType]);
+                  }
                 }}
-                className="px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-on-primary text-sm font-semibold transition-colors shadow-md"
+                className="text-xs text-primary hover:underline font-semibold flex items-center gap-1"
               >
-                Simpan &amp; Terapkan
+                <span>Buka halaman lengkap modul ini</span>
+                <span className="material-symbols-outlined text-[14px]">open_in_new</span>
               </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setModalOpen(false)}
+                  className="px-4 py-2 rounded-lg bg-surface-container hover:bg-surface-container-highest text-on-surface text-sm font-medium transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setModalOpen(false);
+                    showToast('Operasi master berhasil diproses dan dicatat di Jejak Audit!');
+                  }}
+                  className="px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-on-primary text-sm font-semibold transition-colors shadow-md"
+                >
+                  Simpan &amp; Terapkan
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -467,7 +492,16 @@ export default function DasborAdmin({ onRoleChange, activeNavPath, onNavChange }
         {metricCards.map((card) => (
           <div
             key={card.id}
-            className="flex flex-col justify-between p-5 rounded-xl bg-surface-container shadow-md hover:shadow-lg transition-all group relative overflow-hidden border border-outline-variant/20"
+            onClick={() => card.targetPath && handleNav(card.targetPath)}
+            role={card.targetPath ? "button" : undefined}
+            tabIndex={card.targetPath ? 0 : undefined}
+            onKeyDown={(e) => {
+              if (card.targetPath && (e.key === 'Enter' || e.key === ' ')) {
+                e.preventDefault();
+                handleNav(card.targetPath);
+              }
+            }}
+            className={`flex flex-col justify-between p-5 rounded-xl bg-surface-container shadow-md hover:shadow-lg transition-all group relative overflow-hidden border border-outline-variant/20 ${card.targetPath ? 'cursor-pointer hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary' : ''}`}
           >
             <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-bl-full pointer-events-none transition-transform group-hover:scale-110" />
             <div>
@@ -489,7 +523,10 @@ export default function DasborAdmin({ onRoleChange, activeNavPath, onNavChange }
                 <span className="material-symbols-outlined text-[14px]">{card.subIcon}</span>
                 {card.subtext}
               </span>
-              <span className="font-caption text-caption text-on-surface-variant font-medium">{card.rightText}</span>
+              <span className="font-caption text-caption text-on-surface-variant font-medium flex items-center gap-0.5 group-hover:text-primary transition-colors">
+                <span>{card.rightText}</span>
+                <span className="material-symbols-outlined text-[14px] group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
+              </span>
             </div>
           </div>
         ))}
@@ -584,9 +621,12 @@ export default function DasborAdmin({ onRoleChange, activeNavPath, onNavChange }
             </div>
 
             <a
-              className="font-label-sm text-label-sm text-primary hover:text-primary-hover flex items-center gap-1"
+              className="font-label-sm text-label-sm text-primary hover:text-primary-hover flex items-center gap-1 cursor-pointer"
               href="#audit-all"
-              onClick={(e) => { e.preventDefault(); if (onNavChange) onNavChange('jejak-audit'); else showToast('Membuka audit trail lengkap (2,840 entri)'); }}
+              onClick={(e) => {
+                e.preventDefault();
+                handleNav('jejak-audit');
+              }}
             >
               <span>Seluruh Audit</span>
               <span className="material-symbols-outlined text-[16px]">chevron_right</span>
@@ -647,7 +687,19 @@ export default function DasborAdmin({ onRoleChange, activeNavPath, onNavChange }
       </section>
 
       {/* ── SECTION 5: SYSTEM HEALTH & INTEGRITY WIDGET ── */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-space-md p-5 rounded-xl bg-surface-container-low shadow-sm border border-outline-variant/20">
+      <section className="flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <span className="font-title-sm text-title-sm text-on-surface font-semibold">Integritas &amp; Keamanan Sistem</span>
+          <button
+            type="button"
+            onClick={() => handleNav('konfigurasi-sistem')}
+            className="font-label-sm text-label-sm text-primary hover:text-primary-hover flex items-center gap-1 cursor-pointer"
+          >
+            <span>Buka Konfigurasi Sistem</span>
+            <span className="material-symbols-outlined text-[16px]">settings</span>
+          </button>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-space-md p-5 rounded-xl bg-surface-container-low shadow-sm border border-outline-variant/20">
         {/* Health 1: Storage Limit */}
         <div className="flex items-start gap-space-sm">
           <div className="w-9 h-9 rounded-lg bg-surface-container-high flex items-center justify-center text-primary shrink-0">
@@ -709,6 +761,7 @@ export default function DasborAdmin({ onRoleChange, activeNavPath, onNavChange }
             </span>
           </div>
         </div>
+      </div>
       </section>
     </AppShell>
   );

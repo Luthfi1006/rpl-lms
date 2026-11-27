@@ -166,7 +166,7 @@ const INITIAL_USERS = [
   }
 ];
 
-export default function ManajemenPengguna({ onRoleChange }) {
+export default function ManajemenPengguna({ onRoleChange, onNavigate }) {
   // State Pengguna & Pilihan
   const [users, setUsers] = useState(INITIAL_USERS);
   const [selectedUserIds, setSelectedUserIds] = useState([]);
@@ -473,7 +473,7 @@ export default function ManajemenPengguna({ onRoleChange }) {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-space-md mb-space-lg pt-space-md">
         <div className="flex flex-col gap-space-xs">
           <nav className="flex items-center gap-space-xs font-caption text-caption text-on-surface-variant">
-            <a className="hover:text-primary transition-colors flex items-center gap-1" href="#">
+            <a className="hover:text-primary transition-colors flex items-center gap-1 cursor-pointer" href="#dasbor-admin" onClick={(e) => { e.preventDefault(); if (onNavigate) onNavigate("dasbor-admin"); }}>
               <span className="material-symbols-outlined text-[14px]">home</span>
               <span>Beranda</span>
             </a>

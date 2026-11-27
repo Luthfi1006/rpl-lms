@@ -1,15 +1,15 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 
 /**
  * useToast - Shared toast notification hook
  * Returns [toastMessage, showToast] where showToast accepts a message string
  * and an optional duration (default 3500ms)
  */
-export function useToast() {
+export function useToast(defaultDuration = 3500) {
   const [toastMessage, setToastMessage] = useState(null);
-  const timeoutRef = useState(null);
+  const timeoutRef = useRef(null);
 
-  const showToast = useCallback((message, duration = 3500) => {
+  const showToast = useCallback((message, duration = defaultDuration) => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
@@ -18,7 +18,7 @@ export function useToast() {
       setToastMessage(null);
       timeoutRef.current = null;
     }, duration);
-  }, []);
+  }, [defaultDuration]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -61,21 +61,49 @@ export function useKeyboardShortcuts({ findInputRef, onEscape, onFind }) {
 }
 
 /**
- * useCopyFeedback - Shared copy-to-clipboard hook with toast feedback
+ * useCopyFeedback - Shared copy-to-clipboard hook with visual feedback
+ * Returns [copyText, handleCopy]
+ * @param {string} defaultText - Label for the copy button
+ * @param {number} feedbackDuration - How long "Tersalin!" is shown (ms)
  */
-export function useCopyFeedback(showToast) {
-  const [copiedId, setCopiedId] = useState(null);
+export function useCopyFeedback(defaultText = 'Salin', feedbackDuration = 1800) {
+  const [copyText, setCopyText] = useState(defaultText);
+  const timerRef = useRef(null);
 
-  const handleCopy = useCallback(async (text, id, customMessage) => {
+  const handleCopy = useCallback(async (textToCopy) => {
     try {
-      await navigator.clipboard.writeText(text);
-      setCopiedId(id);
-      showToast?.(customMessage || 'Tersalin ke clipboard');
-      setTimeout(() => setCopiedId(null), 2000);
+      if (
+        !navigator.clipboard ||
+        (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost')
+      ) {
+        // Fallback untuk non-HTTPS: gunakan execCommand (deprecated tapi masih jalan)
+        const textArea = document.createElement('textarea');
+        textArea.value = textToCopy;
+        textArea.style.position = 'fixed';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+      } else {
+        await navigator.clipboard.writeText(textToCopy);
+      }
+      setCopyText('Tersalin!');
     } catch (err) {
-      showToast?.('Gagal menyalin: ' + err.message);
+      console.error('Gagal menyalin:', err);
+      setCopyText('Gagal');
     }
-  }, [showToast]);
 
-  return { copiedId, handleCopy };
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => setCopyText(defaultText), feedbackDuration);
+  }, [defaultText, feedbackDuration]);
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  return [copyText, handleCopy];
 }

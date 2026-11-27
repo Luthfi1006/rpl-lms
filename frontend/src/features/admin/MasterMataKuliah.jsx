@@ -266,7 +266,7 @@ export default function MasterMataKuliah({ onNavigate }) {
       {/* Top Academic Navigation Breadcrumbs & Micro System Health */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-space-sm mb-space-md">
         <nav aria-label="Breadcrumb" className="flex items-center gap-space-xs font-caption text-caption text-on-surface-variant">
-          <a className="hover:text-primary transition-colors flex items-center gap-1" href="#" onClick={(e) => { e.preventDefault(); onNavigate?.('dasbor-mahasiswa'); }}>
+          <a className="hover:text-primary transition-colors flex items-center gap-1" href="#" onClick={(e) => { e.preventDefault(); onNavigate?.('dasbor-admin'); }}>
             <span className="material-symbols-outlined text-[15px]">home</span>
             <span>Beranda</span>
           </a>
