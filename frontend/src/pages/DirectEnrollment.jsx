@@ -7,15 +7,16 @@
 import DirectEnrollment from '../features/admin/DirectEnrollment';
 import AppShell from '../components/AppShell';
 
-export default function DirectEnrollmentPage({ onRoleChange, activeNavPath, onNavChange }) {
+export default function DirectEnrollmentPage({ onRoleChange, activeNavPath, onNavChange, onNavigate }) {
+  const handleNav = onNavChange || onNavigate;
   return (
     <AppShell
       activeRole="admin"
       onRoleChange={onRoleChange}
       activeNavPath={activeNavPath || "direct-enrollment"}
-      onNavChange={onNavChange}
+      onNavChange={handleNav}
     >
-      <DirectEnrollment onRoleChange={onRoleChange} />
+      <DirectEnrollment onRoleChange={onRoleChange} onNavigate={handleNav} />
     </AppShell>
   );
 }

@@ -103,7 +103,7 @@ const INITIAL_AUDIT_LOGS = [
   { id: 'LOG-8802', time: '27 Okt 2026, 09:00 WIB', actor: 'Sistem E-Learning', event: 'Validasi Kuota Kelas & Jadwal Tanpa Bentrok', affected: '48 Kelas', status: 'Sinkron' }
 ];
 
-export default function DirectEnrollment({ onRoleChange }) {
+export default function DirectEnrollment({ onRoleChange, onNavigate }) {
   // State Rombel Kelas
   const [selectedClassId, setSelectedClassId] = useState('TI-A-RPL');
   const [classDropdownOpen, setClassDropdownOpen] = useState(false);
@@ -333,7 +333,7 @@ export default function DirectEnrollment({ onRoleChange }) {
       {/* BREADCRUMBS & TOP BAR */}
       <div className="flex flex-col gap-space-xs pt-space-md mb-space-lg">
         <nav className="flex items-center gap-space-xs font-caption text-caption text-on-surface-variant">
-          <a className="hover:text-primary transition-colors flex items-center gap-1" href="#dasbor-admin">
+          <a className="hover:text-primary transition-colors flex items-center gap-1 cursor-pointer" href="#dasbor-admin" onClick={(e) => { e.preventDefault(); if (onNavigate) onNavigate("dasbor-admin"); }}>
             <span className="material-symbols-outlined text-[15px]">home</span>
             <span>Beranda</span>
           </a>

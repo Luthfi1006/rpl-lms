@@ -339,7 +339,7 @@ export default function JejakAudit({ onNavigate }) {
       {/* Breadcrumb & Header */}
       <div className="flex flex-col gap-space-sm pt-space-md mb-space-lg">
         <nav aria-label="Breadcrumb" className="flex items-center gap-space-xs font-label-sm text-label-sm text-on-surface-variant">
-          <a className="hover:text-primary transition-colors flex items-center gap-1" href="#" onClick={(e) => { e.preventDefault(); onNavigate?.('dasbor-mahasiswa'); }}>
+          <a className="hover:text-primary transition-colors flex items-center gap-1" href="#" onClick={(e) => { e.preventDefault(); onNavigate?.('dasbor-admin'); }}>
             <span className="material-symbols-outlined text-[16px]">home</span>
             Beranda
           </a>

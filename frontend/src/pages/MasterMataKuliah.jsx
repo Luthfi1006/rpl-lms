@@ -7,15 +7,16 @@
 import MasterMataKuliah from '../features/admin/MasterMataKuliah';
 import AppShell from '../components/AppShell';
 
-export default function MasterMataKuliahPage({ onRoleChange, activeNavPath, onNavChange }) {
+export default function MasterMataKuliahPage({ onRoleChange, activeNavPath, onNavChange, onNavigate }) {
+  const handleNav = onNavChange || onNavigate;
   return (
     <AppShell
       activeRole="admin"
       onRoleChange={onRoleChange}
       activeNavPath={activeNavPath || "master-mata-kuliah"}
-      onNavChange={onNavChange}
+      onNavChange={handleNav}
     >
-      <MasterMataKuliah onRoleChange={onRoleChange} />
+      <MasterMataKuliah onRoleChange={onRoleChange} onNavigate={handleNav} />
     </AppShell>
   );
 }
