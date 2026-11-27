@@ -400,15 +400,15 @@ Komponen berikut dipakai berulang oleh Fase 2–4 dan harus selesai lebih dulu:
 
 ---
 
-### Fase 1: Migrasi Skema Database MVP 3 (Hari 1) — GERBANG KERAS — ⬜ **BELUM**
+### Fase 1: Migrasi Skema Database MVP 3 (Hari 1) — GERBANG KERAS — ✅ **SELESAI**
 
-- [ ] Tambahkan model `Assignment` dan `Submission` pada `schema.prisma` sesuai Bab 3.
-- [ ] Tambahkan relasi balik: `assignments Assignment[]` pada `Meeting`, `submissions Submission[]` pada `Mahasiswa`, serta `assignment_soal Assignment[] @relation("AssignmentSoal")` dan `submission_files Submission[] @relation("SubmissionFile")` pada `File`.
-- [ ] Jalankan `npx prisma validate`.
-- [ ] Jalankan migrasi: `npx prisma migrate dev --name add_elearning_mvp3_assignments_submissions`.
-- [ ] Verifikasi `npx prisma migrate status` → *Database schema is up to date*.
-- [ ] Pastikan Prisma Client memiliki delegate baru: `prisma.assignment`, `prisma.submission`.
-- [ ] Terapkan juga ke database operasional `rpl_lms` (lihat catatan operasional di Bab 8).
+- [x] Tambahkan model `Assignment` dan `Submission` pada `schema.prisma` sesuai Bab 3.
+- [x] Tambahkan relasi balik: `assignments Assignment[]` pada `Meeting`, `submissions Submission[]` pada `Mahasiswa`, serta `assignment_soal Assignment[] @relation("AssignmentSoal")` dan `submission_files Submission[] @relation("SubmissionFile")` pada `File`.
+- [x] Jalankan `npx prisma validate`.
+- [x] Jalankan migrasi: `npx prisma migrate dev --name add_elearning_mvp3_assignments_submissions`.
+- [x] Verifikasi `npx prisma migrate status` → *Database schema is up to date*.
+- [x] Pastikan Prisma Client memiliki delegate baru: `prisma.assignment`, `prisma.submission`.
+- [x] Terapkan juga ke database operasional `rpl_lms` (lihat catatan operasional di Bab 8).
 
 ---
 
@@ -561,7 +561,7 @@ Komponen berikut dipakai berulang oleh Fase 2–4 dan harus selesai lebih dulu:
 | Fase | Status | Tanggal mulai | Tanggal selesai | Tes terakhir | Catatan / commit |
 |---|---|---|---|---|---|
 | 0 — Prasyarat bersama | ✅ | 2026-11-27 | 2026-11-27 | `npm test` 220/220 lulus | Fase 0 selesai; 30 tes baru (MVP 3 phase0) |
-| 1 — Migrasi Skema | ⬜ | — | — | — | — |
+| 1 — Migrasi Skema | ✅ | 2026-11-27 | 2026-11-27 | `npx prisma validate` OK; `npm test` 220/220 lulus | Migrasi `20261127163147_add_elearning_mvp3_assignments_submissions` diterapkan ke `rpl_lms` & `rpl_review`; delegate `assignment`/`submission` terverifikasi |
 | 2 — Penerbitan Tugas | ⬜ | — | — | — | — |
 | 3 — Submission & Validasi Berkas | ⬜ | — | — | — | — |
 | 4 — Penilaian 0–100 | ⬜ | — | — | — | — |
@@ -573,6 +573,7 @@ Komponen berikut dipakai berulang oleh Fase 2–4 dan harus selesai lebih dulu:
 |---|---|---|---|---|---|
 | 2026-11-27 | — | Dokumen plan MVP 3 dibuat (belum ada implementasi) | `IMPLEMENTATION_PLAN_MVP3_BACKEND.md` | — | — |
 | 2026-11-27 | 0 | Prasyarat bersama MVP 3: entitas audit `assignments`/`submissions`, `MAX_SUBMISSION_SIZE_MB` (5–10MB), helper signature magic-byte, factory middleware unggah dokumen (soal opsional + submission), kategori storage `assignment` | `backend/src/constants/auditEntities.js`, `backend/src/config/env.js`, `backend/src/utils/fileSignature.js`, `backend/src/utils/storage.js`, `backend/src/middlewares/upload.middleware.js`, `backend/tests/mvp3-phase0.test.js`, `backend/.env.example` | `npm test` → 220/220 lulus (190 baseline + 30 baru) | 6a52fec |
+| 2026-11-27 | 1 | Model `Assignment` & `Submission` + relasi balik `Meeting`/`Mahasiswa`/`File`; migrasi `add_elearning_mvp3_assignments_submissions` diterapkan ke `rpl_lms` (dev) dan `rpl_review` (deploy) | `backend/prisma/schema.prisma`, `backend/prisma/migrations/20261127163147_add_elearning_mvp3_assignments_submissions/migration.sql` | `prisma validate` OK; `prisma migrate status` up to date; delegate `assignment`/`submission` OK; `npm test` → 220/220 lulus | e4e9192 |
 
 **Format acuan baris baru (jangan dihapus; tambahkan baris di bawah tabel):**
 

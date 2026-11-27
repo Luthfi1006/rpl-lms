@@ -1,5 +1,5 @@
 // =============================================================================
-// E-Learning Kampus — Prisma Schema (MVP 1 + MVP 2)
+// E-Learning Kampus — Prisma Schema (MVP 1 + MVP 2 + MVP 3)
 // =============================================================================
 
 generator client {
@@ -106,6 +106,7 @@ model Mahasiswa {
   user               User               @relation(fields: [user_id], references: [id], onDelete: Cascade)
   enrollments        Enrollment[]
   attendance_records AttendanceRecord[]
+  submissions        Submission[]
 
   @@map("mahasiswa")
 }
@@ -223,6 +224,7 @@ model Meeting {
 
   class              Class              @relation(fields: [class_id], references: [id], onDelete: Cascade)
   materials          Material[]
+  assignments        Assignment[]
   attendance_session AttendanceSession?
 
   @@unique([class_id, meeting_number])
@@ -277,6 +279,56 @@ model AttendanceRecord {
 }
 
 // ---------------------------------------------------------------------------
+// E-Learning MVP 3 — Tugas Perkuliahan, Submission, Penilaian
+// ---------------------------------------------------------------------------
+
+model Assignment {
+  id                String   @id @default(uuid()) @db.Uuid
+  meeting_id        String   @db.Uuid
+  title             String   @db.VarChar(150)
+  instructions      String?  @db.Text
+  file_soal_id      String?  @db.Uuid // Berkas soal opsional
+  weight_percentage Decimal  @db.Decimal(5, 2) // Bobot nilai 0.00–100.00
+  due_date          DateTime // Deadline berbasis waktu server (BR-013)
+  allow_late        Boolean  @default(false)
+  is_published      Boolean  @default(true) // BR-005: draft tidak tampil ke mahasiswa
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  // Relations
+  meeting     Meeting      @relation(fields: [meeting_id], references: [id], onDelete: Cascade)
+  soal        File?        @relation("AssignmentSoal", fields: [file_soal_id], references: [id], onDelete: SetNull)
+  submissions Submission[]
+
+  @@index([meeting_id])
+  @@index([due_date])
+  @@map("assignments")
+}
+
+model Submission {
+  id            String    @id @default(uuid()) @db.Uuid
+  assignment_id String    @db.Uuid
+  student_id    String    @db.Uuid // Relasi ke Mahasiswa
+  file_id       String    @db.Uuid // Berkas jawaban wajib ada
+  submitted_at  DateTime  @default(now()) // Stempel waktu server
+  is_late       Boolean   @default(false)
+  score         Decimal?  @db.Decimal(5, 2) // 0.00–100.00, null = belum dinilai
+  feedback      String?   @db.Text
+  graded_at     DateTime?
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+
+  // Relations
+  assignment Assignment @relation(fields: [assignment_id], references: [id], onDelete: Cascade)
+  student    Mahasiswa  @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  file       File       @relation("SubmissionFile", fields: [file_id], references: [id], onDelete: Restrict)
+
+  @@unique([assignment_id, student_id])
+  @@index([student_id])
+  @@map("submissions")
+}
+
+// ---------------------------------------------------------------------------
 // File Storage (Private — BR-009)
 // ---------------------------------------------------------------------------
 
@@ -294,6 +346,9 @@ model File {
   uploader   User       @relation(fields: [uploaded_by], references: [id], onDelete: Cascade)
   profiles   Profile[]  @relation("ProfileAvatar")
   materials  Material[]
+
+  assignment_soal  Assignment[] @relation("AssignmentSoal")
+  submission_files Submission[] @relation("SubmissionFile")
 
   @@map("files")
 }
