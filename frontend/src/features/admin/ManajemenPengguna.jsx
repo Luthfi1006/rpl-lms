@@ -166,7 +166,7 @@ const INITIAL_USERS = [
   }
 ];
 
-export default function ManajemenPengguna({ onRoleChange }) {
+export default function ManajemenPengguna({ onRoleChange, onNavigate }) {
   // State Pengguna & Pilihan
   const [users, setUsers] = useState(INITIAL_USERS);
   const [selectedUserIds, setSelectedUserIds] = useState([]);

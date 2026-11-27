@@ -435,7 +435,8 @@ export default function DasborAdmin({ onRoleChange, activeNavPath, onNavChange, 
               </div>
             </div>
           </div>
-        </div>      )}
+        </div>
+      )}
 
       {/* ── SECTION 1: HEADER & STATUS BANNER ── */}
       <section className="relative w-full rounded-2xl bg-surface-container-low p-gutter overflow-hidden shadow-sm mb-space-lg border border-outline-variant/20">
@@ -529,7 +530,9 @@ export default function DasborAdmin({ onRoleChange, activeNavPath, onNavChange, 
             </div>
           </div>
         ))}
-      </section>      {/* ── SECTION 3: QUICK OPERATIONAL SHORTCUTS (Bento Action Grid) ── */}
+      </section>
+
+      {/* ── SECTION 3: QUICK OPERATIONAL SHORTCUTS (Bento Action Grid) ── */}
       <section className="flex flex-col gap-space-sm mb-8">
         <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
           <h2 className="font-title-lg text-title-lg text-on-surface font-semibold">
