@@ -55,7 +55,7 @@ function validateDocumentFile(file, maxSize) {
     throw new AppError('Format berkas tidak didukung. Harap unggah file .pdf, .docx, .xlsx, atau .zip', 400);
   }
   if (file.size > maxSize) {
-    throw new AppError('Ukuran berkas melebihi batas maksimal (maks 10MB)', 400);
+    throw new AppError(`Ukuran berkas melebihi batas maksimal (maks ${maxSize / 1024 / 1024}MB)`, 400);
   }
   if (file.mimetype !== 'application/octet-stream' && !allowedMimes.includes(file.mimetype)) {
     throw new AppError('Tipe berkas (MIME) tidak sesuai dengan ekstensi berkas', 400);
@@ -171,10 +171,7 @@ export class AssignmentService {
       const submission = assignment.submissions?.[0] ?? null;
       const extras = user.role === ROLES.MAHASISWA
         ? { my_submission: submission ? { id: submission.id, status: submission.score != null ? 'GRADED' : submission.is_late ? 'LATE' : 'SUBMITTED', score: number(submission.score) } : null }
-        : {
-            submission_count: assignment.submissions.length,
-            _count: { submissions: assignment.submissions.length },
-          };
+        : { _count: { submissions: assignment.submissions.length } };
       return serializeAssignment(assignment, extras);
     });
   }
