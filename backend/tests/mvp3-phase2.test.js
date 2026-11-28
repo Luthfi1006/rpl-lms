@@ -10,7 +10,9 @@ import { cleanupTestArtifacts } from './setup.js';
 describe('Fase 2 MVP 3: penerbitan tugas', () => {
   let server;
   let baseUrl;
+  let adminToken;
   let lecturerToken;
+  let otherLecturerToken;
   let studentToken;
   let outsideToken;
   let testClass;
@@ -56,8 +58,10 @@ describe('Fase 2 MVP 3: penerbitan tugas', () => {
         resolve();
       });
     });
-    [lecturerToken, studentToken, outsideToken] = await Promise.all([
+    [adminToken, lecturerToken, otherLecturerToken, studentToken, outsideToken] = await Promise.all([
+      login('admin'),
       login('198501152010121002'),
+      login('199003202015042001'),
       login('2024001001'),
       login('2024001003'),
     ]);
@@ -186,5 +190,148 @@ describe('Fase 2 MVP 3: penerbitan tugas', () => {
     assert.equal(await prisma.auditLog.count({
       where: { entity: 'assignments', action: 'DELETE_ASSIGNMENT', entity_id: assignment.id },
     }), 1);
+  });
+
+  test('Admin dapat membuat tugas tanpa soal dan mahasiswa hanya melihat tugas publik', async () => {
+    const createForm = (title, isPublished) => {
+      const form = new FormData();
+      form.append('title', title);
+      form.append('instructions', 'Tugas tanpa berkas soal');
+      form.append('weight_percentage', '15');
+      form.append('due_date', new Date(Date.now() + 2 * 86400000).toISOString());
+      form.append('allow_late', 'false');
+      form.append('is_published', String(isPublished));
+      return form;
+    };
+
+    const publishedResponse = await request(`/api/meetings/${meeting.id}/assignments`, {
+      method: 'POST',
+      token: adminToken,
+      form: createForm('Tugas Admin Publik', true),
+    });
+    assert.equal(publishedResponse.status, 201);
+    const published = (await publishedResponse.json()).data;
+    assert.equal(published.soal, null);
+
+    const draftResponse = await request(`/api/meetings/${meeting.id}/assignments`, {
+      method: 'POST',
+      token: adminToken,
+      form: createForm('Tugas Admin Draft', false),
+    });
+    assert.equal(draftResponse.status, 201);
+    const draft = (await draftResponse.json()).data;
+
+    const studentList = await request(`/api/classes/${testClass.id}/assignments`, {
+      token: studentToken,
+    });
+    assert.equal(studentList.status, 200);
+    const listed = (await studentList.json()).data;
+    assert.ok(listed.some((item) => item.id === published.id));
+    assert.ok(!listed.some((item) => item.id === draft.id));
+
+    const draftDetail = await request(`/api/assignments/${draft.id}`, {
+      token: studentToken,
+    });
+    assert.equal(draftDetail.status, 404);
+
+    const updateDraft = await request(`/api/assignments/${draft.id}`, {
+      method: 'PUT',
+      token: adminToken,
+      body: { title: 'Draft Admin Diperbarui' },
+    });
+    assert.equal(updateDraft.status, 200);
+
+    const deleteDraft = await request(`/api/assignments/${draft.id}`, {
+      method: 'DELETE',
+      token: adminToken,
+    });
+    assert.equal(deleteDraft.status, 200);
+    await prisma.assignment.delete({ where: { id: published.id } }).catch(() => {});
+  });
+
+  test('RBAC mutasi tugas dan unduh soal mengikuti kepemilikan kelas', async () => {
+    const form = new FormData();
+    form.append('title', 'Tugas RBAC');
+    form.append('weight_percentage', '10');
+    form.append('due_date', new Date(Date.now() + 86400000).toISOString());
+    form.append('allow_late', 'false');
+    form.append('is_published', 'true');
+
+    const studentCreate = await request(`/api/meetings/${meeting.id}/assignments`, {
+      method: 'POST',
+      token: studentToken,
+      form,
+    });
+    assert.equal(studentCreate.status, 403);
+
+    const otherLecturerForm = new FormData();
+    otherLecturerForm.append('title', 'Tugas dosen lain');
+    otherLecturerForm.append('weight_percentage', '10');
+    otherLecturerForm.append('due_date', new Date(Date.now() + 86400000).toISOString());
+    otherLecturerForm.append('allow_late', 'false');
+    otherLecturerForm.append('is_published', 'true');
+    const otherLecturerCreate = await request(`/api/meetings/${meeting.id}/assignments`, {
+      method: 'POST',
+      token: otherLecturerToken,
+      form: otherLecturerForm,
+    });
+    assert.equal(otherLecturerCreate.status, 403);
+
+    const withFile = new FormData();
+    withFile.append('title', 'Tugas RBAC Soal');
+    withFile.append('weight_percentage', '10');
+    withFile.append('due_date', new Date(Date.now() + 86400000).toISOString());
+    withFile.append('allow_late', 'false');
+    withFile.append('is_published', 'true');
+    withFile.append('file', new Blob(['%PDF-1.4\nrbac'], { type: 'application/pdf' }), 'rbac.pdf');
+    const lecturerCreate = await request(`/api/meetings/${meeting.id}/assignments`, {
+      method: 'POST',
+      token: lecturerToken,
+      form: withFile,
+    });
+    assert.equal(lecturerCreate.status, 201);
+    const assignment = (await lecturerCreate.json()).data;
+
+    const otherLecturerUpdate = await request(`/api/assignments/${assignment.id}`, {
+      method: 'PUT',
+      token: otherLecturerToken,
+      body: { title: 'Tidak boleh' },
+    });
+    assert.equal(otherLecturerUpdate.status, 403);
+
+    const studentUpdate = await request(`/api/assignments/${assignment.id}`, {
+      method: 'PUT',
+      token: studentToken,
+      body: { title: 'Tidak boleh' },
+    });
+    assert.equal(studentUpdate.status, 403);
+
+    const outsideDownload = await request(`/api/assignments/${assignment.id}/download`, {
+      token: outsideToken,
+    });
+    assert.equal(outsideDownload.status, 403);
+
+    const unauthenticatedDownload = await request(`/api/assignments/${assignment.id}/download`, {
+      token: null,
+    });
+    assert.equal(unauthenticatedDownload.status, 401);
+
+    const otherLecturerDelete = await request(`/api/assignments/${assignment.id}`, {
+      method: 'DELETE',
+      token: otherLecturerToken,
+    });
+    assert.equal(otherLecturerDelete.status, 403);
+
+    const studentDelete = await request(`/api/assignments/${assignment.id}`, {
+      method: 'DELETE',
+      token: studentToken,
+    });
+    assert.equal(studentDelete.status, 403);
+
+    const lecturerDelete = await request(`/api/assignments/${assignment.id}`, {
+      method: 'DELETE',
+      token: lecturerToken,
+    });
+    assert.equal(lecturerDelete.status, 200);
   });
 });

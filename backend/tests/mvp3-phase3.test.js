@@ -149,6 +149,14 @@ describe('Fase 3 MVP 3: submission dan validasi berkas', () => {
     assert.equal(secondPayload.data.status, 'SUBMITTED');
     await assert.rejects(fs.access(firstFilePath));
 
+    const secondRecord = await prisma.submission.findUnique({
+      where: { id: secondPayload.data.id },
+      include: { file: true },
+    });
+    const secondFilePath = path.resolve(STORAGE.UPLOAD_DIR, secondRecord.file.file_path);
+    assert.equal(path.dirname(secondFilePath), path.resolve(STORAGE.UPLOAD_DIR, 'submissions'));
+    assert.ok(secondFilePath.startsWith(path.resolve(STORAGE.UPLOAD_DIR)));
+
     const fake = await upload(Buffer.from('MZ\x90\x00bukan-pdf'), 'palsu.pdf');
     assert.equal(fake.status, 400);
 

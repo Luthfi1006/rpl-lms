@@ -568,8 +568,8 @@ Komponen berikut dipakai berulang oleh Fase 2–4 dan harus selesai lebih dulu:
 |---|---|---|---|---|---|
 | 0 — Prasyarat bersama | ✅ | 2026-11-27 | 2026-11-27 | `npm test` 220/220 lulus | Fase 0 selesai; 30 tes baru (MVP 3 phase0) |
 | 1 — Migrasi Skema | ✅ | 2026-11-27 | 2026-11-27 | `npx prisma validate` OK; `npm test` 220/220 lulus | Migrasi `20261127163147_add_elearning_mvp3_assignments_submissions` diterapkan ke `rpl_lms` & `rpl_review`; delegate `assignment`/`submission` terverifikasi |
-| 2 — Penerbitan Tugas | ✅ | 2026-11-28 | 2026-11-28 | `mvp3-phase2.test.js` 1/1; `npm test` 223/223 lulus | Modul assignments + tes CRUD/publikasi/unduh; revisi temuan review |
-| 3 — Submission & Validasi Berkas | ✅ | 2026-11-28 | 2026-11-28 | `mvp3-phase3.test.js` 2/2; `npm test` 223/223 lulus | Modul submissions + validasi magic-byte/deadline/resubmission; revisi temuan review |
+| 2 — Penerbitan Tugas | ✅ | 2026-11-28 | 2026-11-28 | `mvp3-phase2.test.js` 3/3; `npm test` 225/225 lulus | Modul assignments + tes CRUD/publikasi/RBAC/unduh/filter draft; revisi temuan review |
+| 3 — Submission & Validasi Berkas | ✅ | 2026-11-28 | 2026-11-28 | `mvp3-phase3.test.js` 2/2; `npm test` 225/225 lulus | Modul submissions + validasi magic-byte/deadline/private storage/resubmission; revisi temuan review |
 | 4 — Penilaian 0–100 | ⬜ | — | — | — | — |
 | 5 — Integrasi & Handoff | ⬜ | — | — | — | — |
 
@@ -582,6 +582,7 @@ Komponen berikut dipakai berulang oleh Fase 2–4 dan harus selesai lebih dulu:
 | 2026-11-27 | 1 | Model `Assignment` & `Submission` + relasi balik `Meeting`/`Mahasiswa`/`File`; migrasi `add_elearning_mvp3_assignments_submissions` diterapkan ke `rpl_lms` (dev) dan `rpl_review` (deploy) | `backend/prisma/schema.prisma`, `backend/prisma/migrations/20261127163147_add_elearning_mvp3_assignments_submissions/migration.sql` | `prisma validate` OK; `prisma migrate status` up to date; delegate `assignment`/`submission` OK; `npm test` → 220/220 lulus | e4e9192 |
 | 2026-11-28 | 2–3 | Implementasi API penerbitan tugas dan pengumpulan jawaban: CRUD tugas, draft/publikasi, unduh soal, resubmission, roster, download submission, validasi MIME/signature/ukuran/deadline, audit mutasi, dan cleanup berkas. | `backend/src/modules/assignments/*`, `backend/src/modules/submissions/*`, `backend/src/app.js`, `backend/tests/mvp3-phase2.test.js`, `backend/tests/mvp3-phase3.test.js` | Fase 0 30/30; Fase 2 1/1; Fase 3 1/1; `npm test` 222/222 lulus; `prisma validate` OK | a3775ae |
 | 2026-11-28 | 2–3 | Perbaikan review: checklist tes permanen diperluas, late roster dihitung dari `is_late`, PUT file-only diizinkan, cleanup berkas dibungkus try/finally, kontras `_count.submissions` ditambah, dan validasi soal memakai `STORAGE.DOC_MAX_SIZE`. | `assignment.dto.js`, `assignment.service.js`, `submission.service.js`, `mvp3-phase2.test.js`, `mvp3-phase3.test.js`, `IMPLEMENTATION_PLAN_MVP3_BACKEND.md` | Fase 2–3 3/3 lulus; `npm test` 223/223 lulus; `prisma validate` OK | b9b071c |
+| 2026-11-28 | 2–3 | Pelengkapan bukti review Fase 1: tambah tes Admin/tanpa soal, filter draft untuk mahasiswa, RBAC mutasi dosen lain/mahasiswa, unduh soal 403/401, dan assertion lokasi private storage submissions. | `backend/tests/mvp3-phase2.test.js`, `backend/tests/mvp3-phase3.test.js`, `IMPLEMENTATION_PLAN_MVP3_BACKEND.md` | Fase 2 3/3 dan Fase 3 2/2 lulus; `npm test` 225/225 lulus | belum commit |
 
 **Format acuan baris baru (jangan dihapus; tambahkan baris di bawah tabel):**
 
