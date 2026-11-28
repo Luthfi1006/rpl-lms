@@ -185,6 +185,10 @@ Seeder juga membuat 5 master mata kuliah (`TIF101`–`TIF105`) dan 2 kelas perku
 
 - ✅ **Fase 1: Setup Lingkungan & Skema Database (Selesai)**
   - `schema.prisma` (10 model), migrasi awal `init_spada_mvp1`, seeder idempoten, konfigurasi storage berkas privat (BR-009).
+- ✅ **MVP 3 Fase 2: Penerbitan Tugas (Selesai)**
+  - CRUD tugas pada pertemuan, berkas soal privat, bobot/deadline/publikasi, unduh terproteksi, ownership RBAC, dan audit assignment.
+- ✅ **MVP 3 Fase 3: Submission & Validasi Berkas (Selesai)**
+  - Unggah/resubmission jawaban, deadline/late submission, whitelist ekstensi/MIME/magic-byte, roster dosen, unduh privat, dan penguncian submission setelah dinilai.
 - ✅ **Fase 2: Autentikasi, Profil & RBAC Guard (Selesai — 24 test)**
   - Multi-credential login (username/email/NIM/NIDN/NIP), penolakan akun INACTIVE/SUSPENDED, refresh token & revocation, RBAC guard, modul profil mandiri, unggah avatar privat (2MB limit).
 - ✅ **Fase 3: Layanan Audit Trail Engine & Keamanan Server (Selesai — 33 test)**

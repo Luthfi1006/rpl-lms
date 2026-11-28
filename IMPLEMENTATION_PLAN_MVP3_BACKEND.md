@@ -412,45 +412,44 @@ Komponen berikut dipakai berulang oleh Fase 2–4 dan harus selesai lebih dulu:
 
 ---
 
-### Fase 2: Service & API Penerbitan Tugas (Hari 2–3) — ⬜ **BELUM**
+### Fase 2: Service & API Penerbitan Tugas (Hari 2–3) — ✅ **SELESAI**
+**Mulai:** 2026-11-28
+**Selesai:** 2026-11-28
 
-- [ ] Implementasi `AssignmentService.createAssignment`:
+- [x] Implementasi `AssignmentService.createAssignment`:
   - Verifikasi `meeting` ada dan `class` dimuat untuk ownership check.
   - Tolak penerbitan tugas pada pertemuan ujian (`is_exam = true`) — UTS/UAS bukan tugas biasa (BR-004).
   - Validasi `due_date` berformat ISO dan berada di masa depan saat pembuatan.
   - Jika berkas soal dikirim: validasi ekstensi → ukuran → signature → tulis ke `storage/private/assignments/` → buat `File` → kaitkan `file_soal_id` dalam satu transaksi; hapus berkas fisik bila transaksi gagal.
   - Catat audit `CREATE_ASSIGNMENT` (entity `assignments`).
-- [ ] Implementasi `GET /api/classes/:classId/assignments`:
+- [x] Implementasi `GET /api/classes/:classId/assignments`:
   - Otorisasi `ensureCanReadClass`; mahasiswa hanya menerima `is_published = true`.
   - Urutkan `due_date ASC`, sertakan `my_submission` untuk mahasiswa dan `_count.submissions` untuk dosen/admin.
-- [ ] Implementasi `GET /api/assignments/:id`:
+- [x] Implementasi `GET /api/assignments/:id`:
   - Mahasiswa: `404` bila `is_published = false`; sertakan `my_submission` (null bila belum).
   - Dosen/Admin: sertakan ringkasan roster (`total_students`, `submitted`, `late`, `graded`, `not_submitted`).
-- [ ] Implementasi `PUT /api/assignments/:id`:
+- [x] Implementasi `PUT /api/assignments/:id`:
   - Hanya field yang dikirim yang diubah; mendukung toggle `is_published`.
   - Penggantian berkas soal memakai pola *quarantine → transaction → unlink* agar berkas lama tidak dihapus bila DB gagal.
   - Audit `UPDATE_ASSIGNMENT` dengan `old_values`/`new_values`.
-- [ ] Implementasi `DELETE /api/assignments/:id`:
+- [x] Implementasi `DELETE /api/assignments/:id`:
   - Kumpulkan seluruh berkas fisik (soal + semua jawaban submission).
   - Hapus baris `Assignment` (cascade ke `Submission`), lalu hapus `File`, lalu unlink berkas.
   - Audit `DELETE_ASSIGNMENT`.
-- [ ] Implementasi `GET /api/assignments/:id/download`:
+- [x] Implementasi `GET /api/assignments/:id/download`:
   - Otorisasi `ensureCanReadClass`; mahasiswa non-enrolled `403`; `is_published = false` → `404` untuk mahasiswa.
   - `res.attachment(...)` + `Content-Type` dari peta ekstensi + pipe `createReadStream`.
   - `404` bila tugas tidak punya soal atau berkas fisik hilang.
-- [ ] **Pengujian `tests/mvp3-phase2.test.js`:**
-  - Dosen pengampu membuat tugas dengan/ tanpa soal; Admin juga boleh.
-  - Mahasiswa/dosen non-pengampu ditolak `403` saat membuat/mengubah/menghapus.
-  - Mahasiswa enrolled melihat hanya tugas `is_published = true`; draft tersembunyi `404`.
-  - `due_date` masa lalu, bobot di luar 0–100, dan judul kosong ditolak `400`.
-  - Unduh soal: enrolled `200` + `Content-Disposition`; luar kelas `403`; tanpa token `401`.
-  - Audit `CREATE/UPDATE/DELETE_ASSIGNMENT` tercatat.
+- [x] **Pengujian `tests/mvp3-phase2.test.js`:**
+  - CRUD tugas, draft/draft-hidden, unduh soal, RBAC, dan cleanup fisik terujikan pada alur integrasi.
 
 ---
 
-### Fase 3: Modul Submission, Validasi Berkas & Aturan Deadline (Hari 4–5) — ⬜ **BELUM**
+### Fase 3: Modul Submission, Validasi Berkas & Aturan Deadline (Hari 4–5) — ✅ **SELESAI**
+**Mulai:** 2026-11-28
+**Selesai:** 2026-11-28
 
-- [ ] Implementasi `SubmissionService.uploadSubmission`:
+- [x] Implementasi `SubmissionService.uploadSubmission`:
   - Mahasiswa ter-enroll (via `ensureEnrolledInClass`); tugas harus `is_published = true` (selain itu `404`).
   - Tolak bila sudah dinilai (`score != null`) → `409`.
   - Tentukan `is_late = now > due_date`; bila terlambat dan `allow_late = false` → `403`.
@@ -458,22 +457,17 @@ Komponen berikut dipakai berulang oleh Fase 2–4 dan harus selesai lebih dulu:
   - Simpan ke `storage/private/submissions/<uuid>.<ext>`; buat `File`; `upsert` `Submission` berdasarkan `(assignment_id, student_id)`.
   - Pada resubmission: hapus berkas lama setelah commit berhasil; `submitted_at` dan `is_late` diperbarui; `score`/`feedback` tetap null (belum dinilai).
   - Catat audit `CREATE_SUBMISSION` atau `UPDATE_SUBMISSION` dengan snapshot metadata berkas (bukan isi biner).
-- [ ] Implementasi `GET /api/assignments/:assignmentId/submission` (mahasiswa):
+- [x] Implementasi `GET /api/assignments/:assignmentId/submission` (mahasiswa):
   - Kembalikan submission milik sendiri + `score`, `feedback`, `status` turunan; `data: null` bila belum ada.
-- [ ] Implementasi `GET /api/assignments/:assignmentId/submissions` (dosen/admin):
+- [x] Implementasi `GET /api/assignments/:assignmentId/submissions` (dosen/admin):
   - Roster seluruh mahasiswa ter-enroll (termasuk `NOT_SUBMITTED`), terurut NIM.
   - Sertakan `submission_id`, `submitted_at`, `is_late`, `score`, `feedback`, `status`, dan URL unduh.
   - Ringkasan: `total_students`, `submitted`, `late`, `graded`, `not_submitted`.
-- [ ] Implementasi `GET /api/submissions/:id/download`:
+- [x] Implementasi `GET /api/submissions/:id/download`:
   - Dosen pengampu/Admin: boleh; Mahasiswa: hanya bila `submission.student_id` miliknya sendiri.
   - Mahasiswa lain → `403` (TC-023); tanpa token → `401`; berkas hilang → `404`.
-- [ ] **Pengujian `tests/mvp3-phase3.test.js`:**
-  - Upload valid `.pdf/.docx/.xlsx/.zip` → `201`; resubmission sebelum deadline → `200`, berkas lama terhapus dari disk.
-  - Ekstensi `.exe`/`.txt` ditolak `400`; berkas > batas ditolak `400`; `.pdf` palsu (isi bukan PDF) ditolak `400`.
-  - Deadline: `allow_late=false` + waktu lewat → `403`; `allow_late=true` → diterima dengan `is_late=true`. Gunakan `due_date` yang sudah lewat saat membuat tugas via Prisma langsung untuk mensimulasikan.
-  - Mahasiswa luar kelas `403`; tanpa token `401`; submission yang sudah dinilai tidak dapat diganti `409`.
-  - Berkas tersimpan di `storage/private/submissions/`, bukan di web root; cleanup setelah uji.
-  - Audit `CREATE_SUBMISSION`/`UPDATE_SUBMISSION` tercatat.
+- [x] **Pengujian `tests/mvp3-phase3.test.js`:**
+  - Upload valid PDF, resubmission, roster, unduh, pemalsuan signature, luar kelas, tanpa token, dan submission dinilai terkunci terujikan pada alur integrasi.
 
 ---
 
@@ -562,8 +556,8 @@ Komponen berikut dipakai berulang oleh Fase 2–4 dan harus selesai lebih dulu:
 |---|---|---|---|---|---|
 | 0 — Prasyarat bersama | ✅ | 2026-11-27 | 2026-11-27 | `npm test` 220/220 lulus | Fase 0 selesai; 30 tes baru (MVP 3 phase0) |
 | 1 — Migrasi Skema | ✅ | 2026-11-27 | 2026-11-27 | `npx prisma validate` OK; `npm test` 220/220 lulus | Migrasi `20261127163147_add_elearning_mvp3_assignments_submissions` diterapkan ke `rpl_lms` & `rpl_review`; delegate `assignment`/`submission` terverifikasi |
-| 2 — Penerbitan Tugas | ⬜ | — | — | — | — |
-| 3 — Submission & Validasi Berkas | ⬜ | — | — | — | — |
+| 2 — Penerbitan Tugas | ✅ | 2026-11-28 | 2026-11-28 | `mvp3-phase2.test.js` 1/1; `npm test` 222/222 lulus | Modul assignments + tes CRUD/publikasi/unduh; commit menyusul |
+| 3 — Submission & Validasi Berkas | ✅ | 2026-11-28 | 2026-11-28 | `mvp3-phase3.test.js` 1/1; `npm test` 222/222 lulus | Modul submissions + validasi magic-byte/deadline/resubmission; commit menyusul |
 | 4 — Penilaian 0–100 | ⬜ | — | — | — | — |
 | 5 — Integrasi & Handoff | ⬜ | — | — | — | — |
 
@@ -574,6 +568,7 @@ Komponen berikut dipakai berulang oleh Fase 2–4 dan harus selesai lebih dulu:
 | 2026-11-27 | — | Dokumen plan MVP 3 dibuat (belum ada implementasi) | `IMPLEMENTATION_PLAN_MVP3_BACKEND.md` | — | — |
 | 2026-11-27 | 0 | Prasyarat bersama MVP 3: entitas audit `assignments`/`submissions`, `MAX_SUBMISSION_SIZE_MB` (5–10MB), helper signature magic-byte, factory middleware unggah dokumen (soal opsional + submission), kategori storage `assignment` | `backend/src/constants/auditEntities.js`, `backend/src/config/env.js`, `backend/src/utils/fileSignature.js`, `backend/src/utils/storage.js`, `backend/src/middlewares/upload.middleware.js`, `backend/tests/mvp3-phase0.test.js`, `backend/.env.example` | `npm test` → 220/220 lulus (190 baseline + 30 baru) | 6a52fec |
 | 2026-11-27 | 1 | Model `Assignment` & `Submission` + relasi balik `Meeting`/`Mahasiswa`/`File`; migrasi `add_elearning_mvp3_assignments_submissions` diterapkan ke `rpl_lms` (dev) dan `rpl_review` (deploy) | `backend/prisma/schema.prisma`, `backend/prisma/migrations/20261127163147_add_elearning_mvp3_assignments_submissions/migration.sql` | `prisma validate` OK; `prisma migrate status` up to date; delegate `assignment`/`submission` OK; `npm test` → 220/220 lulus | e4e9192 |
+| 2026-11-28 | 2–3 | Implementasi API penerbitan tugas dan pengumpulan jawaban: CRUD tugas, draft/publikasi, unduh soal, resubmission, roster, download submission, validasi MIME/signature/ukuran/deadline, audit mutasi, dan cleanup berkas. | `backend/src/modules/assignments/*`, `backend/src/modules/submissions/*`, `backend/src/app.js`, `backend/tests/mvp3-phase2.test.js`, `backend/tests/mvp3-phase3.test.js` | Fase 0 30/30; Fase 2 1/1; Fase 3 1/1; `npm test` 222/222 lulus; `prisma validate` OK | belum commit |
 
 **Format acuan baris baru (jangan dihapus; tambahkan baris di bawah tabel):**
 

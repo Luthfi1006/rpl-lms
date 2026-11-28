@@ -26,6 +26,15 @@ import {
   meetingMaterialRoutes,
   materialRoutes,
 } from './modules/materials/material.routes.js';
+import {
+  meetingAssignmentRoutes,
+  classAssignmentRoutes,
+  assignmentRoutes,
+} from './modules/assignments/assignment.routes.js';
+import {
+  assignmentSubmissionRoutes,
+  submissionRoutes,
+} from './modules/submissions/submission.routes.js';
 import { errorHandler } from './middlewares/error.middleware.js';
 import { attachAuditHelper } from './middlewares/audit.middleware.js';
 import { generalLimiter, authLimiter } from './middlewares/rateLimit.middleware.js';
@@ -128,6 +137,11 @@ app.use('/api/meetings', meetingAttendanceRoutes);
 app.use('/api/meetings', meetingMaterialRoutes);
 app.use('/api/materials', materialRoutes);
 app.use('/api/attendance', attendanceRoutes);
+app.use('/api/meetings', meetingAssignmentRoutes);
+app.use('/api/classes', classAssignmentRoutes);
+app.use('/api/assignments', assignmentRoutes);
+app.use('/api/assignments', assignmentSubmissionRoutes);
+app.use('/api/submissions', submissionRoutes);
 
 // 404 Handler untuk rute tak terdefinisi
 app.use((req, res) => {
