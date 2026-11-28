@@ -556,8 +556,8 @@ Komponen berikut dipakai berulang oleh Fase 2–4 dan harus selesai lebih dulu:
 |---|---|---|---|---|---|
 | 0 — Prasyarat bersama | ✅ | 2026-11-27 | 2026-11-27 | `npm test` 220/220 lulus | Fase 0 selesai; 30 tes baru (MVP 3 phase0) |
 | 1 — Migrasi Skema | ✅ | 2026-11-27 | 2026-11-27 | `npx prisma validate` OK; `npm test` 220/220 lulus | Migrasi `20261127163147_add_elearning_mvp3_assignments_submissions` diterapkan ke `rpl_lms` & `rpl_review`; delegate `assignment`/`submission` terverifikasi |
-| 2 — Penerbitan Tugas | ✅ | 2026-11-28 | 2026-11-28 | `mvp3-phase2.test.js` 1/1; `npm test` 222/222 lulus | Modul assignments + tes CRUD/publikasi/unduh; commit menyusul |
-| 3 — Submission & Validasi Berkas | ✅ | 2026-11-28 | 2026-11-28 | `mvp3-phase3.test.js` 1/1; `npm test` 222/222 lulus | Modul submissions + validasi magic-byte/deadline/resubmission; commit menyusul |
+| 2 — Penerbitan Tugas | ✅ | 2026-11-28 | 2026-11-28 | `mvp3-phase2.test.js` 1/1; `npm test` 222/222 lulus | Modul assignments + tes CRUD/publikasi/unduh; commit a3775ae |
+| 3 — Submission & Validasi Berkas | ✅ | 2026-11-28 | 2026-11-28 | `mvp3-phase3.test.js` 1/1; `npm test` 222/222 lulus | Modul submissions + validasi magic-byte/deadline/resubmission; commit a3775ae |
 | 4 — Penilaian 0–100 | ⬜ | — | — | — | — |
 | 5 — Integrasi & Handoff | ⬜ | — | — | — | — |
 
@@ -568,7 +568,7 @@ Komponen berikut dipakai berulang oleh Fase 2–4 dan harus selesai lebih dulu:
 | 2026-11-27 | — | Dokumen plan MVP 3 dibuat (belum ada implementasi) | `IMPLEMENTATION_PLAN_MVP3_BACKEND.md` | — | — |
 | 2026-11-27 | 0 | Prasyarat bersama MVP 3: entitas audit `assignments`/`submissions`, `MAX_SUBMISSION_SIZE_MB` (5–10MB), helper signature magic-byte, factory middleware unggah dokumen (soal opsional + submission), kategori storage `assignment` | `backend/src/constants/auditEntities.js`, `backend/src/config/env.js`, `backend/src/utils/fileSignature.js`, `backend/src/utils/storage.js`, `backend/src/middlewares/upload.middleware.js`, `backend/tests/mvp3-phase0.test.js`, `backend/.env.example` | `npm test` → 220/220 lulus (190 baseline + 30 baru) | 6a52fec |
 | 2026-11-27 | 1 | Model `Assignment` & `Submission` + relasi balik `Meeting`/`Mahasiswa`/`File`; migrasi `add_elearning_mvp3_assignments_submissions` diterapkan ke `rpl_lms` (dev) dan `rpl_review` (deploy) | `backend/prisma/schema.prisma`, `backend/prisma/migrations/20261127163147_add_elearning_mvp3_assignments_submissions/migration.sql` | `prisma validate` OK; `prisma migrate status` up to date; delegate `assignment`/`submission` OK; `npm test` → 220/220 lulus | e4e9192 |
-| 2026-11-28 | 2–3 | Implementasi API penerbitan tugas dan pengumpulan jawaban: CRUD tugas, draft/publikasi, unduh soal, resubmission, roster, download submission, validasi MIME/signature/ukuran/deadline, audit mutasi, dan cleanup berkas. | `backend/src/modules/assignments/*`, `backend/src/modules/submissions/*`, `backend/src/app.js`, `backend/tests/mvp3-phase2.test.js`, `backend/tests/mvp3-phase3.test.js` | Fase 0 30/30; Fase 2 1/1; Fase 3 1/1; `npm test` 222/222 lulus; `prisma validate` OK | belum commit |
+| 2026-11-28 | 2–3 | Implementasi API penerbitan tugas dan pengumpulan jawaban: CRUD tugas, draft/publikasi, unduh soal, resubmission, roster, download submission, validasi MIME/signature/ukuran/deadline, audit mutasi, dan cleanup berkas. | `backend/src/modules/assignments/*`, `backend/src/modules/submissions/*`, `backend/src/app.js`, `backend/tests/mvp3-phase2.test.js`, `backend/tests/mvp3-phase3.test.js` | Fase 0 30/30; Fase 2 1/1; Fase 3 1/1; `npm test` 222/222 lulus; `prisma validate` OK | a3775ae |
 
 **Format acuan baris baru (jangan dihapus; tambahkan baris di bawah tabel):**
 
