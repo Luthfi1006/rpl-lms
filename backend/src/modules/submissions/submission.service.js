@@ -115,15 +115,20 @@ export class SubmissionService {
       throw new AppError('Batas waktu pengumpulan tugas telah berakhir', 403);
     }
 
-    const written = await writeSubmissionFile(file, user.id);
+    let written = null;
     let quarantined = null;
-    if (existing) {
-      const oldPath = getSubmissionFilePath(existing.file);
-      quarantined = `${oldPath}.replacing-${crypto.randomUUID()}`;
-      try { await fs.rename(oldPath, quarantined); } catch (error) { if (error.code !== 'ENOENT') throw error; quarantined = null; }
-    }
-
     try {
+      written = await writeSubmissionFile(file, user.id);
+      if (existing) {
+        const oldPath = getSubmissionFilePath(existing.file);
+        quarantined = `${oldPath}.replacing-${crypto.randomUUID()}`;
+        try {
+          await fs.rename(oldPath, quarantined);
+        } catch (error) {
+          if (error.code !== 'ENOENT') throw error;
+          quarantined = null;
+        }
+      }
       const submission = await prisma.$transaction(async (tx) => {
         const fileRecord = await tx.file.create({
           data: {
@@ -177,7 +182,7 @@ export class SubmissionService {
       if (quarantined) await fs.unlink(quarantined).catch(() => {});
       return { created: !existing, submission: serializeSubmission(submission) };
     } catch (error) {
-      await fs.unlink(written.destination).catch(() => {});
+      if (written) await fs.unlink(written.destination).catch(() => {});
       if (quarantined) {
         await fs.rename(quarantined, getSubmissionFilePath(existing.file)).catch(() => {});
       }
@@ -236,7 +241,7 @@ export class SubmissionService {
     return {
       total_students: roster.length,
       submitted: submitted.length,
-      late: submitted.filter((item) => item.status === 'LATE').length,
+      late: submitted.filter((item) => item.is_late).length,
       graded: submitted.filter((item) => item.status === 'GRADED').length,
       not_submitted: roster.length - submitted.length,
       roster,

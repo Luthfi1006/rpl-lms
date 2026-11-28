@@ -129,6 +129,18 @@ describe('Fase 2 MVP 3: penerbitan tugas', () => {
     const assignment = createdPayload.data;
     assert.equal(assignment.weight_percentage, 20);
 
+    const invalidForms = [
+      { title: '', weight_percentage: '20' },
+      { title: 'Bobot invalid', weight_percentage: '101' },
+      { title: 'Deadline lewat', due_date: new Date(Date.now() - 86400000).toISOString(), weight_percentage: '20' },
+    ];
+    for (const fields of invalidForms) {
+      const invalidForm = new FormData();
+      Object.entries(fields).forEach(([key, value]) => invalidForm.append(key, value));
+      const invalid = await request(`/api/meetings/${meeting.id}/assignments`, { method: 'POST', form: invalidForm });
+      assert.equal(invalid.status, 400);
+    }
+
     const listStudent = await request(`/api/classes/${testClass.id}/assignments`, { token: studentToken });
     assert.equal(listStudent.status, 200);
 
@@ -145,10 +157,34 @@ describe('Fase 2 MVP 3: penerbitan tugas', () => {
     });
     assert.equal(update.status, 200);
 
+    const oldFileId = (await prisma.assignment.findUnique({ where: { id: assignment.id }, select: { file_soal_id: true } })).file_soal_id;
+    const oldFile = await prisma.file.findUnique({ where: { id: oldFileId } });
+    const fileOnlyForm = new FormData();
+    fileOnlyForm.append('file', new Blob(['%PDF-1.4\nsoal revisi'], { type: 'application/pdf' }), 'soal-revisi.pdf');
+    const fileOnlyUpdate = await request(`/api/assignments/${assignment.id}`, {
+      method: 'PUT',
+      form: fileOnlyForm,
+    });
+    assert.equal(fileOnlyUpdate.status, 200);
+    const revised = await prisma.assignment.findUnique({ where: { id: assignment.id }, select: { file_soal_id: true } });
+    assert.notEqual(revised.file_soal_id, oldFileId);
+    assert.equal(await prisma.file.findUnique({ where: { id: oldFileId } }), null);
+    await assert.rejects(fs.access(path.resolve(STORAGE.UPLOAD_DIR, oldFile.file_path)));
+
     const draftDetail = await request(`/api/assignments/${assignment.id}`, { token: studentToken });
     assert.equal(draftDetail.status, 404);
 
+    assert.equal(await prisma.auditLog.count({
+      where: { entity: 'assignments', action: 'CREATE_ASSIGNMENT', entity_id: assignment.id },
+    }), 1);
+    assert.equal(await prisma.auditLog.count({
+      where: { entity: 'assignments', action: 'UPDATE_ASSIGNMENT', entity_id: assignment.id },
+    }), 2);
+
     const remove = await request(`/api/assignments/${assignment.id}`, { method: 'DELETE' });
     assert.equal(remove.status, 200);
+    assert.equal(await prisma.auditLog.count({
+      where: { entity: 'assignments', action: 'DELETE_ASSIGNMENT', entity_id: assignment.id },
+    }), 1);
   });
 });

@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import prisma from '../../config/prisma.js';
+import { STORAGE } from '../../config/env.js';
 import { ROLES } from '../../constants/roles.js';
 import { AUDIT_ENTITIES } from '../../constants/auditEntities.js';
 import { AuditLogService } from '../audit-log/audit-log.service.js';
@@ -75,7 +76,7 @@ function getFilePath(file) {
 }
 
 async function writeAssignmentFile(file, userId) {
-  const extension = validateDocumentFile(file, 10 * 1024 * 1024);
+  const extension = validateDocumentFile(file, STORAGE.DOC_MAX_SIZE);
   if (!extension) return null;
   const originalName = sanitizeFilename(file.originalname);
   if (!originalName || originalName.length > 255) {
@@ -170,7 +171,10 @@ export class AssignmentService {
       const submission = assignment.submissions?.[0] ?? null;
       const extras = user.role === ROLES.MAHASISWA
         ? { my_submission: submission ? { id: submission.id, status: submission.score != null ? 'GRADED' : submission.is_late ? 'LATE' : 'SUBMITTED', score: number(submission.score) } : null }
-        : { submission_count: assignment.submissions.length };
+        : {
+            submission_count: assignment.submissions.length,
+            _count: { submissions: assignment.submissions.length },
+          };
       return serializeAssignment(assignment, extras);
     });
   }
@@ -224,23 +228,32 @@ export class AssignmentService {
     });
     if (!assignment) throw new AppError('Tugas tidak ditemukan', 404);
     ensureCanManageClass(assignment.meeting.class, user);
+    if (!file && Object.keys(payload).length === 0) {
+      throw new AppError('Tidak ada data yang diperbarui', 400);
+    }
 
     if (payload.due_date && new Date(payload.due_date) <= new Date()) {
       throw new AppError('due_date harus berada di masa depan', 400);
     }
 
-    const written = file ? await writeAssignmentFile(file, user.id) : null;
-    const oldFile = assignment.soal;
+    let written = null;
     let quarantined = null;
     let oldSourcePath = null;
-    if (written && oldFile) {
-      const oldPath = getFilePath(oldFile);
-      oldSourcePath = oldPath;
-      quarantined = `${oldPath}.replacing-${crypto.randomUUID()}`;
-      try { await fs.rename(oldPath, quarantined); } catch (error) { if (error.code !== 'ENOENT') throw error; quarantined = null; }
-    }
-
     try {
+      written = file ? await writeAssignmentFile(file, user.id) : null;
+      const oldFile = assignment.soal;
+      if (written && oldFile) {
+        const oldPath = getFilePath(oldFile);
+        oldSourcePath = oldPath;
+        quarantined = `${oldPath}.replacing-${crypto.randomUUID()}`;
+        try {
+          await fs.rename(oldPath, quarantined);
+        } catch (error) {
+          if (error.code !== 'ENOENT') throw error;
+          quarantined = null;
+        }
+      }
+
       const result = await prisma.$transaction(async (tx) => {
         let fileId = assignment.file_soal_id;
         if (written) {

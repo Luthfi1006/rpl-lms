@@ -55,7 +55,5 @@ export const updateAssignmentSchema = {
     due_date: z.string().datetime({ message: 'due_date harus format ISO 8601' }).optional(),
     allow_late: booleanSchema.optional(),
     is_published: booleanSchema.optional(),
-  }).strict().refine((data) => Object.keys(data).length > 0, {
-    message: 'Tidak ada data yang diperbarui',
-  }),
+  }).strict(),
 };

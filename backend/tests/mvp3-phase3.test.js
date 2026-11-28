@@ -16,6 +16,7 @@ describe('Fase 3 MVP 3: submission dan validasi berkas', () => {
   let testClass;
   let assignment;
   let student;
+  let extraAssignments = [];
 
   const suffix = Date.now().toString().slice(-8);
   const request = (url, { method = 'GET', token = studentToken, body } = {}) =>
@@ -92,6 +93,17 @@ describe('Fase 3 MVP 3: submission dan validasi berkas', () => {
   });
 
   after(async () => {
+    for (const extra of extraAssignments) {
+      const submissions = await prisma.submission.findMany({
+        where: { assignment_id: extra.id },
+        include: { file: true },
+      });
+      for (const submission of submissions) {
+        await fs.rm(path.resolve(STORAGE.UPLOAD_DIR, submission.file.file_path), { force: true });
+      }
+      await prisma.assignment.delete({ where: { id: extra.id } }).catch(() => {});
+      await prisma.file.deleteMany({ where: { id: { in: submissions.map((item) => item.file_id) } } });
+    }
     if (assignment) {
       const submissions = await prisma.submission.findMany({
         where: { assignment_id: assignment.id },
@@ -111,9 +123,9 @@ describe('Fase 3 MVP 3: submission dan validasi berkas', () => {
   });
 
   test('upload, resubmission, roster, unduh, dan penolakan berkas terlindungi', async () => {
-    async function upload(buffer, filename, token = studentToken) {
+    async function upload(buffer, filename, token = studentToken, mime = 'application/pdf') {
       const form = new FormData();
-      form.append('file', new Blob([buffer], { type: 'application/pdf' }), filename);
+      form.append('file', new Blob([buffer], { type: mime }), filename);
       return fetch(`${baseUrl}/api/assignments/${assignment.id}/submissions`, {
         method: 'POST',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -125,14 +137,42 @@ describe('Fase 3 MVP 3: submission dan validasi berkas', () => {
     assert.equal(first.status, 201);
     const firstPayload = await first.json();
     assert.equal(firstPayload.data.status, 'SUBMITTED');
+    const firstRecord = await prisma.submission.findUnique({
+      where: { id: firstPayload.data.id },
+      include: { file: true },
+    });
+    const firstFilePath = path.resolve(STORAGE.UPLOAD_DIR, firstRecord.file.file_path);
 
     const second = await upload(Buffer.from('%PDF-1.4\njawaban revisi'), 'jawaban-revisi.pdf');
     assert.equal(second.status, 200);
     const secondPayload = await second.json();
     assert.equal(secondPayload.data.status, 'SUBMITTED');
+    await assert.rejects(fs.access(firstFilePath));
 
     const fake = await upload(Buffer.from('MZ\x90\x00bukan-pdf'), 'palsu.pdf');
     assert.equal(fake.status, 400);
+
+    const exe = await upload(Buffer.from('MZ\x90\x00'), 'jawaban.exe');
+    assert.equal(exe.status, 400);
+    const txt = await upload(Buffer.from('bukan dokumen'), 'jawaban.txt');
+    assert.equal(txt.status, 400);
+
+    const zipBuffer = Buffer.concat([Buffer.from([0x50, 0x4b, 0x03, 0x04]), Buffer.from('valid archive')]);
+    const validFormats = [
+      ['jawaban.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+      ['jawaban.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+      ['jawaban.zip', 'application/zip'],
+    ];
+    for (const [filename, mime] of validFormats) {
+      const response = await upload(zipBuffer, filename, studentToken, mime);
+      assert.ok([200, 201].includes(response.status), `${filename} harus diterima`);
+    }
+
+    const oversized = await upload(
+      Buffer.concat([Buffer.from('%PDF-1.4\n'), Buffer.alloc(STORAGE.SUBMISSION_MAX_SIZE)]),
+      'terlalu-besar.pdf'
+    );
+    assert.equal(oversized.status, 400);
 
     const outside = await upload(Buffer.from('%PDF-1.4\nluar'), 'luar.pdf', outsideToken);
     assert.equal(outside.status, 403);
@@ -147,6 +187,12 @@ describe('Fase 3 MVP 3: submission dan validasi berkas', () => {
     assert.equal(rosterPayload.data.submitted, 1);
 
     const submissionId = secondPayload.data.id;
+    assert.equal(await prisma.auditLog.count({
+      where: { entity: 'submissions', action: 'CREATE_SUBMISSION', entity_id: submissionId },
+    }), 1);
+    assert.ok(await prisma.auditLog.count({
+      where: { entity: 'submissions', action: 'UPDATE_SUBMISSION', entity_id: submissionId },
+    }) >= 1);
     const download = await request(`/api/submissions/${submissionId}/download`, { token: studentToken });
     assert.equal(download.status, 200);
 
@@ -156,5 +202,72 @@ describe('Fase 3 MVP 3: submission dan validasi berkas', () => {
     });
     const graded = await upload(Buffer.from('%PDF-1.4\nsetelah dinilai'), 'graded.pdf');
     assert.equal(graded.status, 409);
+  });
+
+  test('deadline dua mode, audit submission, dan konsistensi late saat sudah dinilai', async () => {
+    const meeting = await prisma.meeting.findFirst({ where: { class_id: testClass.id, meeting_number: 3 } });
+    const pastDue = new Date(Date.now() - 60000);
+
+    const rejectedAssignment = await prisma.assignment.create({
+      data: {
+        meeting_id: meeting.id,
+        title: 'Late ditolak',
+        weight_percentage: 10,
+        due_date: pastDue,
+        allow_late: false,
+        is_published: true,
+      },
+    });
+    extraAssignments.push(rejectedAssignment);
+
+    const rejectedForm = new FormData();
+    rejectedForm.append('file', new Blob(['%PDF-1.4\nterlambat ditolak'], { type: 'application/pdf' }), 'ditolak.pdf');
+    const rejected = await fetch(`${baseUrl}/api/assignments/${rejectedAssignment.id}/submissions`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${studentToken}` },
+      body: rejectedForm,
+    });
+    assert.equal(rejected.status, 403);
+
+    const acceptedAssignment = await prisma.assignment.create({
+      data: {
+        meeting_id: meeting.id,
+        title: 'Late diterima',
+        weight_percentage: 10,
+        due_date: pastDue,
+        allow_late: true,
+        is_published: true,
+      },
+    });
+    extraAssignments.push(acceptedAssignment);
+
+    const acceptedForm = new FormData();
+    acceptedForm.append('file', new Blob(['%PDF-1.4\nterlambat diterima'], { type: 'application/pdf' }), 'diterima.pdf');
+    const accepted = await fetch(`${baseUrl}/api/assignments/${acceptedAssignment.id}/submissions`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${studentToken}` },
+      body: acceptedForm,
+    });
+    assert.equal(accepted.status, 201);
+    const acceptedPayload = await accepted.json();
+    assert.equal(acceptedPayload.data.is_late, true);
+
+    const auditCountBefore = await prisma.auditLog.count({
+      where: { entity: 'submissions', action: 'CREATE_SUBMISSION', entity_id: acceptedPayload.data.id },
+    });
+    assert.equal(auditCountBefore, 1);
+
+    await prisma.submission.update({
+      where: { id: acceptedPayload.data.id },
+      data: { score: 80, feedback: 'Dinilai meskipun terlambat', graded_at: new Date() },
+    });
+
+    const rosterResponse = await request(`/api/assignments/${acceptedAssignment.id}/submissions`, { token: lecturerToken });
+    assert.equal(rosterResponse.status, 200);
+    const roster = await rosterResponse.json();
+    assert.equal(roster.data.late, 1);
+    assert.equal(roster.data.graded, 1);
+    assert.equal(roster.data.roster[0].is_late, true);
+    assert.equal(roster.data.roster[0].status, 'GRADED');
   });
 });

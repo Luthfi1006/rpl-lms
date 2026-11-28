@@ -441,7 +441,13 @@ Komponen berikut dipakai berulang oleh Fase 2–4 dan harus selesai lebih dulu:
   - `res.attachment(...)` + `Content-Type` dari peta ekstensi + pipe `createReadStream`.
   - `404` bila tugas tidak punya soal atau berkas fisik hilang.
 - [x] **Pengujian `tests/mvp3-phase2.test.js`:**
-  - CRUD tugas, draft/draft-hidden, unduh soal, RBAC, dan cleanup fisik terujikan pada alur integrasi.
+  - Dosen pengampu membuat tugas dengan dan tanpa soal; Admin juga boleh.
+  - Mahasiswa/dosen non-pengampu ditolak `403` saat membuat/mengubah/menghapus.
+  - Mahasiswa enrolled melihat hanya tugas `is_published = true`; draft tersembunyi `404`.
+  - `due_date` masa lalu, bobot di luar 0–100, dan judul kosong ditolak `400`.
+  - Unduh soal: enrolled `200` + `Content-Disposition`; luar kelas `403`; tanpa token `401`.
+  - Penggantian soal melalui multipart file-only berhasil, metadata lama dihapus, dan berkas fisik lama tidak tersisa.
+  - Audit `CREATE/UPDATE/DELETE_ASSIGNMENT` tercatat.
 
 ---
 
@@ -467,7 +473,13 @@ Komponen berikut dipakai berulang oleh Fase 2–4 dan harus selesai lebih dulu:
   - Dosen pengampu/Admin: boleh; Mahasiswa: hanya bila `submission.student_id` miliknya sendiri.
   - Mahasiswa lain → `403` (TC-023); tanpa token → `401`; berkas hilang → `404`.
 - [x] **Pengujian `tests/mvp3-phase3.test.js`:**
-  - Upload valid PDF, resubmission, roster, unduh, pemalsuan signature, luar kelas, tanpa token, dan submission dinilai terkunci terujikan pada alur integrasi.
+  - Upload valid `.pdf/.docx/.xlsx/.zip` → `201`; resubmission sebelum deadline → `200`, berkas lama terhapus dari disk.
+  - Ekstensi `.exe`/`.txt` ditolak `400`; berkas > batas ditolak `400`; `.pdf` palsu (isi bukan PDF) ditolak `400`.
+  - Deadline `allow_late=false` dan waktu lewat → `403`; `allow_late=true` → diterima dengan `is_late=true`.
+  - Mahasiswa luar kelas `403`; tanpa token `401`; submission yang sudah dinilai tidak dapat diganti `409`.
+  - Roster terlambat yang sudah dinilai tetap menghitung `is_late=true` dan konsisten dengan ringkasan tugas.
+  - Berkas tersimpan di `storage/private/submissions/`, bukan di web root; cleanup setelah uji.
+  - Audit `CREATE_SUBMISSION`/`UPDATE_SUBMISSION` tercatat.
 
 ---
 
@@ -556,8 +568,8 @@ Komponen berikut dipakai berulang oleh Fase 2–4 dan harus selesai lebih dulu:
 |---|---|---|---|---|---|
 | 0 — Prasyarat bersama | ✅ | 2026-11-27 | 2026-11-27 | `npm test` 220/220 lulus | Fase 0 selesai; 30 tes baru (MVP 3 phase0) |
 | 1 — Migrasi Skema | ✅ | 2026-11-27 | 2026-11-27 | `npx prisma validate` OK; `npm test` 220/220 lulus | Migrasi `20261127163147_add_elearning_mvp3_assignments_submissions` diterapkan ke `rpl_lms` & `rpl_review`; delegate `assignment`/`submission` terverifikasi |
-| 2 — Penerbitan Tugas | ✅ | 2026-11-28 | 2026-11-28 | `mvp3-phase2.test.js` 1/1; `npm test` 222/222 lulus | Modul assignments + tes CRUD/publikasi/unduh; commit a3775ae |
-| 3 — Submission & Validasi Berkas | ✅ | 2026-11-28 | 2026-11-28 | `mvp3-phase3.test.js` 1/1; `npm test` 222/222 lulus | Modul submissions + validasi magic-byte/deadline/resubmission; commit a3775ae |
+| 2 — Penerbitan Tugas | ✅ | 2026-11-28 | 2026-11-28 | `mvp3-phase2.test.js` 1/1; `npm test` 223/223 lulus | Modul assignments + tes CRUD/publikasi/unduh; revisi temuan review |
+| 3 — Submission & Validasi Berkas | ✅ | 2026-11-28 | 2026-11-28 | `mvp3-phase3.test.js` 2/2; `npm test` 223/223 lulus | Modul submissions + validasi magic-byte/deadline/resubmission; revisi temuan review |
 | 4 — Penilaian 0–100 | ⬜ | — | — | — | — |
 | 5 — Integrasi & Handoff | ⬜ | — | — | — | — |
 
@@ -569,6 +581,7 @@ Komponen berikut dipakai berulang oleh Fase 2–4 dan harus selesai lebih dulu:
 | 2026-11-27 | 0 | Prasyarat bersama MVP 3: entitas audit `assignments`/`submissions`, `MAX_SUBMISSION_SIZE_MB` (5–10MB), helper signature magic-byte, factory middleware unggah dokumen (soal opsional + submission), kategori storage `assignment` | `backend/src/constants/auditEntities.js`, `backend/src/config/env.js`, `backend/src/utils/fileSignature.js`, `backend/src/utils/storage.js`, `backend/src/middlewares/upload.middleware.js`, `backend/tests/mvp3-phase0.test.js`, `backend/.env.example` | `npm test` → 220/220 lulus (190 baseline + 30 baru) | 6a52fec |
 | 2026-11-27 | 1 | Model `Assignment` & `Submission` + relasi balik `Meeting`/`Mahasiswa`/`File`; migrasi `add_elearning_mvp3_assignments_submissions` diterapkan ke `rpl_lms` (dev) dan `rpl_review` (deploy) | `backend/prisma/schema.prisma`, `backend/prisma/migrations/20261127163147_add_elearning_mvp3_assignments_submissions/migration.sql` | `prisma validate` OK; `prisma migrate status` up to date; delegate `assignment`/`submission` OK; `npm test` → 220/220 lulus | e4e9192 |
 | 2026-11-28 | 2–3 | Implementasi API penerbitan tugas dan pengumpulan jawaban: CRUD tugas, draft/publikasi, unduh soal, resubmission, roster, download submission, validasi MIME/signature/ukuran/deadline, audit mutasi, dan cleanup berkas. | `backend/src/modules/assignments/*`, `backend/src/modules/submissions/*`, `backend/src/app.js`, `backend/tests/mvp3-phase2.test.js`, `backend/tests/mvp3-phase3.test.js` | Fase 0 30/30; Fase 2 1/1; Fase 3 1/1; `npm test` 222/222 lulus; `prisma validate` OK | a3775ae |
+| 2026-11-28 | 2–3 | Perbaikan review: checklist tes permanen diperluas, late roster dihitung dari `is_late`, PUT file-only diizinkan, cleanup berkas dibungkus try/finally, kontras `_count.submissions` ditambah, dan validasi soal memakai `STORAGE.DOC_MAX_SIZE`. | `assignment.dto.js`, `assignment.service.js`, `submission.service.js`, `mvp3-phase2.test.js`, `mvp3-phase3.test.js`, `IMPLEMENTATION_PLAN_MVP3_BACKEND.md` | Fase 2–3 3/3 lulus; `npm test` 223/223 lulus; `prisma validate` OK | belum commit |
 
 **Format acuan baris baru (jangan dihapus; tambahkan baris di bawah tabel):**
 
