@@ -148,6 +148,12 @@ describe('Fase 2 MVP 3: penerbitan tugas', () => {
     const listStudent = await request(`/api/classes/${testClass.id}/assignments`, { token: studentToken });
     assert.equal(listStudent.status, 200);
 
+    const listLecturer = await request(`/api/classes/${testClass.id}/assignments`, { token: lecturerToken });
+    assert.equal(listLecturer.status, 200);
+    const lecturerAssignments = (await listLecturer.json()).data;
+    assert.equal(lecturerAssignments[0]._count.submissions, 0);
+    assert.equal('submission_count' in lecturerAssignments[0], false);
+
     const outsideList = await request(`/api/classes/${testClass.id}/assignments`, { token: outsideToken });
     assert.equal(outsideList.status, 403);
 
